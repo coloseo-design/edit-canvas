@@ -53,14 +53,6 @@ export default () => {
       //   height: 250,
       //   img: t2,
       // });
-      // canvasConsext.createImage({
-      //   x: 550,
-      //   y: 510,
-      //   width: 200,
-      //   height: 250,
-      //   img: t4,
-      //   radian: 35,
-      // });
     }
   }, []);
 
@@ -76,6 +68,10 @@ export default () => {
     const value = event.target.value;
     $filter(value);
     conext && conext.filter(value);
+  }
+
+  const handlePaint = () => {
+    conext && conext.paintBrush('blue');
   }
 
 
@@ -100,6 +96,9 @@ export default () => {
             <option value="单色">单色滤镜</option>
           </select>
         </div>
+        <button onClick={handlePaint}>
+          <img src={require('./assets/pen.svg')} style={{ width: 20, height: 20 }} />
+        </button>
       </div>
     
     </div>
