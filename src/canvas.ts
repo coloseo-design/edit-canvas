@@ -211,22 +211,24 @@ class DragCanvas {
   back(step: number = 1) {
     const stepIndex = step > this.backOperation.length ? 0 : this.backOperation.length - step;
     const lastOperation = this.backOperation[stepIndex];
+    const temOperation = this.backOperation.slice(0, stepIndex);
     const list = lastOperation instanceof ImageRect ? this.imageList : lastOperation instanceof Rect ? this.rectList : [];
-    list.forEach((item) => {
-      if (item?.uuid === lastOperation?.uuid) {
-        Object.assign(item, {
-          ...lastOperation,
-        });
-      }
-    });
-    // if (lastOperation instanceof Path2D) {
-    //   const tem = new Path2D();
-    //   this.editCtx.stroke(tem);
-    // }
+    if (lastOperation instanceof Path2D) {
+      const temLine = (temOperation || []).filter((item: any) => item instanceof Path2D);
+      this.lineList = temLine || [];
+    } else {
+      list.forEach((item) => {
+        if (item?.uuid === lastOperation?.uuid) {
+          Object.assign(item, {
+            ...lastOperation,
+          });
+        }
+      });
+    }
     if (this.backOperation.length) {
       this.paintAll(this.currentContainter);
     }
-    this.backOperation = this.backOperation.slice(0, stepIndex);
+    this.backOperation = temOperation;
   }
 
   paintBrush(color: string = 'black') {
@@ -274,13 +276,13 @@ class DragCanvas {
     });
   }
 
-  repaintLine() {
+  repaintLine() { // 清空画布时重绘线段
     this.lineList.forEach((item: Path2D) => {
       this.editCtx.stroke(item);
     });
   }
 
-  paintLine(point: { x: number, y: number }) { //多条线段， 线段返回上一步还待 fix
+  paintLine(point: { x: number, y: number }) { //画线段
     const line = new Path2D();
     this.editCtx.beginPath();
     this.editCtx.strokeStyle = this.paintColor;

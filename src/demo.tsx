@@ -58,9 +58,9 @@ export default () => {
 
   const handleBack = () => {
     if (conext) {
-      // back不传值默认回退一步，传值大于操作步数回到最初状态
+      // 传值代表回退的步数 back不传值默认回退一步，传值大于操作步数回到最初状态
       // conext.back(3);
-      conext.back(1);
+      conext.back();
     }
   };
 
