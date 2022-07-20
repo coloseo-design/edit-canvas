@@ -1,4 +1,4 @@
-import { uuid } from './utils';
+import { uuid, Reverse, BackWhite, Relief, Grey, Red } from './utils';
 
 interface BaseRectProps {
   x: number;
@@ -12,6 +12,7 @@ interface BaseRectProps {
 
 interface imageProps extends BaseRectProps {
   img: HTMLImageElement;
+  filter?: string;
 }
 
 interface RectProps extends BaseRectProps {
@@ -38,6 +39,17 @@ interface HornProps extends BaseHornProps {
   Canvas: DragCanvas;
 }
 
+interface mapping {
+  [x: string] : Function,
+}
+const FilterMap: mapping = {
+  '反色': Reverse,
+  '黑白':  BackWhite,
+  '浮雕': Relief,
+  '灰色': Grey,
+  '单色': Red,
+}
+
 
 class DragCanvas {
   public canvas :HTMLCanvasElement;
@@ -52,11 +64,11 @@ class DragCanvas {
 
   public hornW = 16;
 
-  protected currentShape: any;
+  protected currentShape: any; // 当前点击的图形（四个角或者图片图形）
 
-  public currentContainter: any;
+  public currentContainter: any; // 当前图形的容器
 
-  public backOperation: any = [];
+  public backOperation: any = []; // 操作步骤存储list
   
   constructor(canvas:HTMLCanvasElement) {
     this.canvas = canvas;
@@ -152,39 +164,72 @@ class DragCanvas {
     this.hornList = hornList;
   }
 
+  back(step: number = 1) {
+    const stepIndex = step > this.backOperation.length ? 0 : this.backOperation.length - step;
+    const lastOperation = this.backOperation[stepIndex];
+    const list = lastOperation instanceof ImageRect ? this.imageList : lastOperation instanceof Rect ? this.rectList : [];
+    list.forEach((item) => {
+      if (item?.uuid === lastOperation?.uuid) {
+        Object.assign(item, {
+          ...lastOperation,
+        });
+      }
+    });
+    if (this.backOperation.length) {
+      this.paintRect();
+      this.paintImage();
+      if (this.currentContainter) {
+        this.paintHorn(this.currentContainter);
+      }
+    }
+    this.backOperation = this.backOperation.slice(0, stepIndex);
+  }
+
+  FilterChange(ele: imageProps, fn: Function) {
+    const imageData: any = this.editCtx.getImageData(ele.x, ele.y, ele.width, ele.height);
+    const obj: any = { ...imageData };
+    for(const key in imageData) { // 利用浅拷贝改变imageData的data
+      Object.assign(obj, {
+        [key]: imageData[key]
+      });
+    }
+    const data = obj.data;
+    for(let i = 0, len = data.length; i < len; i+=4){
+      fn(data,i, imageData.width)
+    }
+    obj.data = data;
+    this.editCtx.clearRect(ele.x, ele.y, ele.width, ele.height);
+    this.editCtx.putImageData(imageData, ele.x, ele.y);
+  }
+  filter(type: string) {
+    let currentFilter: any;
+    if (!this.currentContainter && this.imageList.length > 0) {
+      const firstList = { ...this.imageList[0]};
+      currentFilter = { ...this.imageList[0]};
+      this.backOperation.push(new ImageRect(firstList));
+    } else {
+      currentFilter = { ...this.currentContainter };
+      this.backOperation.push(new ImageRect({ ...this.currentContainter }));
+    }
+    this.imageList.forEach((item) => {
+      if (currentFilter && currentFilter.uuid === item.uuid) {
+        Object.assign(item, {
+          filter: type,
+        });
+      }
+    });
+    this.paintImage();
+  }
+
   ImageRotate(ele: imageProps) {
     this.editCtx.save();
     this.editCtx.translate(ele.x + ele.width / 2, ele.y + ele.height / 2);
     this.editCtx.rotate(ele?.radian || 0);
     this.editCtx.translate(-(ele.x + ele.width / 2), -(ele.y + ele.height / 2));
+    this.editCtx.clearRect(ele.x, ele.y, ele.width, ele.height);
     this.editCtx.drawImage(ele.img, ele.x, ele.y, ele.width, ele.height);
+    ele.filter && this.FilterChange(ele, FilterMap[ele.filter]);
     this.editCtx.restore();
-  }
-
-  back(step: number = 1) {
-    const stepIndex = step > this.backOperation.length ? 0 : this.backOperation.length - step;
-    const lastOperation = this.backOperation[stepIndex];
-    if (lastOperation instanceof ImageRect) {
-      this.imageList.forEach((item) => {
-        if (item?.uuid === lastOperation?.uuid) {
-          Object.assign(item, {
-            ...lastOperation,
-          });
-        }
-      });
-    }
-    if (lastOperation instanceof Rect) {
-      this.rectList.forEach((item) => {
-        if (item?.uuid === lastOperation?.uuid) {
-          Object.assign(item, {
-            ...lastOperation,
-          });
-        }
-      });
-    }
-    this.paintRect();
-    this.paintImage();
-    this.paintHorn(this.currentContainter);
   }
 
   paintImage(first?: boolean) {
@@ -358,7 +403,8 @@ class ImageRect { // 图片
   public img: HTMLImageElement; // 图像
   public radian?: number; // 旋转的弧度
   public uuid?: string;
-  constructor ({ width, height, x, y,  Canvas, img, radian = 0, uuid }: imageProps) {
+  filter?: string; // 滤镜
+  constructor ({ width, height, x, y,  Canvas, img, radian = 0, uuid, filter }: imageProps) {
     this.width = width;
     this.height = height;
     this.x = x;
@@ -367,6 +413,7 @@ class ImageRect { // 图片
     this.img = img;
     this.radian = radian;
     this.uuid = uuid;
+    this.filter = filter;
   }
 
   mousedown(e: MouseEvent) {
@@ -513,5 +560,7 @@ class Horn { // 四个顶角
   }
 
 }
+
+export type DragCanvasType = DragCanvas;
 
 export default DragCanvas;

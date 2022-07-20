@@ -25,7 +25,7 @@ const output = process.env.NODE_ENV !== 'production' ? {
   filename: '[name]-[hash].js',
 } : {
   path: path.join(__dirname, './dist'),
-  publicPath: './canvas.ts',
+  publicPath: './src/',
   filename: 'index.js',
   // library: { // webpack5的写法
   //   name: 'canvas',
@@ -44,7 +44,7 @@ module.exports = {
     host: '127.0.0.1',
     port: 3005,
   },
-  entry: process.env.NODE_ENV !== 'production' ? './index.js' : './canvas.ts',
+  entry: process.env.NODE_ENV !== 'production' ? './index.js' : './src/canvas.ts',
   output,
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],

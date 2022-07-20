@@ -14,5 +14,5 @@
     "allowSyntheticDefaultImports": true,
     "sourceMap": true,
   },
-  "include": ["./canvas.ts"],
+  "include": ["src/"],
 }
