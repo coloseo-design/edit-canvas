@@ -115,14 +115,14 @@ class Horn { // 四个顶角
   }
 
   mousedown(e: MouseEvent) {
-    document.onmousemove = (mouseEvent) => {
+    this.Canvas.canvas.onmousemove = (mouseEvent) => {
       const movex =  mouseEvent.pageX - e.pageX;
       const movey = mouseEvent.pageY - e.pageY;
       const list = this.Canvas.currentContainter.img ?  this.Canvas.imageList : this.Canvas.rectList
       this.directionShape(list, movex, movey);
     }
-    document.onmouseup = () => {
-      document.onmousemove = document.onmousedown = null
+    this.Canvas.canvas.onmouseup = () => {
+      this.Canvas.canvas.onmousemove = this.Canvas.canvas.onmousedown = null
     }
   }
 

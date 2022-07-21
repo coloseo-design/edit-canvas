@@ -32,27 +32,27 @@ export default () => {
         height: 200,
         img: t3, 
       });
-      // canvasConsext.createImage({
-      //   x: 300,
-      //   y: 10,
-      //   width: 200,
-      //   height: 250,
-      //   img: img1,
-      // });
-      // canvasConsext.createImage({
-      //   x: 600,
-      //   y: 10,
-      //   width: 100,
-      //   height: 90,
-      //   img: t1,
-      // });
-      // canvasConsext.createImage({
-      //   x: 50,
-      //   y: 520,
-      //   width: 200,
-      //   height: 250,
-      //   img: t2,
-      // });
+      canvasConsext.createImage({
+        x: 300,
+        y: 10,
+        width: 200,
+        height: 250,
+        img: img1,
+      });
+      canvasConsext.createImage({
+        x: 600,
+        y: 10,
+        width: 100,
+        height: 90,
+        img: t1,
+      });
+      canvasConsext.createImage({
+        x: 50,
+        y: 520,
+        width: 200,
+        height: 250,
+        img: t2,
+      });
     }
   }, []);
 
@@ -67,7 +67,12 @@ export default () => {
   const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const value = event.target.value;
     $filter(value);
-    conext && conext.filter(value);
+    const degree = value.indexOf('轻度') >= 0 ? 2 : 4;
+    if (value.indexOf('模糊') >= 0 || value.indexOf('马赛克') >= 0) {
+      conext && conext.filter(value.slice(2), degree);
+    } else {
+      conext && conext.filter(value);
+    }
   }
 
   const handlePaint = () => {
@@ -94,6 +99,10 @@ export default () => {
             <option value="浮雕">浮雕滤镜</option>
             <option value="灰色">灰色滤镜</option>
             <option value="单色">单色滤镜</option>
+            <option value="轻度模糊">轻度模糊</option>
+            <option value="轻度马赛克">轻度马赛克</option>
+            <option value="重度模糊">重度模糊</option>
+            <option value="重度马赛克">重度马赛克</option>
           </select>
         </div>
         <button onClick={handlePaint}>

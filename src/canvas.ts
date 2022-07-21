@@ -1,5 +1,8 @@
-import { uuid, Reverse, BackWhite, Relief, Grey, Red } from './utils';
+import { uuid, Reverse, BackWhite, Relief, Grey, Red, isPosInRotationRect } from './utils';
 import Horn from './horn';
+import Line from './line';
+import ImageRect from './image';
+import Rect from './rect';
 
 export interface BaseRectProps {
   x: number;
@@ -14,6 +17,7 @@ export interface BaseRectProps {
 export interface imageProps extends BaseRectProps {
   img: HTMLImageElement;
   filter?: string;
+  degree?: number;
 }
 
 export interface RectProps extends BaseRectProps {
@@ -59,7 +63,7 @@ class DragCanvas {
 
   public rectList: RectProps[]  = []; // 矩形列表
 
-  public imageList: imageProps[] = []; // 图片列表
+  public imageList: ImageRect[] = []; // 图片列表
 
   public hornList: HornProps[] = []; // 顶角数据
 
@@ -88,25 +92,6 @@ class DragCanvas {
   }
   get height() {
     return this.canvas.height;
-  }
-  isPosInRotationRect(point: any, shape: any, hornRadinCenter?: any) {
-    let hw = shape.width / 2;
-    let hh = shape.height / 2
-    let radian = shape.radian;
-    let center = shape.position;
-    let X = point.x;
-    let Y = point.y;
-    const angle = radian * 180 / Math.PI;
-    let r = -angle * Math.PI/180;
-    // 当前点击图形上四个顶角和旋转框框是，旋转的中心不是自己的中心的点，而是四个顶角的父级中心点
-    const radianCenter = hornRadinCenter && radian ? hornRadinCenter : center;
-
-    let nTempX = radianCenter.x + (X - radianCenter.x) * Math.cos(r) - (Y - radianCenter.y) * Math.sin(r);
-    let nTempY = radianCenter.y + (X - radianCenter.x) * Math.sin(r) + (Y - radianCenter.y) * Math.cos(r);
-    if (nTempX > center.x - hw && nTempX < center.x + hw && nTempY > center.y - hh && nTempY < center.y + hh) {
-        return true;
-    }
-    return false
   }
 
   init() {
@@ -171,25 +156,7 @@ class DragCanvas {
     this.hornList = hornList;
   }
 
-
-  FilterChange(ele: imageProps, fn: Function) {
-    const imageData: any = this.editCtx.getImageData(ele.x, ele.y, ele.width, ele.height);
-    const obj: any = { ...imageData };
-    for(const key in imageData) { // 利用浅拷贝改变imageData的data
-      Object.assign(obj, {
-        [key]: imageData[key]
-      });
-    }
-    const data = obj.data;
-    for(let i = 0, len = data.length; i < len; i+=4){
-      fn(data,i, imageData.width)
-    }
-    obj.data = data;
-    this.editCtx.clearRect(ele.x, ele.y, ele.width, ele.height);
-    this.editCtx.putImageData(imageData, ele.x, ele.y);
-  }
-
-  filter(type: string) {
+  filter(type: string, degree: number = 1) {
     let currentFilter: any;
     if (!this.currentContainter && this.imageList.length > 0) {
       const firstList = { ...this.imageList[0]};
@@ -203,6 +170,7 @@ class DragCanvas {
       if (currentFilter && currentFilter.uuid === item.uuid) {
         Object.assign(item, {
           filter: type,
+          degree,
         });
       }
     });
@@ -237,19 +205,21 @@ class DragCanvas {
     this.paintColor = color;
   }
 
-  ImageRotate(ele: imageProps) {
+  ImageRotate(ele: ImageRect) {
     this.editCtx.save();
     this.editCtx.translate(ele.x + ele.width / 2, ele.y + ele.height / 2);
     this.editCtx.rotate(ele?.radian || 0);
     this.editCtx.translate(-(ele.x + ele.width / 2), -(ele.y + ele.height / 2));
     this.editCtx.clearRect(ele.x, ele.y, ele.width, ele.height);
     this.editCtx.drawImage(ele.img, ele.x, ele.y, ele.width, ele.height);
-    ele.filter && this.FilterChange(ele, FilterMap[ele.filter]);
+    if(ele.filter) {
+      (ele.filter === '模糊' || ele.filter === '马赛克') ? ele.VagueMosaic(ele.filter) : ele.paintFilter(FilterMap[ele.filter]);
+    }
     this.editCtx.restore();
   }
 
   paintImage(first?: boolean) {
-    this.imageList.forEach((ele: imageProps) => {
+    this.imageList.forEach((ele: ImageRect) => {
       if (ele.img) {
         if (!first) {
           this.ImageRotate(ele);
@@ -283,24 +253,6 @@ class DragCanvas {
     });
   }
 
-  paintLine(point: { x: number, y: number }) { //画线段
-    const line = new Path2D();
-    this.editCtx.beginPath();
-    this.editCtx.strokeStyle = this.paintColor;
-    line.moveTo(point.x, point.y);
-    this.canvas.onmousemove = (evt) => {
-      line.lineTo(evt.offsetX, evt.offsetY);
-      this.editCtx.stroke(line);
-    }
-    this.canvas.onmouseup = () => {
-      this.editCtx.closePath();
-      this.paintStart = false;
-      this.canvas.onmousemove = null;
-      this.lineList.push(line);
-      this.backOperation.push(line);
-    }
-  }
-
   paintAll(option: BaseHornProps, cancel: boolean = false) {
     this.paintRect();
     this.paintImage();
@@ -310,7 +262,7 @@ class DragCanvas {
     }
   }
 
-  Operations(downinfo: any, containter: any, ishorn: boolean) {
+  Operations(downinfo: any, containter: any, ishorn: boolean) { // 存贮前一步操作
     if (ishorn) { // 点击四个顶角旋转角
       if (containter instanceof Rect) {
         this.backOperation.push(new Rect({ ...containter }));
@@ -328,29 +280,47 @@ class DragCanvas {
     }
   }
 
+  mouseJudge(e: MouseEvent, type: 'down' | 'move') {
+    let cursor = 'default';
+    const point = {  x: e.offsetX, y: e.offsetY };
+    const currentDown: any = ([...this.hornList, ...this.rectList, ...this.imageList].find((ele: imageProps | RectProps | HornProps) => {
+      const w = ele instanceof Horn ? this.hornW : ele.width ;
+      const h = ele instanceof Horn ? this.hornW : ele.height;
+      const shape = {
+        width: w,
+        height: h,
+        radian: ele.radian ?? 0,
+        position : { x: ele.x + w / 2, y: ele.y + h / 2 }
+      };
+      let radianCenter;
+      if (ele instanceof Horn && (this.currentContainter instanceof Rect || this.currentContainter instanceof ImageRect) && ele.radian) {
+        radianCenter = { x: this.currentContainter.x + this.currentContainter.width / 2, y: this.currentContainter.y + this.currentContainter.height / 2 };
+      }
+      if (ele instanceof Horn) {
+        return isPosInRotationRect(point, shape, radianCenter) && !ele.cancel;
+      }
+      return isPosInRotationRect(point, shape);
+    }));
+
+    if (currentDown && type === 'move') {
+      const IsRect = currentDown instanceof Rect || currentDown instanceof ImageRect;
+      const isHorn = currentDown instanceof Horn;
+      if (IsRect) {
+        cursor = 'move';
+      }
+      if (isHorn && !currentDown.cancel) {
+        cursor = currentDown.cursor;
+      }
+    }
+    return type === 'move' ? cursor : currentDown;
+  }
+
   onmousedown(e: MouseEvent) {
-    const point = { x: e.offsetX, y: e.offsetY };
     if (this.paintStart) {
-      this.paintLine(point);
+      const linePaint = new Line({ Canvas: this, paintColor: this.paintColor });
+      linePaint.mousedown(e)
     } else {
-      const currentDown: any = ([...this.hornList, ...this.rectList, ...this.imageList].find((ele: imageProps | RectProps | HornProps) => {
-        const w = ele instanceof Horn ? this.hornW : ele.width ;
-        const h = ele instanceof Horn ? this.hornW : ele.height;
-        const shape = {
-          width: w,
-          height: h,
-          radian: ele.radian ?? 0,
-          position : { x: ele.x + w / 2, y: ele.y + h / 2 }
-        };
-        if (ele instanceof Horn && (this.currentContainter instanceof Rect || this.currentContainter instanceof ImageRect) && ele.radian) {
-          const radianCenter = { x: this.currentContainter.x + this.currentContainter.width / 2, y: this.currentContainter.y + this.currentContainter.height / 2 };
-          return this.isPosInRotationRect(point, shape, radianCenter) && !ele.cancel;
-        }
-        if (ele instanceof Horn) {
-          return this.isPosInRotationRect(point, shape) && !ele.cancel;
-        }
-        return this.isPosInRotationRect(point, shape);
-      }));
+      const currentDown = this.mouseJudge(e, 'down');
       this.currentShape = currentDown;
       if (!currentDown) {
         this.paintAll(this.currentContainter || {}, true);
@@ -378,112 +348,12 @@ class DragCanvas {
   mousemove(e: MouseEvent) {
     let cursor = 'default';
     if (!this.paintStart) {
-      const point = { x: e.offsetX, y: e.offsetY };
-      ([...this.rectList, ...this.imageList, ...this.hornList].forEach((ele) => {
-        const w = ele instanceof Horn ? this.hornW : ele.width ;
-        const h = ele instanceof Horn ? this.hornW : ele.height;
-        const shape = {
-          width: w,
-          height: h,
-          radian: ele.radian ?? 0,
-          position : { x: ele.x + w / 2, y: ele.y + h / 2 }};
-          let radianCenter;
-          if (ele instanceof Horn && (this.currentContainter instanceof Rect || this.currentContainter instanceof ImageRect) && ele.radian) {
-            radianCenter = { x: this.currentContainter.x + this.currentContainter.width / 2, y: this.currentContainter.y + this.currentContainter.height / 2 };
-          }
-        if (this.isPosInRotationRect(point, shape, radianCenter)) {
-          const IsRect = ele instanceof Rect || ele instanceof ImageRect;
-          const isHorn = ele instanceof Horn;
-          if (IsRect) {
-            cursor = 'move';
-          }
-          if (isHorn && !ele.cancel) {
-            cursor = ele.cursor;
-          }
-        }
-      }));
+      cursor = this.mouseJudge(e, 'move');
     }
     this.canvas.style.cursor = cursor;
   }
 
 };
-
-
-class Rect { // 矩形
-  public width: number;
-  public height: number;
-  public x: number;
-  public y: number;
-  public color: string;
-  public Canvas?: DragCanvas;
-  public radian?: number; // 旋转的弧度
-  public uuid?: string
-  constructor ({ width, height, x, y, color, Canvas, radian = 0, uuid }: RectProps) {
-    this.width = width;
-    this.height = height;
-    this.x = x;
-    this.y = y;
-    this.color = color;
-    this.Canvas = Canvas;
-    this.radian = radian;
-    this.uuid = uuid;
-  }
-
-  mousedown(e: MouseEvent) {
-    const disX = e.pageX - this.x;
-    const disY = e.pageY - this.y;
-    document.onmousemove = (mouseEvent) => {
-      this.x = mouseEvent.pageX - disX;
-      this.y = mouseEvent.pageY - disY;
-      this.Canvas?.paintRect();
-      this.Canvas?.paintImage();
-      this.Canvas?.repaintLine();
-      this.Canvas?.paintHorn({ x: this.x, y: this.y, width: this.width, height: this.height, radian: this.radian ?? 0 });
-    }
-    document.onmouseup = () => {
-      document.onmousemove = document.onmousedown = null
-    }
-  }
-}
-
-class ImageRect { // 图片
-  public width: number;
-  public height: number;
-  public x: number;
-  public y: number;
-  public Canvas?: DragCanvas;
-  public img: HTMLImageElement; // 图像
-  public radian?: number; // 旋转的弧度
-  public uuid?: string;
-  filter?: string; // 滤镜
-  constructor ({ width, height, x, y,  Canvas, img, radian = 0, uuid, filter }: imageProps) {
-    this.width = width;
-    this.height = height;
-    this.x = x;
-    this.y = y;
-    this.Canvas = Canvas;
-    this.img = img;
-    this.radian = radian;
-    this.uuid = uuid;
-    this.filter = filter;
-  }
-
-  mousedown(e: MouseEvent) {
-    const disX = e.pageX - this.x;
-    const disY = e.pageY - this.y;
-    document.onmousemove = (mouseEvent) => {
-      this.x = mouseEvent.pageX - disX;
-      this.y = mouseEvent.pageY - disY;
-      this.Canvas?.paintRect();
-      this.Canvas?.paintImage();
-      this.Canvas?.repaintLine();
-      this.Canvas?.paintHorn({ x: this.x, y: this.y, width: this.width, height: this.height, radian: this.radian ?? 0 });
-    }
-    document.onmouseup = () => {
-      document.onmousemove = document.onmousedown = null
-    }
-  }
-}
 
 
 export type DragCanvasType = DragCanvas;
