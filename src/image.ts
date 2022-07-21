@@ -66,10 +66,8 @@ class ImageRect { // 图片
       this.Canvas.canvas.onmousemove = (mouseEvent: MouseEvent) => {
         this.x = mouseEvent.pageX - disX;
         this.y = mouseEvent.pageY - disY;
-        this.Canvas?.paintRect();
-        this.Canvas?.paintImage();
-        this.Canvas?.repaintLine();
-        this.Canvas?.paintHorn({ x: this.x, y: this.y, width: this.width, height: this.height, radian: this.radian ?? 0 });
+        const obj = { x: this.x, y: this.y, width: this.width, height: this.height, radian: this.radian ?? 0  };
+        this.Canvas?.paintAll(obj);
       }
       this.Canvas.canvas.onmouseup = () => {
         this.Canvas ?  this.Canvas.canvas.onmousemove = this.Canvas.canvas.onmousedown = null : null

@@ -118,7 +118,6 @@ class DragCanvas {
   paintHorn(option: BaseHornProps, cancel: boolean = false) { // cancel为true表示没有点击到图形上，清除horn
     const { x, y, width: w, height: h, radian } = option;
     const intersectionW = this.hornW / 2;
-  
     const basehorn = {
       radian,
       Canvas: this,
@@ -128,7 +127,7 @@ class DragCanvas {
       containterY: y,
       cancel,
       color: 'red',
-    }
+    };
     const rightTop = { direction: 'rightTop',  x: x - intersectionW + w, y: y - intersectionW, cursor: 'nesw-resize' };
     const leftTop = { direction: 'leftTop', x: x - intersectionW, y: y - intersectionW, cursor: 'nwse-resize' };
     const leftBottom = { direction: 'leftBottom', x: x - intersectionW, y: y - intersectionW + h, cursor: 'nesw-resize' };
@@ -233,7 +232,6 @@ class DragCanvas {
   }
 
   paintRect() {
-    this.editCtx.clearRect(0, 0, this.width, this.height);
     this.rectList.forEach(ele => {
       this.editCtx.save();
       this.editCtx.beginPath()
@@ -254,6 +252,7 @@ class DragCanvas {
   }
 
   paintAll(option: BaseHornProps, cancel: boolean = false) {
+    this.editCtx.clearRect(0, 0, this.width, this.height);
     this.paintRect();
     this.paintImage();
     this.repaintLine();
@@ -323,10 +322,9 @@ class DragCanvas {
       const currentDown = this.mouseJudge(e, 'down');
       this.currentShape = currentDown;
       if (!currentDown) {
-        this.paintAll(this.currentContainter || {}, true);
+        this.paintAll(this.currentContainter || {}, true); // 删除horn
         return;
       }
-  
       const isHorn = this.currentShape instanceof Horn;
       if (!isHorn) {
         const hornProps = {
@@ -336,6 +334,16 @@ class DragCanvas {
           width: this.currentShape.width,
           radian: this.currentShape.radian,
         };
+        if (this.currentShape instanceof ImageRect) { // 为了使当前图形在最上层
+          const list = this.imageList.filter((item) => item.uuid !== this.currentShape.uuid);
+          list.push(this.currentShape);
+          this.imageList = list;
+        }
+        if (this.currentShape instanceof Rect) { // 为了使当前图形在最上层
+          const list = this.rectList.filter((item) => item.uuid !== this.currentShape.uuid);
+          list.push(this.currentShape);
+          this.rectList = list;
+        }
         this.paintAll(hornProps);
         this.currentContainter = this.currentShape;
       }

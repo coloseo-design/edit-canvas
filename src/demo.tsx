@@ -28,31 +28,31 @@ export default () => {
       canvasConsext.createImage({
         x: 50,
         y: 50,
-        width: 200,
-        height: 200,
-        img: t3, 
+        width: 250,
+        height: 250,
+        img: t3,
       });
       canvasConsext.createImage({
-        x: 300,
+        x: 350,
         y: 10,
-        width: 200,
-        height: 250,
+        width: 130,
+        height: 150,
         img: img1,
       });
-      canvasConsext.createImage({
-        x: 600,
-        y: 10,
-        width: 100,
-        height: 90,
-        img: t1,
-      });
-      canvasConsext.createImage({
-        x: 50,
-        y: 520,
-        width: 200,
-        height: 250,
-        img: t2,
-      });
+      // canvasConsext.createImage({
+      //   x: 600,
+      //   y: 10,
+      //   width: 100,
+      //   height: 90,
+      //   img: t1,
+      // });
+      // canvasConsext.createImage({
+      //   x: 50,
+      //   y: 320,
+      //   width: 150,
+      //   height: 100,
+      //   img: t2,
+      // });
     }
   }, []);
 

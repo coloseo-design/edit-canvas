@@ -90,10 +90,7 @@ class Horn { // 四个顶角
         });
       }
     });
-    this.Canvas.paintRect();
-    this.Canvas.paintImage();
-    this.Canvas?.repaintLine();
-    this.Canvas.paintHorn({ x, y, width: w, height: h, radian, });
+    this.Canvas.paintAll({ x, y, width: w, height: h, radian, });
   }
 
   paint() {
