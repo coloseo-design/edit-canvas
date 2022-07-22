@@ -46,22 +46,20 @@ export default () => {
       //   height: 90,
       //   img: t1,
       // });
-      // canvasConsext.createImage({
-      //   x: 50,
-      //   y: 320,
-      //   width: 150,
-      //   height: 100,
-      //   img: t2,
+      // canvasConsext.createRect({
+      //   x: 400,
+      //   y: 300,
+      //   width: 272,
+      //   height: 32,
+      //   color: 'red',
       // });
     }
   }, []);
 
   const handleBack = () => {
-    if (conext) {
       // 传值代表回退的步数 back不传值默认回退一步，传值大于操作步数回到最初状态
       // conext.back(3);
-      conext.back();
-    }
+    conext?.back();
   };
 
   const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -69,30 +67,44 @@ export default () => {
     $filter(value);
     const degree = value.indexOf('轻度') >= 0 ? 2 : 4;
     if (value.indexOf('模糊') >= 0 || value.indexOf('马赛克') >= 0) {
-      conext && conext.filter(value.slice(2), degree);
+      conext?.filter(value.slice(2), degree);
     } else {
-      conext && conext.filter(value);
+      conext?.filter(value);
     }
   }
 
   const handlePaint = () => {
-    conext && conext.paintBrush('blue');
+    conext?.paintBrush('blue');
+  }
+
+  const handleWrite = () => {
+   conext?.write({ font: '32px serif', color: 'blue' });
+  }
+
+  const handleWriteEdit = () => {
+    conext?.editWrite();
   }
 
 
   return (
     <div style={{ display: 'flex' }}>
-      <canvas id="canvas" width="800" height="1800" style={{ border: '1px solid red' }}></canvas>
+      <div>
+        <canvas id="canvas" width="800" height="1800" style={{ border: '1px solid red', position: 'absolute', top: 0, left: 0 }}></canvas>
+      </div>
       <div style={{ marginLeft: 32 }}>
         <button onClick={handleBack}>
           <img src={require('./assets/back.svg')} style={{ width: 20, height: 20 }} />
         </button>
-        <button>
+        <button onClick={handleWrite}>
           <img src={require('./assets/text.svg')} style={{ width: 20, height: 20 }} />
+        </button>
+        <button onClick={handleWriteEdit}>
+          <span>编辑文字</span>
+          <img src={require('./assets/edit.svg')} style={{ width: 20, height: 20 }} />
         </button>
         <div style={{ display: 'flex' }}>
           <p>选择滤镜:</p>
-          <select style={{ height: 28, width: 156, marginTop: 8 }} value={filter} onChange={handleChange} >
+          <select style={{ height: 28, width: 156, marginTop: 14 }} value={filter} onChange={handleChange} >
             <option value=""></option>
             <option value="反色">反色滤镜</option>
             <option value="黑白">黑白滤镜</option>
@@ -109,7 +121,6 @@ export default () => {
           <img src={require('./assets/pen.svg')} style={{ width: 20, height: 20 }} />
         </button>
       </div>
-    
     </div>
   );
 };

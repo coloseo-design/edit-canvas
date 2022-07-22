@@ -3,6 +3,7 @@ import Horn from './horn';
 import Line from './line';
 import ImageRect from './image';
 import Rect from './rect';
+import CanvsText, { TextProps } from './text';
 
 export interface BaseRectProps {
   x: number;
@@ -32,6 +33,13 @@ export interface BaseHornProps {
   radian: number; // 容器的旋转弧度
 }
 
+interface TextTemProps {
+  font: string;
+  color?: string;
+  Canvas?: DragCanvas;
+  uuid?: string;
+}
+
 export interface HornProps extends BaseHornProps {
   direction: string;
   cursor: string; // 鼠标样式
@@ -56,6 +64,7 @@ const FilterMap: mapping = {
 }
 
 
+
 class DragCanvas {
   public canvas :HTMLCanvasElement;
 
@@ -67,7 +76,9 @@ class DragCanvas {
 
   public hornList: HornProps[] = []; // 顶角数据
 
-  public lineList: any = [];
+  public lineList: any = []; // 线列表存储
+
+  public textList: CanvsText[] = []; // 文字列表存储
 
   public hornW = 16;
 
@@ -80,11 +91,24 @@ class DragCanvas {
   public paintStart: boolean = false; // 开始画
 
   public paintColor: string = 'black';
+
+  public isEdit: boolean = false;
+
+  public isWrite: boolean = false;
+
+  public currentAddWrite: any = {};
   
   constructor(canvas:HTMLCanvasElement) {
     this.canvas = canvas;
     this.editCtx = this.canvas.getContext('2d') as CanvasRenderingContext2D;
-    this.init()
+    const parent = document.createElement('div');
+    parent.setAttribute('style', `position: relative; width: ${canvas.width}px; height: ${canvas.height}px`);
+    canvas.parentNode?.appendChild(parent);
+    parent.appendChild(canvas);
+    canvas.style.position = 'absolute';
+    canvas.style.top = '0px';
+    canvas.style.left = '0px';
+    this.init();
   }
 
   get width() {
@@ -184,6 +208,9 @@ class DragCanvas {
     if (lastOperation instanceof Path2D) {
       const temLine = (temOperation || []).filter((item: any) => item instanceof Path2D);
       this.lineList = temLine || [];
+    } else if (lastOperation instanceof CanvsText) {
+      const temLine = (temOperation || []).filter((item: any) => item instanceof CanvsText);
+      this.textList = temLine || [];
     } else {
       list.forEach((item) => {
         if (item?.uuid === lastOperation?.uuid) {
@@ -203,6 +230,28 @@ class DragCanvas {
     this.paintStart = true;
     this.paintColor = color;
   }
+
+  write(option: TextTemProps) {
+    this.isWrite = true;
+    option.uuid = uuid();
+    option.Canvas = this;
+    Object.assign(this.currentAddWrite, {
+      ...option,
+    });
+  }
+
+  editWrite() {
+    this.isEdit = true;
+  }
+
+  changeParentAttribute() {
+    this.isEdit = false;
+    this.isWrite = false;
+  }
+  changeParentwStatus() {
+    this.isWrite = false;
+  }
+
 
   ImageRotate(ele: ImageRect) {
     this.editCtx.save();
@@ -251,11 +300,21 @@ class DragCanvas {
     });
   }
 
+  paintText() {
+    this.textList.forEach((item) => {
+      this.editCtx.font = item.font;
+      const height = Number(item.font.slice(0, item.font.indexOf('px')))
+      this.editCtx.fillText(item?.value || '', item.x, item.y + height);
+    });
+  }
+  
+
   paintAll(option: BaseHornProps, cancel: boolean = false) {
     this.editCtx.clearRect(0, 0, this.width, this.height);
     this.paintRect();
     this.paintImage();
     this.repaintLine();
+    this.paintText();
     if (option) {
       this.paintHorn(option, cancel);
     }
@@ -282,9 +341,9 @@ class DragCanvas {
   mouseJudge(e: MouseEvent, type: 'down' | 'move') {
     let cursor = 'default';
     const point = {  x: e.offsetX, y: e.offsetY };
-    const currentDown: any = ([...this.hornList, ...this.rectList, ...this.imageList].find((ele: imageProps | RectProps | HornProps) => {
-      const w = ele instanceof Horn ? this.hornW : ele.width ;
-      const h = ele instanceof Horn ? this.hornW : ele.height;
+    const currentDown: any = ([...this.hornList, ...this.rectList, ...this.imageList, ...this.textList].find((ele: imageProps | RectProps | HornProps | TextProps) => {
+      const w = ele instanceof Horn ? this.hornW : ele.width ?? 0;
+      const h = ele instanceof Horn ? this.hornW : ele.height ?? 0;
       const shape = {
         width: w,
         height: h,
@@ -307,6 +366,9 @@ class DragCanvas {
       if (IsRect) {
         cursor = 'move';
       }
+      if (currentDown instanceof CanvsText) {
+        cursor = this.isEdit ? 'text' : 'move';
+      }
       if (isHorn && !currentDown.cancel) {
         cursor = currentDown.cursor;
       }
@@ -315,7 +377,15 @@ class DragCanvas {
   }
 
   onmousedown(e: MouseEvent) {
-    if (this.paintStart) {
+    if (this.isWrite) {
+      Object.assign(this.currentAddWrite, {
+        x: e.offsetX - 4,
+        y: e.offsetY - 4,
+      });
+      const obj = { ...this.currentAddWrite };
+      this.textList.push(new CanvsText(obj));
+      this.backOperation.push(new CanvsText(obj));
+    } else if (this.paintStart) {
       const linePaint = new Line({ Canvas: this, paintColor: this.paintColor });
       linePaint.mousedown(e)
     } else {
@@ -344,18 +414,17 @@ class DragCanvas {
           list.push(this.currentShape);
           this.rectList = list;
         }
-        this.paintAll(hornProps);
+        this.paintAll(hornProps, this.currentShape instanceof CanvsText);
         this.currentContainter = this.currentShape;
       }
       this.Operations(currentDown, this.currentContainter, isHorn);
-  
       this.currentShape.mousedown(e);
     }
   }
 
   mousemove(e: MouseEvent) {
     let cursor = 'default';
-    if (!this.paintStart) {
+    if (!this.paintStart && !this.isWrite) {
       cursor = this.mouseJudge(e, 'move');
     }
     this.canvas.style.cursor = cursor;
