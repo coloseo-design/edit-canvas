@@ -10,7 +10,8 @@ export interface TextProps {
   height?: number;
   uuid?: string;
   color?: string;
-  radian?: number;
+  radian?: number; 
+  noPaint?: boolean;
 }
 
 class CanvsText {
@@ -20,7 +21,11 @@ class CanvsText {
   public Canvas?: DragCanvas;
 
   public isChinaStart: boolean;
+
   public value: string;
+
+  public notChainese: string;
+
   public input: HTMLInputElement;
 
   public width: number;
@@ -31,20 +36,25 @@ class CanvsText {
 
   public color?: string;
 
-  constructor({ x, y, font = '14px', Canvas, uuid, color }: TextProps) {
+  public noPaint?: boolean;
+
+  constructor({ x, y, font = '14px', Canvas, uuid, color, value = '', noPaint = false }: TextProps) {
     this.x = x;
     this.y = y;
     this.font = font;
     this.uuid = uuid;
     this.isChinaStart = false;
-    this.value = '';
+    this.value = value;
+    this.notChainese = '';
     this.Canvas = Canvas;
     this.width = 100;
     this.color = color;
+    this.noPaint = noPaint;
     this.input = document.createElement('input');
     this.height = Number(font.slice(0, font.indexOf('px'))) || 14;
-    
-    this.createText();
+    if (!noPaint) {
+      this.createText();
+    }
   }
   createText() {
     if (this.input) {
@@ -53,7 +63,8 @@ class CanvsText {
         `position: absolute;
         height: ${this.height}px;
         width: ${this.width}px;
-        left: ${this.x}px; top: ${this.y}px;
+        left: ${this.x}px;
+        top: ${this.y}px;
         border: none; outline: none; z-index: 10;
         font-size: ${this.height}px;
         background: transparent;
@@ -77,30 +88,39 @@ class CanvsText {
   }
 
   oncompositionend(e: any) { // 中文输入完
-    this.value = `${this.value}${e.data}`;
-    this.paint();
     this.isChinaStart = false;
+    this.paint();
   }
 
   paint() {
-    if (this.Canvas && this.height && this.input) {
+    if (this.Canvas) {
+      const val = this.isChinaStart ? this.notChainese : this.value;
       const partenEnglish =/[\A-Za-z]/g;
-      const res = this.value?.match(partenEnglish) || '';
-      const englishLen = res?.length;
-      const chineseLen = (this.value || '').length - englishLen;
+      const res = val.match(partenEnglish) || '';
+      const englishLen = res.length;
+      const chineseLen = val.length - englishLen;
       this.Canvas.editCtx.font = this.font;
       this.Canvas.editCtx.fillStyle = this.color || 'black';
-      this.value && this.Canvas?.editCtx.fillText(this.value, this.x, this.y + this.height);
+      val && this.Canvas?.editCtx.fillText(val, this.x, this.y + this.height / 1.3);
       const width = this.height * chineseLen + this.height * (englishLen / 2);
       this.input.style.width = `${width}px`;
       this.width = width;
       this.height = this.height;
+      (this.Canvas?.textList || []).forEach((item) => {
+        if (item.uuid === this.uuid) {
+          Object.assign(item, {
+            width,
+            value: val,
+          })
+        }
+      });
     }
   }
  
   oninput(e: any) {
-    if (this.isChinaStart) return;
     this.value = e.target.value;
+    if (this.isChinaStart) return; // 表示早输入中文拼音阶段不展示在画布上
+    this.notChainese = e.target.value;
     this.paint();
     this.Canvas?.changeParentwStatus();
   }
@@ -118,7 +138,7 @@ class CanvsText {
       this.input.value = this.value;
       this.input.style.top = `${this.y}px`;
       this.input.style.left = `${this.x}px`;
-      this.input.focus();
+      // this.input.focus();
     } else {
       const disX = e.pageX - this.x;
       const disY = e.pageY - this.y;

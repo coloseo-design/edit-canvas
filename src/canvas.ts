@@ -204,13 +204,10 @@ class DragCanvas {
     const stepIndex = step > this.backOperation.length ? 0 : this.backOperation.length - step;
     const lastOperation = this.backOperation[stepIndex];
     const temOperation = this.backOperation.slice(0, stepIndex);
-    const list = lastOperation instanceof ImageRect ? this.imageList : lastOperation instanceof Rect ? this.rectList : [];
+    const list = lastOperation instanceof ImageRect ? this.imageList : lastOperation instanceof Rect ? this.rectList : lastOperation instanceof CanvsText ? this.textList : [];
     if (lastOperation instanceof Path2D) {
       const temLine = (temOperation || []).filter((item: any) => item instanceof Path2D);
       this.lineList = temLine || [];
-    } else if (lastOperation instanceof CanvsText) {
-      const temLine = (temOperation || []).filter((item: any) => item instanceof CanvsText);
-      this.textList = temLine || [];
     } else {
       list.forEach((item) => {
         if (item?.uuid === lastOperation?.uuid) {
@@ -220,8 +217,9 @@ class DragCanvas {
         }
       });
     }
+
     if (this.backOperation.length) {
-      this.paintAll(this.currentContainter);
+      this.paintAll(this.currentContainter, lastOperation instanceof CanvsText);
     }
     this.backOperation = temOperation;
   }
@@ -304,7 +302,7 @@ class DragCanvas {
     this.textList.forEach((item) => {
       this.editCtx.font = item.font;
       const height = Number(item.font.slice(0, item.font.indexOf('px')))
-      this.editCtx.fillText(item?.value || '', item.x, item.y + height);
+      this.editCtx.fillText(item?.value || '', item.x, item.y + height / 1.3);
     });
   }
   
@@ -334,6 +332,9 @@ class DragCanvas {
       }
       if (downinfo instanceof ImageRect) {
         this.backOperation.push(new ImageRect({ ...downinfo }));
+      }
+      if (downinfo instanceof CanvsText) {
+        this.backOperation.push(new CanvsText({ ...downinfo, noPaint: true, }));
       }
     }
   }
@@ -378,13 +379,15 @@ class DragCanvas {
 
   onmousedown(e: MouseEvent) {
     if (this.isWrite) {
-      Object.assign(this.currentAddWrite, {
-        x: e.offsetX - 4,
-        y: e.offsetY - 4,
+      Object.assign(this.currentAddWrite, { // 点击的位置就是文本框的位置
+        x: e.offsetX,
+        y: e.offsetY,
       });
       const obj = { ...this.currentAddWrite };
-      this.textList.push(new CanvsText(obj));
-      this.backOperation.push(new CanvsText(obj));
+      const textInfo = new CanvsText(obj)
+      this.textList.push(textInfo);
+      this.backOperation.push(textInfo);
+      this.isWrite = false;
     } else if (this.paintStart) {
       const linePaint = new Line({ Canvas: this, paintColor: this.paintColor });
       linePaint.mousedown(e)
