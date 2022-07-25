@@ -9,15 +9,8 @@ export default () => {
   const img1 = new Image();
   img1.src= require('./assets/test.png');
 
-  const t1 = new Image();
-  t1.src= require('./assets/1.jpg');
-
-  const t2 = new Image();
-  t2.src= require('./assets/2.jpg');
   const t3 = new Image();
   t3.src= require('./assets/3.jpg');
-  const t4 = new Image();
-  t4.src= require('./assets/4.jpg');
   const [conext, $context] = React.useState<DragCanvasType>();
   const [filter, $filter] = React.useState('');
   React.useEffect(() => {
@@ -39,20 +32,6 @@ export default () => {
         height: 150,
         img: img1,
       });
-      // canvasConsext.createImage({
-      //   x: 600,
-      //   y: 10,
-      //   width: 100,
-      //   height: 90,
-      //   img: t1,
-      // });
-      // canvasConsext.createRect({
-      //   x: 400,
-      //   y: 300,
-      //   width: 272,
-      //   height: 32,
-      //   color: 'red',
-      // });
     }
   }, []);
 
@@ -74,24 +53,25 @@ export default () => {
   }
 
   const handlePaint = () => {
-    conext?.paintBrush('blue');
+    conext?.paintBrush({ color: 'blue', lineWidth: 2 });
   }
 
   const handleWrite = () => {
-   conext?.write({ font: '32px serif', color: 'blue' });
+   conext?.write({ font: '32px serif', color: 'black' });
   }
 
   const handleWriteEdit = () => {
     conext?.editWrite();
   }
 
+  const handleBig = () => {
+
+  }
 
   return (
     <div style={{ display: 'flex' }}>
-      <div>
-        <canvas id="canvas" width="800" height="1800" style={{ border: '1px solid red', position: 'absolute', top: 0, left: 0 }}></canvas>
-      </div>
-      <div style={{ marginLeft: 32 }}>
+      <canvas id="canvas" width="1000" height="1800" style={{ border: '1px solid red', position: 'absolute', top: 0, left: 0 }}></canvas>
+      <div style={{ marginRight: 16 }}>
         <button onClick={handleBack}>
           <img src={require('./assets/back.svg')} style={{ width: 20, height: 20 }} />
         </button>
@@ -119,6 +99,9 @@ export default () => {
         </div>
         <button onClick={handlePaint}>
           <img src={require('./assets/pen.svg')} style={{ width: 20, height: 20 }} />
+        </button>
+        <button onClick={handleBig}>
+          <img src={require('./assets/big.svg')} style={{ width: 20, height: 20 }} />
         </button>
       </div>
     </div>

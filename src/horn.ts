@@ -80,7 +80,7 @@ class Horn { // 四个顶角
       radian = Math.atan2(movey, movex);
     }
     list.forEach((item) => {
-      if (item === this.Canvas.currentContainter) {
+      if (item.uuid === this.Canvas.currentContainter.uuid) {
         Object.assign(item, {
           x,
           y,
@@ -101,6 +101,7 @@ class Horn { // 四个顶角
     this.Canvas.editCtx.rotate(this.radian);
     this.Canvas.editCtx.translate(-(this.containterX + this.width / 2), -(this.containterY + this.height / 2));
     this.Canvas.editCtx.strokeStyle = this.color;
+    this.Canvas.editCtx.lineWidth = 1;
     if (this.direction === 'rotateLine') { // 旋转的连接线
       this.Canvas.editCtx.moveTo(!this.cancel ? this.x : 0 , !this.cancel ? this.y : 0);
       this.Canvas.editCtx.lineTo(!this.cancel ? this.x2 || 0 : 0, !this.cancel ? this.y2 || 0 : 0);

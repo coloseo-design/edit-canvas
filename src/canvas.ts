@@ -52,6 +52,11 @@ export interface HornProps extends BaseHornProps {
   Canvas: DragCanvas;
 }
 
+interface paintBrushProps {
+  color?: string;
+  lineWidth?: number;
+}
+
 interface mapping {
   [x: string] : Function,
 }
@@ -92,6 +97,8 @@ class DragCanvas {
 
   public paintColor: string = 'black';
 
+  public lineWidth: number = 1;
+
   public isEdit: boolean = false;
 
   public isWrite: boolean = false;
@@ -101,10 +108,10 @@ class DragCanvas {
   constructor(canvas:HTMLCanvasElement) {
     this.canvas = canvas;
     this.editCtx = this.canvas.getContext('2d') as CanvasRenderingContext2D;
-    const parent = document.createElement('div');
+    const parent = document.createElement('div'); // 创建canvas的parent，以便于文字编辑input定位
     parent.setAttribute('style', `position: relative; width: ${canvas.width}px; height: ${canvas.height}px`);
-    canvas.parentNode?.appendChild(parent);
-    parent.appendChild(canvas);
+    canvas.parentNode?.insertBefore(parent, canvas); // 把parent插入到canvas的位置
+    parent.appendChild(canvas); // 再把canvas 放到 parent中
     canvas.style.position = 'absolute';
     canvas.style.top = '0px';
     canvas.style.left = '0px';
@@ -179,7 +186,7 @@ class DragCanvas {
     this.hornList = hornList;
   }
 
-  filter(type: string, degree: number = 1) {
+  filter(type: string, degree: number = 1) { // 滤镜
     let currentFilter: any;
     if (!this.currentContainter && this.imageList.length > 0) {
       const firstList = { ...this.imageList[0]};
@@ -200,15 +207,27 @@ class DragCanvas {
     this.paintImage();
   }
 
-  back(step: number = 1) {
+  back(step: number = 1) { // 回退
     const stepIndex = step > this.backOperation.length ? 0 : this.backOperation.length - step;
-    const lastOperation = this.backOperation[stepIndex];
-    const temOperation = this.backOperation.slice(0, stepIndex);
-    const list = lastOperation instanceof ImageRect ? this.imageList : lastOperation instanceof Rect ? this.rectList : lastOperation instanceof CanvsText ? this.textList : [];
-    if (lastOperation instanceof Path2D) {
+    const lastOperation = this.backOperation[stepIndex]; // 回退到这一步
+    const temOperation = this.backOperation.slice(0, stepIndex); // 回退后操作列表的缓存
+    const list = lastOperation instanceof ImageRect ? this.imageList : lastOperation instanceof Rect ? this.rectList : [];
+    if (lastOperation instanceof Path2D) { // 线段的回退
       const temLine = (temOperation || []).filter((item: any) => item instanceof Path2D);
       this.lineList = temLine || [];
-    } else {
+    } else if (lastOperation instanceof CanvsText) { // 文字的回退
+      if (temOperation.some((i: any) => i.uuid === lastOperation?.uuid)) { // 如果操作步骤中含有要lastOperation操作则更新文字，否则在列表中删除这条文案
+        this.textList.forEach((item) => {
+          if (item?.uuid === lastOperation?.uuid) {
+            Object.assign(item, {
+              ...lastOperation,
+            });
+          }
+        });
+      } else {
+        this.textList = this.textList.filter((i: CanvsText) => i.uuid !== lastOperation?.uuid);
+      }
+    } else { // 图片，矩形的回退
       list.forEach((item) => {
         if (item?.uuid === lastOperation?.uuid) {
           Object.assign(item, {
@@ -221,15 +240,17 @@ class DragCanvas {
     if (this.backOperation.length) {
       this.paintAll(this.currentContainter, lastOperation instanceof CanvsText);
     }
+
     this.backOperation = temOperation;
   }
 
-  paintBrush(color: string = 'black') {
+  paintBrush(option: paintBrushProps) { // 画笔
     this.paintStart = true;
-    this.paintColor = color;
+    this.paintColor = option?.color || 'black';
+    this.lineWidth = option?.lineWidth || 1;
   }
 
-  write(option: TextTemProps) {
+  write(option: TextTemProps) { // 写文字
     this.isWrite = true;
     option.uuid = uuid();
     option.Canvas = this;
@@ -238,7 +259,7 @@ class DragCanvas {
     });
   }
 
-  editWrite() {
+  editWrite() { // 文字编辑
     this.isEdit = true;
   }
 
@@ -298,10 +319,11 @@ class DragCanvas {
     });
   }
 
-  paintText() {
+  paintText() { // 画文字
     this.textList.forEach((item) => {
       this.editCtx.font = item.font;
-      const height = Number(item.font.slice(0, item.font.indexOf('px')))
+      const height = Number(item.font.slice(0, item.font.indexOf('px')));
+      item.setInputAttribute(item.x, item.y);
       this.editCtx.fillText(item?.value || '', item.x, item.y + height / 1.3);
     });
   }
@@ -334,7 +356,8 @@ class DragCanvas {
         this.backOperation.push(new ImageRect({ ...downinfo }));
       }
       if (downinfo instanceof CanvsText) {
-        this.backOperation.push(new CanvsText({ ...downinfo, noPaint: true, }));
+        const t = new CanvsText({ ...downinfo, noPaint: true });
+        this.backOperation.push(t);
       }
     }
   }
@@ -389,7 +412,7 @@ class DragCanvas {
       this.backOperation.push(textInfo);
       this.isWrite = false;
     } else if (this.paintStart) {
-      const linePaint = new Line({ Canvas: this, paintColor: this.paintColor });
+      const linePaint = new Line({ Canvas: this, paintColor: this.paintColor, lineWidth: this.lineWidth });
       linePaint.mousedown(e)
     } else {
       const currentDown = this.mouseJudge(e, 'down');
