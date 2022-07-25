@@ -104,14 +104,15 @@ class DragCanvas {
   public isWrite: boolean = false;
 
   public currentAddWrite: any = {};
+
+  public ratio: number =  window.devicePixelRatio || 1
   
   constructor(canvas:HTMLCanvasElement) {
-    const ratio = window.devicePixelRatio || 1;
     const w = canvas.width;
     const h = canvas.height;
     this.canvas = canvas;
-    canvas.width = w * ratio;
-    canvas.height = h * ratio;
+    canvas.width = w * this.ratio;
+    canvas.height = h * this.ratio;
     canvas.style.width = w + 'px';
     canvas.style.height = h + 'px';
     this.editCtx = this.canvas.getContext('2d') as CanvasRenderingContext2D;
@@ -122,7 +123,7 @@ class DragCanvas {
     canvas.style.position = 'absolute';
     canvas.style.top = '0px';
     canvas.style.left = '0px';
-    this.editCtx.scale(ratio, ratio); // window.devicePixelRatio 解决图片文案不清晰
+    this.editCtx.scale(this.ratio, this.ratio); // window.devicePixelRatio 解决图片文案不清晰
     this.init();
   }
 

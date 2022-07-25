@@ -44,7 +44,7 @@ export default () => {
   const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const value = event.target.value;
     $filter(value);
-    const degree = value.indexOf('轻度') >= 0 ? 2 : 4;
+    const degree = value.indexOf('轻度') >= 0 ? 2 : 12;
     if (value.indexOf('模糊') >= 0 || value.indexOf('马赛克') >= 0) {
       conext?.filter(value.slice(2), degree);
     } else {
@@ -53,7 +53,7 @@ export default () => {
   }
 
   const handlePaint = () => {
-    conext?.paintBrush({ color: 'blue', lineWidth: 2 });
+    conext?.paintBrush({ color: 'blue', lineWidth: 0.5 });
   }
 
   const handleWrite = () => {

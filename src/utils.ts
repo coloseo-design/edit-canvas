@@ -73,8 +73,9 @@ export const Red = (data: any, i: number) => { // 红色滤镜
   data[i * 4 + 2] = 0;
 }
 
-export const Vague = (data: any, n: number = 1, width: number, height: number) => { // 模糊
-  const blurR = n;
+export const Vague = (options: any) => { // 模糊
+  const { data, degree = 1, width, height } = options;
+  const blurR = degree;
   const totalnum = (2 * blurR + 1) * (2 * blurR + 1);
   for(let i = blurR; i < height - blurR; i++){
     for(let j = blurR; j < width - blurR; j++){
@@ -97,8 +98,9 @@ export const Vague = (data: any, n: number = 1, width: number, height: number) =
   }
 }
 
-export const Mosaic = (data: any, n: number = 1, width: number, height: number) => { // 马赛克
-  const size = n;
+export const Mosaic = (options: any) => { // 马赛克
+  const { data, degree = 1, width, height } = options;
+  const size = degree;
   const totalnum = size * size;
   for(let i = 0; i < height; i+=size){
     for(let j = 0; j < width; j+=size){

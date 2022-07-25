@@ -26,7 +26,8 @@ class ImageRect { // 图片
   }
 
   paintFilter(fn: Function) {
-    const imageData: any = this.Canvas?.editCtx.getImageData(this.x, this.y, this.width, this.height);
+    const ratio = this.Canvas?.ratio || 1;
+    const imageData: any = this.Canvas?.editCtx.getImageData(this.x * ratio, this.y * ratio, this.width * ratio, this.height * ratio);
     const obj: any = { ...imageData };
     for(const key in imageData) { // 利用浅拷贝改变imageData的data
       Object.assign(obj, {
@@ -38,12 +39,12 @@ class ImageRect { // 图片
       fn(data,i, imageData.width)
     }
     obj.data = data;
-    this.Canvas?.editCtx.clearRect(this.x, this.y, this.width, this.height);
-    this.Canvas?.editCtx.putImageData(imageData, this.x, this.y);
+    this.Canvas?.editCtx.putImageData(imageData, this.x * ratio, this.y * ratio);
   }
 
   VagueMosaic(type: string) {
-    const imageData: any = this.Canvas?.editCtx.getImageData(this.x, this.y, this.width, this.height);
+    const ratio = this.Canvas?.ratio || 1;
+    const imageData: any = this.Canvas?.editCtx.getImageData(this.x * ratio, this.y * ratio, this.width * ratio, this.height * ratio);
     if (imageData) {
       const obj: any = { ...imageData };
       for(const key in imageData) { // 利用浅拷贝改变imageData的data
@@ -52,10 +53,10 @@ class ImageRect { // 图片
         });
       }
       const data = obj.data;
-      type === '模糊' ? Vague(data, this.degree, this.width, this.height) : Mosaic(data, this.degree, this.width, this.height);
-      obj.data = data;
-      this.Canvas?.editCtx.clearRect(this.x, this.y, this.width, this.height); 
-      this.Canvas?.editCtx.putImageData(imageData, this.x, this.y);
+      const args = { data, degree: this.degree, width: this.width * ratio, height: this.height * ratio }
+      type === '模糊' ? Vague(args) : Mosaic(args);
+      obj.data = data; 
+      this.Canvas?.editCtx.putImageData(imageData, this.x * ratio, this.y * ratio);
     }
   }
 
