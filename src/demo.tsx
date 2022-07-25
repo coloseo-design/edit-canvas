@@ -57,7 +57,7 @@ export default () => {
   }
 
   const handleWrite = () => {
-   conext?.write({ font: '32px serif', color: 'black' });
+   conext?.addWrite({ font: '24px serif', color: 'blue' });
   }
 
   const handleWriteEdit = () => {

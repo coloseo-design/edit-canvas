@@ -39,12 +39,12 @@ export const Reverse = (data: any,i: number) => { // 反色滤镜
 }
 
 export const BackWhite = (data: any, i: number) => { // 黑白滤镜
-  // rgba r = data[i], g = data[i + 1], b = data[i + 2], a = data[i+3]
+  // rgba r = data[i], g = data[i + 1], b = data[i + 2], a = data[i+3] 4个元素为一组
   const red = data[i];
   const green = data[i+1];
   const blue = data[i+2];
   let result = 0
-  const average = Math.floor((red+green+blue)/3);
+  const average = Math.floor((red + green + blue) / 3);
   if(average > 255/2){
     result = 255;
   }else{

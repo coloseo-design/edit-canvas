@@ -39,6 +39,8 @@ class CanvsText {
 
   public noPaint?: boolean;
 
+  public cursorColor?: string;
+
   constructor({ x, y, font = '14px', Canvas, uuid, color, value = '', noPaint = false, input = null }: TextProps) {
     this.x = x;
     this.y = y;
@@ -51,6 +53,7 @@ class CanvsText {
     this.width = 100;
     this.color = color;
     this.noPaint = noPaint;
+    this.cursorColor = 'black';
     this.height = Number(font.slice(0, font.indexOf('px'))) || 14;
     this.input = input; // 回退的时候不需要再重新创立input
     if (!noPaint) {
@@ -64,6 +67,7 @@ class CanvsText {
       this.input.style.left = `${x}px`;
     }
   }
+
   createText() {
     if (this.input) {
       this.input.setAttribute(
@@ -76,19 +80,22 @@ class CanvsText {
         border: none; outline: none;
         z-index: 10;
         font-size: ${this.height}px;
-        background: transparent;
+        caret-color: black;
         color: transparent;
+        background: transparent;
         `
         );
 
       const parentNode = this.Canvas?.canvas.parentNode;
       parentNode && parentNode.appendChild(this.input);
-      // this.input.focus();
       this.input.addEventListener('input', this.oninput.bind(this));
       this.input.addEventListener('blur', this.onblur.bind(this));
       this.input.addEventListener('foucs', this.onfoucs.bind(this));
       this.input.addEventListener('compositionstart', this.oncompositionstart.bind(this));
       this.input.addEventListener('compositionend', this.oncompositionend.bind(this));
+      setTimeout(() => {
+        this.input && this.input?.focus();
+      }, 10);
     }
 
   }
@@ -142,6 +149,9 @@ class CanvsText {
     }
   }
   onfoucs() {
+    if (this.input) {
+      this.input.style.zIndex = '10';
+    }
     this.Canvas?.changeParentwStatus();
   }
   mousedown(e: MouseEvent) {
@@ -151,6 +161,9 @@ class CanvsText {
         this.input.value = this.value;
       }
       this.setInputAttribute(this.x, this.y);
+      setTimeout(() => {
+        this.input && this.input?.focus();
+      }, 10);
     } else {
       const disX = e.pageX - this.x;
       const disY = e.pageY - this.y;

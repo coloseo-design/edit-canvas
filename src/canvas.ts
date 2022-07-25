@@ -106,15 +106,23 @@ class DragCanvas {
   public currentAddWrite: any = {};
   
   constructor(canvas:HTMLCanvasElement) {
+    const ratio = window.devicePixelRatio || 1;
+    const w = canvas.width;
+    const h = canvas.height;
     this.canvas = canvas;
+    canvas.width = w * ratio;
+    canvas.height = h * ratio;
+    canvas.style.width = w + 'px';
+    canvas.style.height = h + 'px';
     this.editCtx = this.canvas.getContext('2d') as CanvasRenderingContext2D;
     const parent = document.createElement('div'); // 创建canvas的parent，以便于文字编辑input定位
-    parent.setAttribute('style', `position: relative; width: ${canvas.width}px; height: ${canvas.height}px`);
+    parent.setAttribute('style', `position: relative; width: ${canvas.style.width}; height: ${canvas.style.height}`);
     canvas.parentNode?.insertBefore(parent, canvas); // 把parent插入到canvas的位置
     parent.appendChild(canvas); // 再把canvas 放到 parent中
     canvas.style.position = 'absolute';
     canvas.style.top = '0px';
     canvas.style.left = '0px';
+    this.editCtx.scale(ratio, ratio); // window.devicePixelRatio 解决图片文案不清晰
     this.init();
   }
 
@@ -126,7 +134,6 @@ class DragCanvas {
   }
 
   init() {
-    this.editCtx.globalCompositeOperation = "multiply";
     this.canvas.addEventListener('mousedown', this.onmousedown.bind(this));
     this.canvas.addEventListener('mousemove', this.mousemove.bind(this));
   }
@@ -250,7 +257,7 @@ class DragCanvas {
     this.lineWidth = option?.lineWidth || 1;
   }
 
-  write(option: TextTemProps) { // 写文字
+  addWrite(option: TextTemProps) { // 写文字
     this.isWrite = true;
     option.uuid = uuid();
     option.Canvas = this;
