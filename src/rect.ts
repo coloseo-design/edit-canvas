@@ -20,11 +20,27 @@ class Rect { // 矩形
     this.uuid = uuid;
   }
 
+  paint() {
+    if (this.Canvas) {
+      const { editCtx } = this.Canvas;
+      editCtx.save();
+      editCtx.beginPath()
+      editCtx.translate(this.x + this.width / 2, this.y + this.height / 2);
+      editCtx.rotate(this.radian ?? 0);
+      editCtx.translate(-(this.x + this.width / 2), -(this.y + this.height / 2));
+      editCtx.rect(this.x, this.y, this.width, this.height);
+      editCtx.strokeStyle = this.color || 'black';
+      editCtx.stroke();
+      editCtx.restore();
+    }
+
+  }
+
   mousedown(e: MouseEvent) {
     const disX = e.pageX - this.x;
     const disY = e.pageY - this.y;
     if (this.Canvas) {
-      document.onmousemove = (mouseEvent) => {
+      this.Canvas.canvas.onmousemove = (mouseEvent) => {
         this.x = mouseEvent.pageX - disX;
         this.y = mouseEvent.pageY - disY;
         const obj = { x: this.x, y: this.y, width: this.width, height: this.height, radian: this.radian ?? 0  };

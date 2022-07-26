@@ -111,13 +111,16 @@ class CanvsText {
   paint() {
     if (this.Canvas && this.input) {
       const val = this.isChinaStart ? this.notChainese : this.value;
-      const partenEnglish =/[\A-Za-z]/g;
+      const partenEnglish =/[\A-Za-z0-9\p{P}]/g;
       const res = val.match(partenEnglish) || '';
-      const englishLen = res.length; // 英文字符 (英文字符宽度占fontsize的一半)
-      const chineseLen = val.length - englishLen; // 中文字符（中文字符宽度为一个fontsize）
+      const Punpat = /[\x21-\x2f\x3a-\x40\x5b-\x60\x7B-\x7F]/g // 判断英文标点符号
+      const EnglishPun = val.match(Punpat) || '';
+      const enlishpunlen = EnglishPun.length; // 英文标点符号占fontsize的1/3
+      const englishLen = res.length; // 英文数字字符 (英文数字字符宽度占fontsize的一半)
+      const chineseLen = val.length - englishLen - enlishpunlen; // 中文字符（中文字符宽度为一个fontsize）
       this.Canvas.editCtx.font = this.font;
       this.Canvas.editCtx.fillStyle = this.color || 'black';
-      const width = this.height * chineseLen + this.height * (englishLen / 2);
+      const width = this.height * chineseLen + this.height * (englishLen / 2) + this.height * (enlishpunlen / 3);
       this.input.style.width = `${width}px`;
       this.width = width;
       this.height = this.height;

@@ -1,4 +1,4 @@
-import { uuid, Reverse, BackWhite, Relief, Grey, Red, isPosInRotationRect } from './utils';
+import { uuid, isPosInRotationRect } from './utils';
 import Horn from './horn';
 import Line from './line';
 import ImageRect from './image';
@@ -57,17 +57,6 @@ interface paintBrushProps {
   lineWidth?: number;
 }
 
-interface mapping {
-  [x: string] : Function,
-}
-const FilterMap: mapping = {
-  '反色': Reverse,
-  '黑白':  BackWhite,
-  '浮雕': Relief,
-  '灰色': Grey,
-  '单色': Red,
-}
-
 
 
 class DragCanvas {
@@ -75,7 +64,7 @@ class DragCanvas {
 
   public editCtx:CanvasRenderingContext2D;
 
-  public rectList: RectProps[]  = []; // 矩形列表
+  public rectList: Rect[]  = []; // 矩形列表
 
   public imageList: ImageRect[] = []; // 图片列表
 
@@ -279,45 +268,21 @@ class DragCanvas {
     this.isWrite = false;
   }
 
-
-  ImageRotate(ele: ImageRect) {
-    this.editCtx.save();
-    this.editCtx.translate(ele.x + ele.width / 2, ele.y + ele.height / 2);
-    this.editCtx.rotate(ele?.radian || 0);
-    this.editCtx.translate(-(ele.x + ele.width / 2), -(ele.y + ele.height / 2));
-    this.editCtx.clearRect(ele.x, ele.y, ele.width, ele.height);
-    this.editCtx.drawImage(ele.img, ele.x, ele.y, ele.width, ele.height);
-    if(ele.filter) {
-      (ele.filter === '模糊' || ele.filter === '马赛克') ? ele.VagueMosaic(ele.filter) : ele.paintFilter(FilterMap[ele.filter]);
-    }
-    this.editCtx.restore();
-  }
-
   paintImage(first?: boolean) {
     this.imageList.forEach((ele: ImageRect) => {
-      if (ele.img) {
-        if (!first) {
-          this.ImageRotate(ele);
-        } else {
-          ele.img.onload = () => {
-            this.ImageRotate(ele);
-          }
+      if (!first) {
+        ele.paint()
+      } else {
+        ele.img.onload = () => {
+          ele.paint()
         }
       }
     });
   }
 
   paintRect() {
-    this.rectList.forEach(ele => {
-      this.editCtx.save();
-      this.editCtx.beginPath()
-      this.editCtx.translate(ele.x + ele.width / 2, ele.y + ele.height / 2);
-      this.editCtx.rotate(ele.radian ?? 0);
-      this.editCtx.translate(-(ele.x + ele.width / 2), -(ele.y + ele.height / 2));
-      this.editCtx.rect(ele.x, ele.y, ele.width, ele.height);
-      this.editCtx.strokeStyle = ele.color;
-      this.editCtx.stroke();
-      this.editCtx.restore();
+    this.rectList.forEach((ele: Rect) => {
+      ele.paint();
     });
   }
 

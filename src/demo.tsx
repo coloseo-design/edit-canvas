@@ -53,7 +53,7 @@ export default () => {
   }
 
   const handlePaint = () => {
-    conext?.paintBrush({ color: 'blue', lineWidth: 0.5 });
+    conext?.paintBrush({ color: 'blue', lineWidth: 1 });
   }
 
   const handleWrite = () => {
@@ -70,7 +70,7 @@ export default () => {
 
   return (
     <div style={{ display: 'flex' }}>
-      <canvas id="canvas" width="1000" height="1800" style={{ border: '1px solid red', position: 'absolute', top: 0, left: 0 }}></canvas>
+      <canvas id="canvas" width="1000" height="1800" style={{ border: '1px solid red' }}></canvas>
       <div style={{ marginRight: 16 }}>
         <button onClick={handleBack}>
           <img src={require('./assets/back.svg')} style={{ width: 20, height: 20 }} />
