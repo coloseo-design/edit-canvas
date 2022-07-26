@@ -1,7 +1,7 @@
 ## API
 
 const context = new DragCanvas(canvas: HTMLCanvasElement);
-滤镜方法 context.filter(type: '反色', '黑白', '浮雕', '灰色', '单色', '模糊', '马赛克', degree: number) => void; 当传值为马赛克和模糊时，第二个参数degree数值越大，越模糊马赛克越明显，传其他值时不需要传degree
+滤镜方法 context.filter(type: '反色', '黑白', '浮雕', '灰色', '单色', '模糊', '马赛克', degree: number) => void; 当传值为马赛克和模糊时，第二个参数degree数值越大，越模糊马赛克越明显，传其他值时不需要传degree (滤镜如果不选中图片，默认用在第一张图片上)
 
 画笔方法 context.paintBrush({ color: string, linewidth: number }) => void; color 画笔颜色， linewidt画线的宽度
 

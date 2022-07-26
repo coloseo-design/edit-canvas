@@ -49,36 +49,28 @@ class ImageRect { // 图片
     if(this.filter) {
       (this.filter === '模糊' || this.filter === '马赛克') ? this.VagueMosaic(this.filter) : this.paintFilter(FilterMap[this.filter]);
     }
+    const ratio = this.Canvas?.ratio || 1;
+    const imageData: any = this.Canvas?.editCtx.getImageData(this.x * ratio, this.y * ratio, this.width * ratio, this.height * ratio);
     this.Canvas?.editCtx.restore();
   }
 
   paintFilter(fn: Function) {
-    const ratio = this.Canvas?.ratio || 1;
-    const imageData: any = this.Canvas?.editCtx.getImageData(this.x * ratio, this.y * ratio, this.width * ratio, this.height * ratio);
-    const obj: any = { ...imageData };
-    for(const key in imageData) { // 利用浅拷贝改变imageData的data
-      Object.assign(obj, {
-        [key]: imageData[key]
-      });
+    if (this.Canvas) {
+      const ratio = this.Canvas.ratio || 1;
+      const imageData: ImageData = this.Canvas.editCtx.getImageData(this.x * ratio, this.y * ratio, this.width * ratio, this.height * ratio);
+      const data = imageData.data;
+      for(let i = 0, len = data.length; i < len; i+=4){
+        fn(data,i, imageData.width)
+      }
+      this.Canvas?.editCtx.putImageData(imageData, this.x * ratio, this.y * ratio);
     }
-    const data = obj.data;
-    for(let i = 0, len = data.length; i < len; i+=4){
-      fn(data,i, imageData.width)
-    }
-    this.Canvas?.editCtx.putImageData(imageData, this.x * ratio, this.y * ratio);
   }
 
   VagueMosaic(type: string) {
-    const ratio = this.Canvas?.ratio || 1;
-    const imageData: any = this.Canvas?.editCtx.getImageData(this.x * ratio, this.y * ratio, this.width * ratio, this.height * ratio);
-    if (imageData) {
-      const obj: any = { ...imageData };
-      for(const key in imageData) {
-        Object.assign(obj, {
-          [key]: imageData[key]
-        });
-      }
-      const data = obj.data;
+    if (this.Canvas) {
+      const ratio = this.Canvas.ratio || 1;
+      const imageData: ImageData = this.Canvas.editCtx.getImageData(this.x * ratio, this.y * ratio, this.width * ratio, this.height * ratio);
+      const data = imageData.data;
       const args = { data, degree: this.degree, width: this.width * ratio, height: this.height * ratio }
       type === '模糊' ? Vague(args) : Mosaic(args);
       this.Canvas?.editCtx.putImageData(imageData, this.x * ratio, this.y * ratio);

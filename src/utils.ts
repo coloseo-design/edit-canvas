@@ -68,9 +68,9 @@ export const Grey = (data: any, i: number) => { // 灰色滤镜
 }
 
 export const Red = (data: any, i: number) => { // 红色滤镜
-  data[i * 4] = 255;
-  data[i * 4 + 1] = 0;
-  data[i * 4 + 2] = 0;
+  // data[i] = 255;
+  data[i + 1] = 0;
+  data[i + 2] = 0;
 }
 
 export const Vague = (options: any) => { // 模糊
