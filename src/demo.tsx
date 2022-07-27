@@ -24,6 +24,7 @@ export default () => {
         width: 250,
         height: 250,
         img: t3,
+        // filter: '反色',
       });
       canvasConsext.createImage({
         x: 350,

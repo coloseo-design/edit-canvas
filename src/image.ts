@@ -24,7 +24,12 @@ class ImageRect { // 图片
   public filter?: string; // 滤镜
   public degree?: number; // 模糊和马赛克的 模糊程度 数值越大，越模糊
 
-  public data: any;
+
+  public offsetScreenCanvas?: HTMLCanvasElement;
+  public offsetScreenCtx?: CanvasRenderingContext2D | null;
+
+  public screenImage: boolean = false;
+
   constructor ({ width, height, x, y,  Canvas, img, radian = 0, uuid, filter, degree = 1 }: imageProps) {
     this.width = width;
     this.height = height;
@@ -37,21 +42,44 @@ class ImageRect { // 图片
     this.filter = filter;
     this.degree = degree;
 
-    this.data = [];
-  }
-  paint() {
-    this.Canvas?.editCtx.save();
-    this.Canvas?.editCtx.translate(this.x + this.width / 2, this.y + this.height / 2);
-    this.Canvas?.editCtx.rotate(this?.radian || 0);
-    this.Canvas?.editCtx.translate(-(this.x + this.width / 2), -(this.y + this.height / 2));
-    this.Canvas?.editCtx.clearRect(this.x, this.y, this.width, this.height);
-    this.Canvas?.editCtx.drawImage(this.img, this.x, this.y, this.width, this.height);
-    if(this.filter) {
-      (this.filter === '模糊' || this.filter === '马赛克') ? this.VagueMosaic(this.filter) : this.paintFilter(FilterMap[this.filter]);
-    }
     const ratio = this.Canvas?.ratio || 1;
-    const imageData: any = this.Canvas?.editCtx.getImageData(this.x * ratio, this.y * ratio, this.width * ratio, this.height * ratio);
-    this.Canvas?.editCtx.restore();
+    this.offsetScreenCanvas = document.createElement('canvas');
+    this.offsetScreenCanvas.width = width * ratio;
+    this.offsetScreenCanvas.height = height * ratio;
+    this.offsetScreenCanvas.style.width = width + 'px';
+    this.offsetScreenCanvas.style.height = height + 'px';
+    this.offsetScreenCtx = this.offsetScreenCanvas.getContext('2d');
+    this.offsetScreenCtx?.scale(ratio, ratio);
+  }
+
+  paint() {
+    if(this.offsetScreenCtx && this.offsetScreenCanvas) {
+      const ratio = this.Canvas?.ratio || 1;
+      this.Canvas?.editCtx.clearRect(this.x, this.y, this.width, this.height);
+      this.offsetScreenCtx.clearRect(0, 0, this.offsetScreenCanvas.width, this.offsetScreenCanvas.height);
+      this.offsetScreenCtx.drawImage(this.img, 0, 0, this.width, this.height);
+      if (this.filter) {
+        const imageData: ImageData = this.offsetScreenCtx.getImageData(0, 0, this.width * ratio, this.height * ratio);
+          const data = imageData.data;
+          if (this.filter === '模糊' || this.filter === '马赛克') {
+            const args = { data, degree: this.degree, width: this.width * ratio, height: this.height * ratio }
+            this.filter === '模糊' ? Vague(args) : Mosaic(args);
+          } else {
+            const fn  = FilterMap[this.filter];
+            for(let i = 0, len = data.length; i < len; i+=4){
+              fn(data,i)
+            }
+          }
+          this.offsetScreenCtx.putImageData(imageData, 0, 0);
+      }
+      this.Canvas?.editCtx.save();
+      this.Canvas?.editCtx.translate(this.x + this.width / 2, this.y + this.height / 2);
+      this.Canvas?.editCtx.rotate(this?.radian || 0);
+      this.Canvas?.editCtx.translate(-(this.x + this.width / 2), -(this.y + this.height / 2));
+      this.Canvas?.editCtx.clearRect(this.x, this.y, this.width, this.height);
+      this.Canvas?.editCtx.drawImage(this.offsetScreenCanvas, this.x, this.y, this.width, this.height);
+      this.Canvas?.editCtx.restore();
+    }
   }
 
   paintFilter(fn: Function) {

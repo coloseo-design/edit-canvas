@@ -1,4 +1,7 @@
 import DragCanvas, { HornProps, RectProps, imageProps } from './canvas';
+import ImageRect from './image';
+import { Reverse, BackWhite } from './utils';
+
 class Horn { // 四个顶角
   public x: number; // 顶角的x
   public y: number; // 顶角的y
@@ -14,6 +17,8 @@ class Horn { // 四个顶角
   public color: string | CanvasGradient; // 矩形边框的颜色
   public x2?: number; // 旋转连接线的linetox
   public y2?: number; // 旋转连接线的linetoy
+
+  public offsetScreenCtx?: CanvasRenderingContext2D | null;
   constructor({
     x, y, width, height, Canvas, direction, cursor, containterY, containterX, radian = 0, color = 'red', cancel = false,
     x2 = 0, y2 = 0,
@@ -91,6 +96,7 @@ class Horn { // 四个顶角
       }
     });
     this.Canvas.paintAll({ x, y, width: w, height: h, radian, });
+    this.offsetScreenCtx?.rotate(radian);
   }
 
   paint() {

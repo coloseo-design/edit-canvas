@@ -18,13 +18,13 @@ export  const isPosInRotationRect = (
   let Y = point.y;
   const angle = radian * 180 / Math.PI;
   let r = -angle * Math.PI/180;
-  // 当前点击图形上四个顶角和旋转框框是，旋转的中心不是自己的中心的点，而是四个顶角的父级中心点
+  // 当前点击图形上四个顶角和旋转框框时，旋转的中心不是自己的中心的点，而是四个顶角的父级中心点
   const radianCenter = hornRadinCenter && radian ? hornRadinCenter : center;
   // 求旋转到回来后的点坐标
   let nTempX = radianCenter.x + (X - radianCenter.x) * Math.cos(r) - (Y - radianCenter.y) * Math.sin(r);
   let nTempY = radianCenter.y + (X - radianCenter.x) * Math.sin(r) + (Y - radianCenter.y) * Math.cos(r);
   if (nTempX > center.x - hw && nTempX < center.x + hw && nTempY > center.y - hh && nTempY < center.y + hh) {
-      return true;
+    return true;
   }
   return false
 }

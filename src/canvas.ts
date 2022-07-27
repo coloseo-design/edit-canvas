@@ -60,9 +60,9 @@ interface paintBrushProps {
 
 
 class DragCanvas {
-  public canvas :HTMLCanvasElement;
+  public canvas: HTMLCanvasElement;
 
-  public editCtx:CanvasRenderingContext2D;
+  public editCtx: CanvasRenderingContext2D;
 
   public rectList: Rect[]  = []; // 矩形列表
 
@@ -94,9 +94,10 @@ class DragCanvas {
 
   public currentAddWrite: any = {};
 
-  public ratio: number =  window.devicePixelRatio || 1
+  public ratio: number;
   
   constructor(canvas:HTMLCanvasElement) {
+    this.ratio = window.devicePixelRatio || 1;
     const w = canvas.width;
     const h = canvas.height;
     this.canvas = canvas;
@@ -268,13 +269,13 @@ class DragCanvas {
     this.isWrite = false;
   }
 
-  paintImage(first?: boolean) {
+  paintImage(first: boolean = false) {
     this.imageList.forEach((ele: ImageRect) => {
       if (!first) {
-        ele.paint()
+        ele.paint();
       } else {
         ele.img.onload = () => {
-          ele.paint()
+          ele.paint();
         }
       }
     });
@@ -305,7 +306,7 @@ class DragCanvas {
   paintAll(option: BaseHornProps, cancel: boolean = false) {
     this.editCtx.clearRect(0, 0, this.width, this.height);
     this.paintRect();
-    this.paintImage();
+    this.paintImage(false);
     this.repaintLine();
     this.paintText();
     if (option) {
