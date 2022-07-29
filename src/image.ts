@@ -42,22 +42,47 @@ class ImageRect { // 图片
     this.filter = filter;
     this.degree = degree;
 
-    const ratio = this.Canvas?.ratio || 1;
+    const ratio = window.devicePixelRatio || 1;
     this.offsetScreenCanvas = document.createElement('canvas');
-    this.offsetScreenCanvas.width = width * ratio;
-    this.offsetScreenCanvas.height = height * ratio;
-    this.offsetScreenCanvas.style.width = width + 'px';
-    this.offsetScreenCanvas.style.height = height + 'px';
     this.offsetScreenCtx = this.offsetScreenCanvas.getContext('2d');
     this.offsetScreenCtx?.scale(ratio, ratio);
   }
 
   paint() {
+    this.img.onload = () => {
+      this.paintImage();
+    }
+  }
+
+  delete() {
+    if (this.Canvas) {
+      const { editCtx} = this.Canvas;
+      editCtx.save();
+      editCtx.translate(this.x + this.width / 2, this.y + this.height / 2);
+      editCtx.rotate(this?.radian || 0);
+      editCtx.translate(-(this.x + this.width / 2), -(this.y + this.height / 2));
+      editCtx.clearRect(this.x, this.y, this.width, this.height);
+      editCtx.restore();
+    }
+  }
+
+  filters(f: string, degree: number = 1) {
+    this.filter = f;
+    this.degree = degree;
+    this.paintImage();
+  }
+
+  paintImage() {
     if(this.offsetScreenCtx && this.offsetScreenCanvas) {
-      const ratio = this.Canvas?.ratio || 1;
+      const ratio = window.devicePixelRatio || 1;
+      this.offsetScreenCanvas.width = this.width * ratio;
+      this.offsetScreenCanvas.height = this.height * ratio;
+      this.offsetScreenCanvas.style.width = this.width + 'px';
+      this.offsetScreenCanvas.style.height = this.height + 'px';
       this.Canvas?.editCtx.clearRect(this.x, this.y, this.width, this.height);
+      // 图像宽高改变，图像画布也跟着改变
       this.offsetScreenCtx.clearRect(0, 0, this.offsetScreenCanvas.width, this.offsetScreenCanvas.height);
-      this.offsetScreenCtx.drawImage(this.img, 0, 0, this.width, this.height);
+      this.offsetScreenCtx.drawImage(this.img, 0, 0, this.width * ratio, this.height * ratio);
       if (this.filter) {
         const imageData: ImageData = this.offsetScreenCtx.getImageData(0, 0, this.width * ratio, this.height * ratio);
           const data = imageData.data;
@@ -79,29 +104,6 @@ class ImageRect { // 图片
       this.Canvas?.editCtx.clearRect(this.x, this.y, this.width, this.height);
       this.Canvas?.editCtx.drawImage(this.offsetScreenCanvas, this.x, this.y, this.width, this.height);
       this.Canvas?.editCtx.restore();
-    }
-  }
-
-  paintFilter(fn: Function) {
-    if (this.Canvas) {
-      const ratio = this.Canvas.ratio || 1;
-      const imageData: ImageData = this.Canvas.editCtx.getImageData(this.x * ratio, this.y * ratio, this.width * ratio, this.height * ratio);
-      const data = imageData.data;
-      for(let i = 0, len = data.length; i < len; i+=4){
-        fn(data,i, imageData.width)
-      }
-      this.Canvas?.editCtx.putImageData(imageData, this.x * ratio, this.y * ratio);
-    }
-  }
-
-  VagueMosaic(type: string) {
-    if (this.Canvas) {
-      const ratio = this.Canvas.ratio || 1;
-      const imageData: ImageData = this.Canvas.editCtx.getImageData(this.x * ratio, this.y * ratio, this.width * ratio, this.height * ratio);
-      const data = imageData.data;
-      const args = { data, degree: this.degree, width: this.width * ratio, height: this.height * ratio }
-      type === '模糊' ? Vague(args) : Mosaic(args);
-      this.Canvas?.editCtx.putImageData(imageData, this.x * ratio, this.y * ratio);
     }
   }
 

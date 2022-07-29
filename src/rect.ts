@@ -24,7 +24,7 @@ class Rect { // 矩形
     if (this.Canvas) {
       const { editCtx } = this.Canvas;
       editCtx.save();
-      editCtx.beginPath()
+      editCtx.beginPath();
       editCtx.translate(this.x + this.width / 2, this.y + this.height / 2);
       editCtx.rotate(this.radian ?? 0);
       editCtx.translate(-(this.x + this.width / 2), -(this.y + this.height / 2));
@@ -34,6 +34,19 @@ class Rect { // 矩形
       editCtx.restore();
     }
 
+  }
+
+  delete() {
+    if (this.Canvas) {
+      const { editCtx } = this.Canvas;
+      editCtx.save();
+      editCtx.beginPath();
+      editCtx.translate(this.x + this.width / 2, this.y + this.height / 2);
+      editCtx.rotate(this.radian ?? 0);
+      editCtx.translate(-(this.x + this.width / 2), -(this.y + this.height / 2));
+      editCtx.clearRect(this.x - 2, this.y - 2, this.width + 4, this.height + 4);
+      editCtx.restore();
+    }
   }
 
   mousedown(e: MouseEvent) {

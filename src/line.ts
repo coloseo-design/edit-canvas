@@ -1,39 +1,63 @@
 import DragCanvas from './canvas'
 export interface LineProps {
-  Canvas: DragCanvas;
-  paintColor: string;
+  Canvas?: DragCanvas;
+  color?: string;
   lineWidth?: number;
+  uuid?: string;
 }
 
 class Line {
-  public Canvas: DragCanvas;
-  public paintColor: string;
+  public Canvas?: DragCanvas;
+  public color?: string;
   public lineWidth?: number;
-  constructor({ Canvas, paintColor, lineWidth }: LineProps) {
+  public uuid?: string;
+
+  public line?: Path2D | null;
+  constructor({ Canvas, color = 'black', lineWidth = 1, uuid }: LineProps) {
     this.Canvas = Canvas;
-    this.paintColor = paintColor;
+    this.color = color;
     this.lineWidth = lineWidth;
+    this.uuid = uuid;
+    this.line = new Path2D();
+  }
+
+  paint() {
+    this.line && this.Canvas?.editCtx.stroke(this.line);
+  }
+
+  delete() {
+    this.line = null;
+  }
+
+  paintBrush() {
+    if (this.Canvas) {
+      const { canvas } = this.Canvas;
+      canvas.onmousedown = (e) => {
+        this.mousedown(e);
+      }
+    }
   }
   mousedown(e: MouseEvent) {
-    this.Canvas.editCtx.lineWidth = this.lineWidth || 1
-    this.Canvas.editCtx.strokeStyle = this.paintColor;
-    this.Canvas.editCtx.save();
-    const line = new Path2D();
-    this.Canvas.editCtx.beginPath();
-    this.Canvas.editCtx.lineWidth = this.lineWidth || 1
-    this.Canvas.editCtx.strokeStyle = this.paintColor;
-    line.moveTo(e.offsetX, e.offsetY);
-    this.Canvas.canvas.onmousemove = (evt) => {
-      line.lineTo(evt.offsetX, evt.offsetY);
-      this.Canvas.editCtx.stroke(line);
-    }
-    this.Canvas.canvas.onmouseup = () => {
-      this.Canvas.editCtx.closePath();
-      this.Canvas.editCtx.restore();
-      this.Canvas.paintStart = false;
-      this.Canvas.canvas.onmousemove = this.Canvas.canvas.onmousedown =  null;
-      this.Canvas.lineList.push(line);
-      this.Canvas.backOperation.push(line);
+    if (this.Canvas && this.line) {
+      const { editCtx,  canvas } = this.Canvas;
+      editCtx.lineWidth = this.lineWidth || 1
+      editCtx.strokeStyle = this.color || 'black';
+      editCtx.save();
+      editCtx.beginPath();
+      editCtx.lineWidth = this.lineWidth || 1
+      editCtx.strokeStyle = this.color || 'black';
+      this.line.moveTo(e.offsetX, e.offsetY);
+      canvas.onmousemove = (evt) => {
+        this.line && this.line.lineTo(evt.offsetX, evt.offsetY);
+        this.line && editCtx.stroke(this.line);
+      }
+      canvas.onmouseup = () => {
+        editCtx.closePath();
+        editCtx.restore();
+        canvas.onmousemove = canvas.onmousedown =  null;
+        this.line && this.Canvas?.lineList.push(this);
+        this.line && this.Canvas?.backOperation.push(this);
+      }
     }
   }
 }

@@ -52,11 +52,6 @@ export interface HornProps extends BaseHornProps {
   Canvas: DragCanvas;
 }
 
-interface paintBrushProps {
-  color?: string;
-  lineWidth?: number;
-}
-
 
 
 class DragCanvas {
@@ -70,7 +65,7 @@ class DragCanvas {
 
   public hornList: HornProps[] = []; // 顶角数据
 
-  public lineList: any = []; // 线列表存储
+  public lineList: Line[] = []; // 线列表存储
 
   public textList: CanvsText[] = []; // 文字列表存储
 
@@ -82,17 +77,11 @@ class DragCanvas {
 
   public backOperation: any = []; // 操作步骤存储list
 
-  public paintStart: boolean = false; // 开始画
-
   public paintColor: string = 'black';
 
   public lineWidth: number = 1;
 
-  public isEdit: boolean = false;
-
   public isWrite: boolean = false;
-
-  public currentAddWrite: any = {};
 
   public ratio: number;
   
@@ -129,19 +118,78 @@ class DragCanvas {
     this.canvas.addEventListener('mousemove', this.mousemove.bind(this));
   }
 
-  createRect(option: RectProps) {
-    option.Canvas = this;
-    option.uuid = uuid();
-    this.rectList.push(new Rect(option));
-    this.paintRect();
+  add(options: ImageRect | Rect | Line | CanvsText) {
+    const id = uuid();
+    options.Canvas = this;
+    options.uuid = id;
+    options.paint();
+    if (options instanceof ImageRect) {
+      this.imageList.push(options);
+    }
+    if (options instanceof Rect) {
+      this.rectList.push(options);
+    }
   }
 
-  createImage(option: imageProps) {
-    option.Canvas = this;
-    option.uuid = uuid();
-    const imgRect = new ImageRect(option);
-    this.imageList.push(imgRect);
-    this.paintImage(true);
+  remove(options: ImageRect | Rect | Line | CanvsText) {
+    // TODO line的删除还有问题
+    const list = [...this.rectList, ...this.imageList, ...this.lineList, ...this.textList];
+    const temList = list.filter((item) => {
+      if (item.uuid === options.uuid) {
+        options.delete();
+      }
+      return item.uuid !== options.uuid;
+    });
+    this.imageList = temList.filter((item) => item instanceof ImageRect) as ImageRect[];
+    this.lineList = temList.filter((item) => item instanceof Line) as Line[];
+    this.rectList = temList.filter((item) => item instanceof Rect) as Rect[];
+    this.textList = temList.filter((item) => item instanceof CanvsText) as CanvsText[];
+  }
+
+  clear() {
+    this.editCtx.clearRect(0, 0, this.width, this.height);
+  }
+
+  back(step: number = 1) { // 回退
+    const stepIndex = step > this.backOperation.length ? 0 : this.backOperation.length - step;
+    const lastOperation = this.backOperation[stepIndex]; // 回退到这一步
+    const temOperation = this.backOperation.slice(0, stepIndex); // 回退后操作列表的缓存
+    const list = lastOperation instanceof ImageRect ? this.imageList : lastOperation instanceof Rect ? this.rectList : [];
+    if (lastOperation instanceof Line) { // 线段的回退
+      const temLine = (temOperation || []).filter((item: any) => item.line instanceof Line);
+      this.lineList = temLine || [];
+    } else if (lastOperation instanceof CanvsText) { // 文字的回退
+      if (temOperation.some((i: any) => i.uuid === lastOperation?.uuid)) { // 如果操作步骤中含有要lastOperation操作则更新文字，否则在列表中删除这条文案
+        this.textList.forEach((item) => {
+          if (item?.uuid === lastOperation?.uuid) {
+            Object.assign(item, {
+              ...lastOperation,
+            });
+          }
+        });
+      } else {
+        this.textList = this.textList.filter((i: CanvsText) => {
+          if (i.uuid === lastOperation.uuid) {
+            i.delete();
+          }
+          return i.uuid !== lastOperation?.uuid
+        });
+      }
+    } else { // 图片，矩形的回退
+      list.forEach((item) => {
+        if (item?.uuid === lastOperation?.uuid) {
+          Object.assign(item, {
+            ...lastOperation,
+          });
+        }
+      });
+    }
+
+    if (this.backOperation.length) {
+      this.paintAll(this.currentContainter, lastOperation instanceof CanvsText);
+    }
+
+    this.backOperation = temOperation;
   }
 
   paintHorn(option: BaseHornProps, cancel: boolean = false) { // cancel为true表示没有点击到图形上，清除horn
@@ -184,131 +232,17 @@ class DragCanvas {
     this.hornList = hornList;
   }
 
-  filter(type: string, degree: number = 1) { // 滤镜
-    let currentFilter: any;
-    if (!this.currentContainter && this.imageList.length > 0) {
-      const firstList = { ...this.imageList[0]};
-      currentFilter = { ...this.imageList[0]};
-      this.backOperation.push(new ImageRect(firstList));
-    } else {
-      currentFilter = { ...this.currentContainter };
-      this.backOperation.push(new ImageRect({ ...this.currentContainter }));
-    }
-    this.imageList.forEach((item) => {
-      if (currentFilter && currentFilter.uuid === item.uuid) {
-        Object.assign(item, {
-          filter: type,
-          degree,
-        });
-      }
-    });
-    this.paintImage();
-  }
-
-  back(step: number = 1) { // 回退
-    const stepIndex = step > this.backOperation.length ? 0 : this.backOperation.length - step;
-    const lastOperation = this.backOperation[stepIndex]; // 回退到这一步
-    const temOperation = this.backOperation.slice(0, stepIndex); // 回退后操作列表的缓存
-    const list = lastOperation instanceof ImageRect ? this.imageList : lastOperation instanceof Rect ? this.rectList : [];
-    if (lastOperation instanceof Path2D) { // 线段的回退
-      const temLine = (temOperation || []).filter((item: any) => item instanceof Path2D);
-      this.lineList = temLine || [];
-    } else if (lastOperation instanceof CanvsText) { // 文字的回退
-      if (temOperation.some((i: any) => i.uuid === lastOperation?.uuid)) { // 如果操作步骤中含有要lastOperation操作则更新文字，否则在列表中删除这条文案
-        this.textList.forEach((item) => {
-          if (item?.uuid === lastOperation?.uuid) {
-            Object.assign(item, {
-              ...lastOperation,
-            });
-          }
-        });
-      } else {
-        this.textList = this.textList.filter((i: CanvsText) => i.uuid !== lastOperation?.uuid);
-      }
-    } else { // 图片，矩形的回退
-      list.forEach((item) => {
-        if (item?.uuid === lastOperation?.uuid) {
-          Object.assign(item, {
-            ...lastOperation,
-          });
-        }
-      });
-    }
-
-    if (this.backOperation.length) {
-      this.paintAll(this.currentContainter, lastOperation instanceof CanvsText);
-    }
-
-    this.backOperation = temOperation;
-  }
-
-  paintBrush(option: paintBrushProps) { // 画笔
-    this.paintStart = true;
-    this.paintColor = option?.color || 'black';
-    this.lineWidth = option?.lineWidth || 1;
-  }
-
-  addWrite(option: TextTemProps) { // 写文字
-    this.isWrite = true;
-    option.uuid = uuid();
-    option.Canvas = this;
-    Object.assign(this.currentAddWrite, {
-      ...option,
-    });
-  }
-
-  editWrite() { // 文字编辑
-    this.isEdit = true;
-  }
-
-  changeParentAttribute() {
-    this.isEdit = false;
-    this.isWrite = false;
-  }
-  changeParentwStatus() {
-    this.isWrite = false;
-  }
-
-  paintImage(first: boolean = false) {
-    this.imageList.forEach((ele: ImageRect) => {
-      if (!first) {
-        ele.paint();
-      } else {
-        ele.img.onload = () => {
-          ele.paint();
-        }
-      }
-    });
-  }
-
-  paintRect() {
-    this.rectList.forEach((ele: Rect) => {
-      ele.paint();
-    });
-  }
-
-  repaintLine() { // 清空画布时重绘线段
-    this.lineList.forEach((item: Path2D) => {
-      this.editCtx.stroke(item);
-    });
-  }
-
-  paintText() { // 画文字
-    this.textList.forEach((item) => {
-      this.editCtx.font = item.font;
-      const height = Number(item.font.slice(0, item.font.indexOf('px')));
-      item.setInputAttribute(item.x, item.y);
-      this.editCtx.fillText(item?.value || '', item.x, item.y + height / 1.3);
-    });
-  }
-  
-
   paintAll(option: BaseHornProps, cancel: boolean = false) {
     this.editCtx.clearRect(0, 0, this.width, this.height);
-    this.paintRect();
-    this.paintImage(false);
-    this.repaintLine();
-    this.paintText();
+    let list: any[] = [...this.rectList, ...this.lineList, ...this.imageList, ...this.textList];
+    if (this.currentContainter instanceof ImageRect) {
+      list = [...this.rectList, ...this.lineList, ...this.textList, ...this.imageList];
+    } else if (this.currentContainter instanceof Rect) {
+      list = [...this.lineList, ...this.textList, ...this.imageList, ...this.rectList];
+    }
+    list.forEach((item) => {
+      item instanceof ImageRect ? item.paintImage() : item.paint();
+    });
     if (option) {
       this.paintHorn(option, cancel);
     }
@@ -346,7 +280,7 @@ class DragCanvas {
         width: w,
         height: h,
         radian: ele.radian ?? 0,
-        position : { x: ele.x + w / 2, y: ele.y + h / 2 }
+        position : { x: (ele.x || 0) + w / 2, y: (ele.y || 0) + h / 2 }
       };
       let radianCenter;
       if (ele instanceof Horn && (this.currentContainter instanceof Rect || this.currentContainter instanceof ImageRect) && ele.radian) {
@@ -365,7 +299,7 @@ class DragCanvas {
         cursor = 'move';
       }
       if (currentDown instanceof CanvsText) {
-        cursor = this.isEdit ? 'text' : 'move';
+        cursor = 'move';
       }
       if (isHorn && !currentDown.cancel) {
         cursor = currentDown.cursor;
@@ -375,63 +309,47 @@ class DragCanvas {
   }
 
   onmousedown(e: MouseEvent) {
-    if (this.isWrite) {
-      Object.assign(this.currentAddWrite, { // 点击的位置就是文本框的位置
-        x: e.offsetX,
-        y: e.offsetY,
-      });
-      const obj = { ...this.currentAddWrite };
-      const textInfo = new CanvsText(obj)
-      this.textList.push(textInfo);
-      this.backOperation.push(textInfo);
-      this.isWrite = false;
-    } else if (this.paintStart) {
-      const linePaint = new Line({ Canvas: this, paintColor: this.paintColor, lineWidth: this.lineWidth });
-      linePaint.mousedown(e)
-    } else {
-      const currentDown = this.mouseJudge(e, 'down');
-      this.currentShape = currentDown;
-      if (!currentDown) {
-        this.paintAll(this.currentContainter || {}, true); // 删除horn
-        return;
-      }
-      const isHorn = this.currentShape instanceof Horn;
-      if (!isHorn) {
-        const hornProps = {
-          x: this.currentShape.x,
-          y: this.currentShape.y,
-          height: this.currentShape.height,
-          width: this.currentShape.width,
-          radian: this.currentShape.radian,
-        };
-        if (this.currentShape instanceof ImageRect) { // 为了使当前图形在最上层
-          const list = this.imageList.filter((item) => item.uuid !== this.currentShape.uuid);
-          list.push(this.currentShape);
-          this.imageList = list;
-        }
-        if (this.currentShape instanceof Rect) { // 为了使当前图形在最上层
-          const list = this.rectList.filter((item) => item.uuid !== this.currentShape.uuid);
-          list.push(this.currentShape);
-          this.rectList = list;
-        }
-        this.paintAll(hornProps, this.currentShape instanceof CanvsText);
-        this.currentContainter = this.currentShape;
-      }
-      this.Operations(currentDown, this.currentContainter, isHorn);
-      this.currentShape.mousedown(e);
+    const currentDown = this.mouseJudge(e, 'down');
+    this.currentShape = currentDown;
+    if (!currentDown) {
+      this.paintAll(this.currentContainter || {}, true); // 删除horn
+      return;
     }
+    const isHorn = this.currentShape instanceof Horn;
+    if (!isHorn) {
+      const hornProps = {
+        x: this.currentShape.x,
+        y: this.currentShape.y,
+        height: this.currentShape.height,
+        width: this.currentShape.width,
+        radian: this.currentShape.radian,
+      };
+      if (this.currentShape instanceof ImageRect) { // 为了使当前图形在最上层
+        const list = this.imageList.filter((item) => item.uuid !== this.currentShape.uuid);
+        list.push(this.currentShape);
+        this.imageList = list;
+      }
+      if (this.currentShape instanceof Rect) { // 为了使当前图形在最上层
+        const list = this.rectList.filter((item) => item.uuid !== this.currentShape.uuid);
+        list.push(this.currentShape);
+        this.rectList = list;
+      }
+      this.paintAll(hornProps, this.currentShape instanceof CanvsText);
+      this.currentContainter = this.currentShape;
+    }
+    this.Operations(currentDown, this.currentContainter, isHorn);
+    this.currentShape.mousedown(e);
   }
 
   mousemove(e: MouseEvent) {
     let cursor = 'default';
-    if (!this.paintStart && !this.isWrite) {
+    if (!this.isWrite) {
       cursor = this.mouseJudge(e, 'move');
     }
     this.canvas.style.cursor = cursor;
   }
 
 };
-
 
 export type DragCanvasType = DragCanvas;
 

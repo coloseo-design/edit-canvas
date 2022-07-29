@@ -1,9 +1,9 @@
 import DragCanvas from './canvas';
 
 export interface TextProps {
-  x: number;
-  y: number;
-  font: string;
+  x?: number;
+  y?: number;
+  font?: string;
   Canvas?: DragCanvas;
   value?: string;
   width?: number;
@@ -41,7 +41,9 @@ class CanvsText {
 
   public cursorColor?: string;
 
-  constructor({ x, y, font = '14px', Canvas, uuid, color, value = '', noPaint = false, input = null }: TextProps) {
+  public isAddText?: boolean = false;
+
+  constructor({ x = 0, y = 0, font = '20px serif', Canvas, uuid, color, value = '', noPaint = false, input = null }: TextProps) {
     this.x = x;
     this.y = y;
     this.font = font;
@@ -54,13 +56,48 @@ class CanvsText {
     this.color = color;
     this.noPaint = noPaint;
     this.cursorColor = 'black';
-    this.height = Number(font.slice(0, font.indexOf('px'))) || 14;
-    this.input = input; // 回退的时候不需要再重新创立input
-    if (!noPaint) {
-      this.input = document.createElement('input');
-      this.createText();
+    this.height = Number(font.slice(0, font.indexOf('px'))) || 20;
+    this.input = input;
+  }
+
+  paint() {
+    if (this.input) {
+      this.setInputAttribute(this.x, this.y);
+      this.Canvas?.editCtx.fillText(this?.value || '', this.x, this.y + this.height / 1.3);
     }
   }
+  delete() {
+    this.input = null;
+    this.value = '';
+    this.x = 0;
+    this.y = 0;
+  }
+
+  writeText() {
+    this.isAddText = true;
+    if (this.Canvas) {
+      const { canvas } = this.Canvas;
+      if (this.input) { // 如果input存在则编辑文字
+        this.input.style.zIndex = '10';
+        this.input.focus();
+        this.input.value = this.value;
+      }
+      canvas.onmousedown = (e) => {
+        // 第一次添加input
+        const temInput = this.input;
+        this.input = this.input || document.createElement('input');
+        if (!temInput) {
+          this.x = e.offsetX;
+          this.y = e.offsetY;
+          this.createText();
+          this.Canvas?.textList.push(this);
+          this.Canvas?.backOperation.push(this);
+        }
+        this.mousedown(e);
+      }
+    }
+  }
+
   setInputAttribute(x: number, y: number) {
     if (this.input) {
       this.input.style.top = `${y}px`;
@@ -85,7 +122,6 @@ class CanvsText {
         background: transparent;
         `
         );
-
       const parentNode = this.Canvas?.canvas.parentNode;
       parentNode && parentNode.appendChild(this.input);
       this.input.addEventListener('input', this.oninput.bind(this));
@@ -105,10 +141,10 @@ class CanvsText {
 
   oncompositionend() { // 中文输入完
     this.isChinaStart = false;
-    this.paint();
+    this.changePaint();
   }
 
-  paint() {
+  changePaint() {
     if (this.Canvas && this.input) {
       const val = this.isChinaStart ? this.notChainese : this.value;
       const partenEnglish =/[\A-Za-z0-9\p{P}]/g;
@@ -141,33 +177,22 @@ class CanvsText {
     this.value = e.target.value;
     if (this.isChinaStart) return; // 表示在输入中文拼音阶段不展示在画布上
     this.notChainese = e.target.value;
-    this.paint();
-    this.Canvas?.changeParentwStatus();
+    this.changePaint();
   }
 
   onblur() {
     if (this.input) {
       this.input.style.zIndex = '-100';
-      this.Canvas?.changeParentAttribute();
     }
   }
   onfoucs() {
+    console.log('==foucs??');
     if (this.input) {
       this.input.style.zIndex = '10';
     }
-    this.Canvas?.changeParentwStatus();
   }
   mousedown(e: MouseEvent) {
-    if (this.Canvas?.isEdit) {
-      if (this.input) {
-        this.input.style.zIndex = '10';
-        this.input.value = this.value;
-      }
-      this.setInputAttribute(this.x, this.y);
-      setTimeout(() => {
-        this.input && this.input?.focus();
-      }, 10);
-    } else {
+   if (!this.isAddText){
       const disX = e.pageX - this.x;
       const disY = e.pageY - this.y;
       if (this.Canvas) {
@@ -177,9 +202,12 @@ class CanvsText {
           const obj = { x: this.x, y: this.y, width: this.width, height: this.height, radian: 0  };
           this.Canvas?.paintAll(obj, true);
         }
-        this.Canvas.canvas.onmouseup = () => {
-          this.Canvas ?  this.Canvas.canvas.onmousemove = this.Canvas.canvas.onmousedown = null : null
-        }
+      }
+    }
+    if (this.Canvas) {
+      this.Canvas.canvas.onmouseup = () => {
+        this.isAddText = false;
+        this.Canvas ?  this.Canvas.canvas.onmousemove = this.Canvas.canvas.onmousedown = null : null
       }
     }
 
