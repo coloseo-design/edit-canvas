@@ -47,7 +47,7 @@ export default () => {
         img: img,
       });
       const l = new Line({ color: 'red' });
-      const t = new CanvsText({ color: 'blue' });
+      const t = new CanvsText({ color: 'blue' }); // 一个实例只能画一段文案
       $imgae(i);
       $imgae1(i1);
       $rect(r);
@@ -94,6 +94,7 @@ export default () => {
     imgae && conext?.remove(imgae);
     rect && conext?.remove(rect);
     line && conext?.remove(line);
+    text && conext?.remove(text);
   }
 
   return (

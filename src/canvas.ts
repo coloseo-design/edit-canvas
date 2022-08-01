@@ -132,7 +132,6 @@ class DragCanvas {
   }
 
   remove(options: ImageRect | Rect | Line | CanvsText) {
-    // TODO line的删除还有问题
     const list = [...this.rectList, ...this.imageList, ...this.lineList, ...this.textList];
     const temList = list.filter((item) => {
       if (item.uuid === options.uuid) {
@@ -144,6 +143,7 @@ class DragCanvas {
     this.lineList = temList.filter((item) => item instanceof Line) as Line[];
     this.rectList = temList.filter((item) => item instanceof Rect) as Rect[];
     this.textList = temList.filter((item) => item instanceof CanvsText) as CanvsText[];
+    this.paintAll(this.currentContainter, true);
   }
 
   clear() {

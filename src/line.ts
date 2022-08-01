@@ -13,11 +13,13 @@ class Line {
   public uuid?: string;
 
   public line?: Path2D | null;
+
   constructor({ Canvas, color = 'black', lineWidth = 1, uuid }: LineProps) {
     this.Canvas = Canvas;
     this.color = color;
     this.lineWidth = lineWidth;
     this.uuid = uuid;
+
     this.line = new Path2D();
   }
 
@@ -38,7 +40,7 @@ class Line {
     }
   }
   mousedown(e: MouseEvent) {
-    if (this.Canvas && this.line) {
+    if (this.Canvas) {
       const { editCtx,  canvas } = this.Canvas;
       editCtx.lineWidth = this.lineWidth || 1
       editCtx.strokeStyle = this.color || 'black';
@@ -46,17 +48,17 @@ class Line {
       editCtx.beginPath();
       editCtx.lineWidth = this.lineWidth || 1
       editCtx.strokeStyle = this.color || 'black';
-      this.line.moveTo(e.offsetX, e.offsetY);
+      this.line && this.line.moveTo(e.offsetX, e.offsetY);
       canvas.onmousemove = (evt) => {
         this.line && this.line.lineTo(evt.offsetX, evt.offsetY);
         this.line && editCtx.stroke(this.line);
       }
       canvas.onmouseup = () => {
-        editCtx.closePath();
-        editCtx.restore();
-        canvas.onmousemove = canvas.onmousedown =  null;
         this.line && this.Canvas?.lineList.push(this);
         this.line && this.Canvas?.backOperation.push(this);
+        editCtx.closePath();
+        editCtx.restore();
+        canvas.onmousemove = canvas.onmousedown =  canvas.onmouseup = null;
       }
     }
   }
