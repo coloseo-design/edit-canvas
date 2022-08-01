@@ -11,7 +11,6 @@ export interface TextProps {
   uuid?: string;
   color?: string;
   radian?: number; 
-  noPaint?: boolean;
   input?: HTMLInputElement | null;
 }
 
@@ -27,7 +26,7 @@ class CanvsText {
 
   public notChainese: string;
 
-  public input: HTMLInputElement | null;
+  public input?: HTMLInputElement | null;
 
   public width: number;
 
@@ -37,13 +36,11 @@ class CanvsText {
 
   public color?: string;
 
-  public noPaint?: boolean;
-
   public cursorColor?: string;
 
   public isAddText?: boolean = false;
 
-  constructor({ x = 0, y = 0, font = '20px serif', Canvas, uuid, color, value = '', noPaint = false, input = null }: TextProps) {
+  constructor({ x = 0, y = 0, font = '20px serif', Canvas, uuid, color, value = '' }: TextProps) {
     this.x = x;
     this.y = y;
     this.font = font;
@@ -54,48 +51,8 @@ class CanvsText {
     this.Canvas = Canvas;
     this.width = 100;
     this.color = color;
-    this.noPaint = noPaint;
     this.cursorColor = 'black';
     this.height = Number(font.slice(0, font.indexOf('px'))) || 20;
-    this.input = input;
-  }
-
-  paint() {
-    if (this.input) {
-      this.setInputAttribute(this.x, this.y);
-      this.Canvas?.editCtx.fillText(this?.value || '', this.x, this.y + this.height / 1.3);
-    }
-  }
-  delete() {
-    this.input = null;
-    this.value = '';
-    this.x = 0;
-    this.y = 0;
-  }
-
-  writeText() {
-    this.isAddText = true;
-    if (this.Canvas) {
-      const { canvas } = this.Canvas;
-      if (this.input) { // 如果input存在则编辑文字
-        this.input.style.zIndex = '10';
-        this.input.focus();
-        this.input.value = this.value;
-      }
-      canvas.onmousedown = (e) => {
-        // 第一次添加input
-        const temInput = this.input;
-        this.input = this.input || document.createElement('input');
-        if (!temInput) {
-          this.x = e.offsetX;
-          this.y = e.offsetY;
-          this.createText();
-          this.Canvas?.textList.push(this);
-          this.Canvas?.backOperation.push(this);
-        }
-        this.mousedown(e);
-      }
-    }
   }
 
   setInputAttribute(x: number, y: number) {
@@ -135,6 +92,47 @@ class CanvsText {
     }
 
   }
+
+  paint() {
+    if (this.input) {
+      this.setInputAttribute(this.x, this.y);
+      this.Canvas?.editCtx.fillText(this?.value || '', this.x, this.y + this.height / 1.3);
+    }
+  }
+
+  delete() {
+    this.input && this.Canvas?.canvas.parentNode?.removeChild(this.input);
+    this.input = null;
+    this.value = '';
+    this.x = 0;
+    this.y = 0;
+  }
+
+  writeText() {
+    this.isAddText = true;
+    if (this.Canvas) {
+      const { canvas } = this.Canvas;
+      if (this.input) { // 如果input存在则编辑文字
+        this.input.style.zIndex = '10';
+        this.input.focus();
+        this.input.value = this.value;
+      }
+      canvas.onmousedown = (e) => {
+        // 第一次添加input
+        const temInput = this.input;
+        this.input = this.input || document.createElement('input');
+        if (!temInput) {
+          this.x = e.offsetX;
+          this.y = e.offsetY;
+          this.createText();
+          this.Canvas?.textList.push(this);
+          this.Canvas?.backOperation.push(this);
+        }
+        this.mousedown(e);
+      }
+    }
+  }
+
   oncompositionstart() { // 开始输入中文
     this.isChinaStart = true;
   }
@@ -185,12 +183,13 @@ class CanvsText {
       this.input.style.zIndex = '-100';
     }
   }
+
   onfoucs() {
-    console.log('==foucs??');
     if (this.input) {
       this.input.style.zIndex = '10';
     }
   }
+
   mousedown(e: MouseEvent) {
    if (!this.isAddText){
       const disX = e.pageX - this.x;
@@ -212,6 +211,7 @@ class CanvsText {
     }
 
   }
+
  };
 
 export default CanvsText;

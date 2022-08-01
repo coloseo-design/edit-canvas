@@ -16,9 +16,9 @@ export interface BaseRectProps {
 }
 
 export interface imageProps extends BaseRectProps {
-  img: HTMLImageElement;
   filter?: string;
   degree?: number;
+  src: string;
 }
 
 export interface RectProps extends BaseRectProps {
@@ -205,28 +205,18 @@ class DragCanvas {
       cancel,
       color: 'red',
     };
-    const rightTop = { direction: 'rightTop',  x: x - intersectionW + w, y: y - intersectionW, cursor: 'nesw-resize' };
-    const leftTop = { direction: 'leftTop', x: x - intersectionW, y: y - intersectionW, cursor: 'nwse-resize' };
-    const leftBottom = { direction: 'leftBottom', x: x - intersectionW, y: y - intersectionW + h, cursor: 'nesw-resize' };
-    const rightBottom = { direction: 'rightBottom', x: x - intersectionW + w, y: y - intersectionW + h, cursor: 'nwse-resize' };
-    const topMiddle = { direction : 'topMiddle', x: x + w / 2 - intersectionW, y: y - intersectionW, cursor: 'ns-resize' };
-    const leftMiddle = { direction : 'leftMiddle', x: x - intersectionW, y: y + h / 2 - intersectionW, cursor: 'ew-resize' };
-    const rightMiddle = { direction : 'rightMiddle', x: x + w - intersectionW, y: y + h / 2 - intersectionW, cursor: 'ew-resize' };
-    const bottomMiddle = { direction : 'bottomMiddle', x: x + w / 2 - intersectionW, y: y + h - intersectionW, cursor: 'ns-resize' };
-    const rotateRect = { direction : 'rotate', x: x + w / 2 - intersectionW, y: y - intersectionW - 40, cursor: 'crosshair' };
-    const rotateLine = { direction: 'rotateLine', x: x + w / 2, y: y - 40 + intersectionW, x2:  x + w / 2, y2: y - intersectionW, cursor: 'default '};
 
     const hornList: any = [
-      new Horn({ ...rightTop, ...basehorn }),
-      new Horn({ ...leftTop, ...basehorn }),
-      new Horn({ ...leftBottom, ...basehorn }),
-      new Horn({ ...rightBottom, ...basehorn }),
-      new Horn({ ...topMiddle, ...basehorn }),
-      new Horn({ ...leftMiddle, ...basehorn }),
-      new Horn({ ...rightMiddle, ...basehorn}),
-      new Horn({ ...bottomMiddle, ...basehorn }),
-      new Horn({ ...rotateRect, ...basehorn }),
-      new Horn({ ...rotateLine, ...basehorn }),
+      new Horn({ direction: 'rightTop',  x: x - intersectionW + w, y: y - intersectionW, cursor: 'nesw-resize', ...basehorn }),
+      new Horn({ direction: 'leftTop', x: x - intersectionW, y: y - intersectionW, cursor: 'nwse-resize', ...basehorn }),
+      new Horn({ direction: 'leftBottom', x: x - intersectionW, y: y - intersectionW + h, cursor: 'nesw-resize', ...basehorn }),
+      new Horn({ direction: 'rightBottom', x: x - intersectionW + w, y: y - intersectionW + h, cursor: 'nwse-resize', ...basehorn }),
+      new Horn({ direction: 'topMiddle', x: x + w / 2 - intersectionW, y: y - intersectionW, cursor: 'ns-resize', ...basehorn }),
+      new Horn({ direction: 'leftMiddle', x: x - intersectionW, y: y + h / 2 - intersectionW, cursor: 'ew-resize', ...basehorn }),
+      new Horn({ direction: 'rightMiddle', x: x + w - intersectionW, y: y + h / 2 - intersectionW, cursor: 'ew-resize', ...basehorn}),
+      new Horn({ direction: 'bottomMiddle', x: x + w / 2 - intersectionW, y: y + h - intersectionW, cursor: 'ns-resize', ...basehorn }),
+      new Horn({ direction: 'rotate', x: x + w / 2 - intersectionW, y: y - intersectionW - 40, cursor: 'crosshair', ...basehorn }),
+      new Horn({ direction: 'rotateLine', x: x + w / 2, y: y - 40 + intersectionW, x2:  x + w / 2, y2: y - intersectionW, cursor: 'default ', ...basehorn }),
     ];
 
     this.hornList = hornList;
@@ -264,8 +254,7 @@ class DragCanvas {
         this.backOperation.push(new ImageRect({ ...downinfo }));
       }
       if (downinfo instanceof CanvsText) {
-        const t = new CanvsText({ ...downinfo, noPaint: true });
-        this.backOperation.push(t);
+        this.backOperation.push(new CanvsText({ ...downinfo }));
       }
     }
   }

@@ -18,7 +18,8 @@ class ImageRect { // 图片
   public x: number;
   public y: number;
   public Canvas?: DragCanvas;
-  public img: HTMLImageElement; // 图像
+  public src: string;
+  public img?: HTMLImageElement; // 图像
   public radian?: number; // 旋转的弧度
   public uuid?: string;
   public filter?: string; // 滤镜
@@ -28,19 +29,17 @@ class ImageRect { // 图片
   public offsetScreenCanvas?: HTMLCanvasElement;
   public offsetScreenCtx?: CanvasRenderingContext2D | null;
 
-  public screenImage: boolean = false;
-
-  constructor ({ width, height, x, y,  Canvas, img, radian = 0, uuid, filter, degree = 1 }: imageProps) {
+  constructor ({ width, height, x, y,  Canvas, radian = 0, uuid, filter, degree = 1, src }: imageProps) {
     this.width = width;
     this.height = height;
     this.x = x;
     this.y = y;
     this.Canvas = Canvas;
-    this.img = img;
     this.radian = radian;
     this.uuid = uuid;
     this.filter = filter;
     this.degree = degree;
+    this.src = src;
 
     const ratio = window.devicePixelRatio || 1;
     this.offsetScreenCanvas = document.createElement('canvas');
@@ -49,7 +48,10 @@ class ImageRect { // 图片
   }
 
   paint() {
-    this.img.onload = () => {
+    const img = new Image();
+    img.src = this.src;
+    this.img = img;
+    img.onload = () => {
       this.paintImage();
     }
   }
@@ -67,13 +69,14 @@ class ImageRect { // 图片
   }
 
   filters(f: string, degree: number = 1) {
+    this.Canvas?.backOperation.push(new ImageRect(this)); // 存储操作步骤
     this.filter = f;
     this.degree = degree;
     this.paintImage();
   }
 
   paintImage() {
-    if(this.offsetScreenCtx && this.offsetScreenCanvas) {
+    if(this.offsetScreenCtx && this.offsetScreenCanvas && this.img) {
       const ratio = window.devicePixelRatio || 1;
       this.offsetScreenCanvas.width = this.width * ratio;
       this.offsetScreenCanvas.height = this.height * ratio;

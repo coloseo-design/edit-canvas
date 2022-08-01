@@ -5,14 +5,19 @@ declare class ImageRect {
     x: number;
     y: number;
     Canvas?: DragCanvas;
-    img: HTMLImageElement;
+    src: string;
+    img?: HTMLImageElement;
     radian?: number;
     uuid?: string;
     filter?: string;
     degree?: number;
-    constructor({ width, height, x, y, Canvas, img, radian, uuid, filter, degree }: imageProps);
-    paintFilter(fn: Function): void;
-    VagueMosaic(type: string): void;
+    offsetScreenCanvas?: HTMLCanvasElement;
+    offsetScreenCtx?: CanvasRenderingContext2D | null;
+    constructor({ width, height, x, y, Canvas, radian, uuid, filter, degree, src }: imageProps);
+    paint(): void;
+    delete(): void;
+    filters(f: string, degree?: number): void;
+    paintImage(): void;
     mousedown(e: MouseEvent): void;
 }
 export default ImageRect;

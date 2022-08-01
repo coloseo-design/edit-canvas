@@ -1,4 +1,7 @@
+import Line from './line';
 import ImageRect from './image';
+import Rect from './rect';
+import CanvsText from './text';
 export interface BaseRectProps {
     x: number;
     y: number;
@@ -9,9 +12,9 @@ export interface BaseRectProps {
     uuid?: string;
 }
 export interface imageProps extends BaseRectProps {
-    img: HTMLImageElement;
     filter?: string;
     degree?: number;
+    src: string;
 }
 export interface RectProps extends BaseRectProps {
     color: string;
@@ -37,30 +40,28 @@ export interface HornProps extends BaseHornProps {
 declare class DragCanvas {
     canvas: HTMLCanvasElement;
     editCtx: CanvasRenderingContext2D;
-    rectList: RectProps[];
+    rectList: Rect[];
     imageList: ImageRect[];
     hornList: HornProps[];
-    lineList: any;
+    lineList: Line[];
+    textList: CanvsText[];
     hornW: number;
     protected currentShape: any;
     currentContainter: any;
     backOperation: any;
-    paintStart: boolean;
     paintColor: string;
+    lineWidth: number;
+    isWrite: boolean;
+    ratio: number;
     constructor(canvas: HTMLCanvasElement);
     get width(): number;
     get height(): number;
     init(): void;
-    createRect(option: RectProps): void;
-    createImage(option: imageProps): void;
-    paintHorn(option: BaseHornProps, cancel?: boolean): void;
-    filter(type: string, degree?: number): void;
+    add(options: ImageRect | Rect | Line | CanvsText): void;
+    remove(options: ImageRect | Rect | Line | CanvsText): void;
+    clear(): void;
     back(step?: number): void;
-    paintBrush(color?: string): void;
-    ImageRotate(ele: ImageRect): void;
-    paintImage(first?: boolean): void;
-    paintRect(): void;
-    repaintLine(): void;
+    paintHorn(option: BaseHornProps, cancel?: boolean): void;
     paintAll(option: BaseHornProps, cancel?: boolean): void;
     Operations(downinfo: any, containter: any, ishorn: boolean): void;
     mouseJudge(e: MouseEvent, type: 'down' | 'move'): any;

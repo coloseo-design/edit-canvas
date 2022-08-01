@@ -14,6 +14,7 @@ declare class Horn {
     color: string | CanvasGradient;
     x2?: number;
     y2?: number;
+    offsetScreenCtx?: CanvasRenderingContext2D | null;
     constructor({ x, y, width, height, Canvas, direction, cursor, containterY, containterX, radian, color, cancel, x2, y2, }: HornProps);
     directionShape(list: RectProps[] | imageProps[], movex: number, movey: number): void;
     paint(): void;

@@ -44,7 +44,7 @@ module.exports = {
     host: '127.0.0.1',
     port: 3005,
   },
-  entry: process.env.NODE_ENV !== 'production' ? './index.js' : './src/canvas.ts',
+  entry: process.env.NODE_ENV !== 'production' ? './index.js' : './src/index.ts',
   output,
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],

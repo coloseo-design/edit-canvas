@@ -1,23 +1,15 @@
 import React from "react";
-import DragCanvas, { Image as ImageRect, Rect, Line, CanvsText } from './index';
-import type { DragCanvasType, ImageType, RectType, LineType, CanvsTextType } from './index';
+import DragCanvas, { Image as ImageRect, Rect, Line, Text } from './index';
+import type { DragCanvasType, ImageType, RectType, LineType, TextType } from './index';
 
 export default () => {
-  const img = new Image();
-  img.src = require('./assets/test.jpg');
-
-  const img1 = new Image();
-  img1.src= require('./assets/test.png');
-
-  const t3 = new Image();
-  t3.src= require('./assets/3.jpg');
   const [conext, $context] = React.useState<DragCanvasType>();
   const [filter, $filter] = React.useState('');
   const [imgae, $imgae] = React.useState<ImageType>();
   const [imgae1, $imgae1] = React.useState<ImageType>();
   const [rect, $rect] = React.useState<RectType>();
   const [line, $line] = React.useState<LineType>();
-  const [text, $text] = React.useState<CanvsTextType>();
+  const [text, $text] = React.useState<TextType>();
 
 
   React.useEffect(() => {
@@ -30,7 +22,7 @@ export default () => {
         y: 50,
         height: 250,
         width: 250,
-        img: t3,
+        src: require('./assets/3.jpg'),
       });
       const r = new Rect({
         x: 50,
@@ -44,10 +36,10 @@ export default () => {
         y: 50,
         height: 150,
         width: 150,
-        img: img,
+        src: require('./assets/test.jpg'),
       });
       const l = new Line({ color: 'red' });
-      const t = new CanvsText({ color: 'blue' }); // 一个实例只能画一段文案
+      const t = new Text({ color: 'blue', font: '24px serif', }); // 一个实例只能画一段文案
       $imgae(i);
       $imgae1(i1);
       $rect(r);
@@ -128,7 +120,7 @@ export default () => {
         <button onClick={handleBig}>
           <img src={require('./assets/big.svg')} style={{ width: 20, height: 20 }} />
         </button>
-        <button onClick={handleDelete}>删除图片</button>
+        <button onClick={handleDelete}>删除</button>
       </div>
     </div>
   );

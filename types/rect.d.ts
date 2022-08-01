@@ -9,6 +9,8 @@ declare class Rect {
     radian?: number;
     uuid?: string;
     constructor({ width, height, x, y, color, Canvas, radian, uuid }: RectProps);
+    paint(): void;
+    delete(): void;
     mousedown(e: MouseEvent): void;
 }
 export default Rect;
