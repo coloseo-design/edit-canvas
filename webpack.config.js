@@ -3,6 +3,7 @@
 // webpackage.config.js
 const { resolve } = require;
 const path = require('path');
+const fs = require('fs');
 const HtmlWebPackPlugin = require('html-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
@@ -19,6 +20,22 @@ if (process.env.NODE_ENV !== 'production') {
   }));
 }
 
+const workspace = path.resolve(process.cwd(), '');
+const entryPath = path.join(workspace, 'src');
+const entryDir = fs.readdirSync(entryPath);
+
+const extensions = ['.tsx', '.ts', '.js'];
+const enteryObj = {};
+entryDir.forEach((file) => {
+  const ext = path.extname(file);
+  if (extensions.includes(ext)) {
+    const basename = path.basename(file, ext);
+    Object.assign(enteryObj, {
+      [basename]: path.join(entryPath, file),
+    })
+  }
+});
+
 const output = process.env.NODE_ENV !== 'production' ? {
   path: path.join(__dirname, './dist'),
   publicPath: './',
@@ -26,11 +43,7 @@ const output = process.env.NODE_ENV !== 'production' ? {
 } : {
   path: path.join(__dirname, './dist'),
   publicPath: './src/',
-  filename: 'index.js',
-  // library: { // webpack5的写法
-  //   name: 'canvas',
-  //   type: 'umd',
-  // }
+  filename: '[name].js',
   library: 'canvas',
   libraryTarget: 'umd',
 }
@@ -44,10 +57,10 @@ module.exports = {
     host: '127.0.0.1',
     port: 3005,
   },
-  entry: process.env.NODE_ENV !== 'production' ? './index.js' : './src/index.ts',
+  entry: process.env.NODE_ENV !== 'production' ? './index.js' : { ...enteryObj },
   output,
   resolve: {
-    extensions: ['.tsx', '.ts', '.js'],
+    extensions,
   },
   module: {
     rules: [

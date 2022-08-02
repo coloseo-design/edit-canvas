@@ -1,4 +1,15 @@
-import DragCanvas, { RectProps } from './canvas';
+import DragCanvas from './canvas';
+
+export interface RectProps {
+  color: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  Canvas?: DragCanvas;
+  radian?: number;
+  uuid?: string;
+}
 
 class Rect { // 矩形
   public width: number;

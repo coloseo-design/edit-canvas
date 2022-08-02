@@ -1,6 +1,18 @@
-import DragCanvas, { HornProps, RectProps, imageProps } from './canvas';
+import DragCanvas, { BaseHornProps } from './canvas';
 import ImageRect from './image';
-import { Reverse, BackWhite } from './utils';
+import Rect from './rect';
+
+export interface HornProps extends BaseHornProps {
+  direction: string;
+  cursor: string; // 鼠标样式
+  containterX: number; // 容器的x
+  containterY: number; // 容器的y
+  cancel: boolean; // 表示取消图形
+  color: string; // 矩形边框的颜色
+  x2?: number; // 旋转连接线的linetox
+  y2?: number; // 旋转连接线的linetoy
+  Canvas: DragCanvas;
+}
 
 class Horn { // 四个顶角
   public x: number; // 顶角的x
@@ -40,7 +52,7 @@ class Horn { // 四个顶角
     this.paint();
   }
 
-  directionShape(list: RectProps[] | imageProps[], movex: number, movey: number) {
+  directionShape(list: Rect[] | ImageRect[], movex: number, movey: number) {
     let x = this.containterX;
     let y = this.containterY;
     let w = this.width;

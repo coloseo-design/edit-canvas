@@ -17,7 +17,8 @@ const context = new DragCanvas(canvas: HTMLCanvasElement);
 |width|图片宽度|number|--|
 |height|图片高度|number|--|
 |src|图片url| string|--|
-|filters|图片滤镜方法(当传值为'马赛克'和'模糊'时，第二个参数degree数值越大，越模糊马赛克越明显，传其他值时不需要传degree)| new Image.filters(type: '反色', '黑白', '浮雕', '灰色', '单色', '模糊', '马赛克', degree: number)| --|
+|filter|图片滤镜属性|'反色', '黑白', '浮雕', '灰色', '单色', '模糊', '马赛克'|--|
+|filters|修改图片滤镜方法(当传值为'马赛克'和'模糊'时，第二个参数degree数值越大，越模糊马赛克越明显，传其他值时不需要传degree)| new Image.filters(type: '反色', '黑白', '浮雕', '灰色', '单色', '模糊', '马赛克', degree: number)| --|
 |radian|图片旋转的弧度｜number|0|
 
 ### new Rect

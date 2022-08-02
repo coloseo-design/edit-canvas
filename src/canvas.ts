@@ -3,27 +3,7 @@ import Horn from './horn';
 import Line from './line';
 import ImageRect from './image';
 import Rect from './rect';
-import CanvsText, { TextProps } from './text';
-
-export interface BaseRectProps {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  Canvas?: DragCanvas;
-  radian?: number;
-  uuid?: string;
-}
-
-export interface imageProps extends BaseRectProps {
-  filter?: string;
-  degree?: number;
-  src: string;
-}
-
-export interface RectProps extends BaseRectProps {
-  color: string;
-}
+import CanvsText from './text';
 
 export interface BaseHornProps {
   x: number;
@@ -32,27 +12,6 @@ export interface BaseHornProps {
   height: number;
   radian: number; // 容器的旋转弧度
 }
-
-interface TextTemProps {
-  font: string;
-  color?: string;
-  Canvas?: DragCanvas;
-  uuid?: string;
-}
-
-export interface HornProps extends BaseHornProps {
-  direction: string;
-  cursor: string; // 鼠标样式
-  containterX: number; // 容器的x
-  containterY: number; // 容器的y
-  cancel: boolean; // 表示取消图形
-  color: string; // 矩形边框的颜色
-  x2?: number; // 旋转连接线的linetox
-  y2?: number; // 旋转连接线的linetoy
-  Canvas: DragCanvas;
-}
-
-
 
 class DragCanvas {
   public canvas: HTMLCanvasElement;
@@ -63,7 +22,7 @@ class DragCanvas {
 
   public imageList: ImageRect[] = []; // 图片列表
 
-  public hornList: HornProps[] = []; // 顶角数据
+  public hornList: Horn[] = []; // 顶角数据
 
   public lineList: Line[] = []; // 线列表存储
 
@@ -80,8 +39,6 @@ class DragCanvas {
   public paintColor: string = 'black';
 
   public lineWidth: number = 1;
-
-  public isWrite: boolean = false;
 
   public ratio: number;
   
@@ -186,7 +143,8 @@ class DragCanvas {
     }
 
     if (this.backOperation.length) {
-      this.paintAll(this.currentContainter, lastOperation instanceof CanvsText);
+      const cancel = lastOperation instanceof CanvsText || this.currentContainter instanceof CanvsText;
+      this.paintAll(this.currentContainter, cancel);
     }
 
     this.backOperation = temOperation;
@@ -206,7 +164,7 @@ class DragCanvas {
       color: 'red',
     };
 
-    const hornList: any = [
+    const hornList: Horn[] = [
       new Horn({ direction: 'rightTop',  x: x - intersectionW + w, y: y - intersectionW, cursor: 'nesw-resize', ...basehorn }),
       new Horn({ direction: 'leftTop', x: x - intersectionW, y: y - intersectionW, cursor: 'nwse-resize', ...basehorn }),
       new Horn({ direction: 'leftBottom', x: x - intersectionW, y: y - intersectionW + h, cursor: 'nesw-resize', ...basehorn }),
@@ -262,7 +220,7 @@ class DragCanvas {
   mouseJudge(e: MouseEvent, type: 'down' | 'move') {
     let cursor = 'default';
     const point = {  x: e.offsetX, y: e.offsetY };
-    const currentDown: any = ([...this.hornList, ...this.rectList, ...this.imageList, ...this.textList].find((ele: imageProps | RectProps | HornProps | TextProps) => {
+    const currentDown: any = ([...this.hornList, ...this.rectList, ...this.imageList, ...this.textList].find((ele: ImageRect | Rect | Horn | CanvsText) => {
       const w = ele instanceof Horn ? this.hornW : ele.width ?? 0;
       const h = ele instanceof Horn ? this.hornW : ele.height ?? 0;
       const shape = {
@@ -331,15 +289,9 @@ class DragCanvas {
   }
 
   mousemove(e: MouseEvent) {
-    let cursor = 'default';
-    if (!this.isWrite) {
-      cursor = this.mouseJudge(e, 'move');
-    }
-    this.canvas.style.cursor = cursor;
+    this.canvas.style.cursor = this.mouseJudge(e, 'move');
   }
 
 };
-
-export type DragCanvasType = DragCanvas;
 
 export default DragCanvas;

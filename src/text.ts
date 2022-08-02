@@ -40,6 +40,8 @@ class CanvsText {
 
   public isAddText?: boolean = false;
 
+  public radian?: number = 0;
+
   constructor({ x = 0, y = 0, font = '20px serif', Canvas, uuid, color, value = '' }: TextProps) {
     this.x = x;
     this.y = y;

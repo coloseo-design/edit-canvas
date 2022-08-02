@@ -1,5 +1,18 @@
-import DragCanvas, { imageProps } from './canvas';
+import DragCanvas from './canvas';
 import { Vague, Mosaic, Reverse, BackWhite, Relief, Grey, Red } from './utils';
+
+export interface imageProps {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  Canvas?: DragCanvas;
+  radian?: number;
+  uuid?: string;
+  filter?: string;
+  degree?: number;
+  src: string;
+}
 
 interface mapping {
   [x: string] : Function,
@@ -82,7 +95,6 @@ class ImageRect { // 图片
       this.offsetScreenCanvas.height = this.height * ratio;
       this.offsetScreenCanvas.style.width = this.width + 'px';
       this.offsetScreenCanvas.style.height = this.height + 'px';
-      this.Canvas?.editCtx.clearRect(this.x, this.y, this.width, this.height);
       // 图像宽高改变，图像画布也跟着改变
       this.offsetScreenCtx.clearRect(0, 0, this.offsetScreenCanvas.width, this.offsetScreenCanvas.height);
       this.offsetScreenCtx.drawImage(this.img, 0, 0, this.width * ratio, this.height * ratio);

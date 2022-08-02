@@ -1,15 +1,14 @@
 import React from "react";
 import DragCanvas, { Image as ImageRect, Rect, Line, Text } from './index';
-import type { DragCanvasType, ImageType, RectType, LineType, TextType } from './index';
 
 export default () => {
-  const [conext, $context] = React.useState<DragCanvasType>();
+  const [conext, $context] = React.useState<DragCanvas>();
   const [filter, $filter] = React.useState('');
-  const [imgae, $imgae] = React.useState<ImageType>();
-  const [imgae1, $imgae1] = React.useState<ImageType>();
-  const [rect, $rect] = React.useState<RectType>();
-  const [line, $line] = React.useState<LineType>();
-  const [text, $text] = React.useState<TextType>();
+  const [imgae, $imgae] = React.useState<ImageRect>();
+  const [imgae1, $imgae1] = React.useState<ImageRect>();
+  const [rect, $rect] = React.useState<Rect>();
+  const [line, $line] = React.useState<Line>();
+  const [text, $text] = React.useState<Text>();
 
 
   React.useEffect(() => {
@@ -37,6 +36,7 @@ export default () => {
         height: 150,
         width: 150,
         src: require('./assets/test.jpg'),
+        // filter: '单色',
       });
       const l = new Line({ color: 'red' });
       const t = new Text({ color: 'blue', font: '24px serif', }); // 一个实例只能画一段文案
