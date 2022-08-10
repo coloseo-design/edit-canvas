@@ -176,7 +176,8 @@ class CanvsText {
       this.input.style.width = `${width}px`;
       this.width = width;
       this.height = this.height;
-      (this.Canvas?.textList || []).forEach((item) => {
+      const textList = this.Canvas.shapeList.filter((item) => item instanceof CanvsText) as CanvsText[];
+      (textList || []).forEach((item) => {
         if (item.uuid === this.uuid) {
           this.Canvas?.editCtx.clearRect(item.x || 0, item.y || 0, item.width, item.height);
           Object.assign(item, {

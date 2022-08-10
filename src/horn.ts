@@ -139,7 +139,7 @@ class Horn { // 四个顶角
     this.Canvas.canvas.onmousemove = (mouseEvent) => {
       const movex =  mouseEvent.pageX - e.pageX;
       const movey = mouseEvent.pageY - e.pageY;
-      const list = this.Canvas.currentContainter.img ?  this.Canvas.imageList : this.Canvas.rectList
+      const list = this.Canvas.shapeList.filter((item) => item instanceof ImageRect || item instanceof Rect) as (ImageRect[] | Rect[]);
       this.directionShape(list, movex, movey);
     }
     this.Canvas.canvas.onmouseup = () => {

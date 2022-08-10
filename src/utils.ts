@@ -1,3 +1,5 @@
+import { ShapeType } from './canvas';
+
 export const uuid = (): string => {
   function S4() {
     return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
@@ -131,4 +133,18 @@ export const Mosaic = (options: any) => { // 马赛克
       }
     }
   }
+}
+
+export const sortShape = (data: ShapeType[], current: ShapeType) => {
+  const sortData = data.sort((a, b) => (a.level || 0) - (b.level || 0));
+  const maxLevel = sortData[sortData.length - 1].level;
+  const maxCurrent: ShapeType = Object.assign(current, { level: maxLevel || 10000 });
+  const list = sortData.filter((item) => {
+    Object.assign(item, {
+      level: (item.level || 0) - 1,
+    });
+    return item.uuid !== current.uuid;
+  });
+  list.push(maxCurrent);
+  return list;
 }

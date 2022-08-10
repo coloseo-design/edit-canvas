@@ -1,4 +1,4 @@
-import { uuid, isPosInRotationRect } from './utils';
+import { uuid, isPosInRotationRect, sortShape } from './utils';
 import Horn from './horn';
 import Line from './line';
 import ImageRect from './image';
@@ -13,28 +13,26 @@ export interface BaseHornProps {
   radian: number; // 容器的旋转弧度
 }
 
+export type ShapeType = Rect | ImageRect | Line | CanvsText;
+
+export type OmitShapeType = Rect | ImageRect | CanvsText;
+
 class DragCanvas {
   public canvas: HTMLCanvasElement;
 
   public editCtx: CanvasRenderingContext2D;
 
-  public rectList: Rect[]  = []; // 矩形列表
-
-  public imageList: ImageRect[] = []; // 图片列表
-
   public hornList: Horn[] = []; // 顶角数据
 
-  public lineList: Line[] = []; // 线列表存储
-
-  public textList: CanvsText[] = []; // 文字列表存储
-
   public hornW = 16;
+
+  public shapeList: ShapeType[] = [] // 图形列表存贮;
 
   protected currentShape: any; // 当前点击的图形（四个角或者图片图形）
 
   public currentContainter: any; // 当前图形的容器
 
-  public backOperation: any = []; // 操作步骤存储list
+  public backOperation: ShapeType[] = []; // 操作步骤存储list
 
   public paintColor: string = 'black';
 
@@ -80,32 +78,17 @@ class DragCanvas {
     options.Canvas = this;
     options.uuid = id;
     options.paint();
-    if (options instanceof ImageRect) {
-      this.imageList.push(options);
-    }
-    if (options instanceof Rect) {
-      this.rectList.push(options);
-    }
-    if (options instanceof Line) {
-      this.lineList.push(options);
-    }
-    if (options instanceof CanvsText) {
-      this.textList.push(options);
-    }
+    options.level = this.shapeList.length;
+    this.shapeList.push(options);
   }
 
   remove(options: ImageRect | Rect | Line | CanvsText) {
-    const list = [...this.rectList, ...this.imageList, ...this.lineList, ...this.textList];
-    const temList = list.filter((item) => {
+    this.shapeList = this.shapeList.filter((item) => {
       if (item.uuid === options.uuid) {
         options.delete();
       }
       return item.uuid !== options.uuid;
     });
-    this.imageList = temList.filter((item) => item instanceof ImageRect) as ImageRect[];
-    this.lineList = temList.filter((item) => item instanceof Line) as Line[];
-    this.rectList = temList.filter((item) => item instanceof Rect) as Rect[];
-    this.textList = temList.filter((item) => item instanceof CanvsText) as CanvsText[];
     this.paintAll(this.currentContainter, true);
   }
 
@@ -117,34 +100,13 @@ class DragCanvas {
     const stepIndex = step > this.backOperation.length ? 0 : this.backOperation.length - step;
     const lastOperation = this.backOperation[stepIndex]; // 回退到这一步
     const temOperation = this.backOperation.slice(0, stepIndex); // 回退后操作列表的缓存
-    const list = lastOperation instanceof ImageRect ? this.imageList : lastOperation instanceof Rect ? this.rectList : [];
-    if (lastOperation instanceof CanvsText) { // 文字的回退
-      if (temOperation.some((i: any) => i.uuid === lastOperation?.uuid)) { // 如果操作步骤中含有要lastOperation操作则更新文字，否则在列表中删除这条文案
-        this.textList.forEach((item) => {
-          if (item?.uuid === lastOperation?.uuid) {
-            Object.assign(item, {
-              ...lastOperation,
-            });
-          }
-        });
-      } else {
-        this.textList = this.textList.filter((i: CanvsText) => {
-          if (i.uuid === lastOperation.uuid) {
-            i.delete();
-          }
-          return i.uuid !== lastOperation?.uuid
+    this.shapeList.forEach((item) => { // TODO 文字回退
+      if (item?.uuid === lastOperation?.uuid) {
+        Object.assign(item, {
+          ...lastOperation,
         });
       }
-    } else { // 图片，矩形的回退
-      list.forEach((item) => {
-        if (item?.uuid === lastOperation?.uuid) {
-          Object.assign(item, {
-            ...lastOperation,
-          });
-        }
-      });
-    }
-
+    });
     if (this.backOperation.length) {
       const cancel = lastOperation instanceof CanvsText || this.currentContainter instanceof CanvsText;
       this.paintAll(this.currentContainter, cancel);
@@ -185,13 +147,7 @@ class DragCanvas {
 
   paintAll(option: BaseHornProps, cancel: boolean = false) {
     this.editCtx.clearRect(0, 0, this.width, this.height);
-    let list: any[] = [...this.lineList, ...this.imageList, ...this.textList, ...this.rectList, ];
-    if (this.currentContainter instanceof ImageRect) {
-      list = [...this.lineList, ...this.textList, ...this.rectList, ...this.imageList];
-    } else if (this.currentContainter instanceof Rect) {
-      list = [...this.lineList, ...this.textList, ...this.imageList, ...this.rectList];
-    }
-    list.forEach((item) => {
+    this.shapeList.forEach((item: ShapeType) => {
       item instanceof ImageRect ? item.paintImage() : item.paint();
     });
     if (option) {
@@ -199,7 +155,7 @@ class DragCanvas {
     }
   }
 
-  Operations(downinfo: any, containter: any, ishorn: boolean) { // 存贮前一步操作
+  Operations(downinfo: ShapeType | Horn, containter: ShapeType, ishorn: boolean) { // 存贮前一步操作
     if (ishorn) { // 点击四个顶角旋转角
       if (containter instanceof Rect) {
         this.backOperation.push(new Rect({ ...containter }));
@@ -223,7 +179,8 @@ class DragCanvas {
   mouseJudge(e: MouseEvent, type: 'down' | 'move') {
     let cursor = 'default';
     const point = {  x: e.offsetX, y: e.offsetY };
-    const currentDown: any = ([...this.hornList, ...this.rectList, ...this.imageList, ...this.textList].find((ele: ImageRect | Rect | Horn | CanvsText) => {
+    const list = this.shapeList.filter((item) => !(item instanceof Line)) as OmitShapeType[];
+    const currentDown: OmitShapeType | Horn | undefined = ([...this.hornList, ...list].find((ele: OmitShapeType | Horn) => {
       const w = ele instanceof Horn ? this.hornW : ele.width ?? 0;
       const h = ele instanceof Horn ? this.hornW : ele.height ?? 0;
       const shape = {
@@ -259,7 +216,7 @@ class DragCanvas {
   }
 
   onmousedown(e: MouseEvent) {
-    const currentDown = this.mouseJudge(e, 'down');
+    const currentDown = this.mouseJudge(e, 'down') as (ShapeType | Horn | undefined);
     this.currentShape = currentDown;
     if (!currentDown) {
       this.hornList.length > 0 && this.paintAll(this.currentContainter || {}, true); // 删除horn
@@ -274,16 +231,7 @@ class DragCanvas {
         width: this.currentShape.width,
         radian: this.currentShape.radian,
       };
-      if (this.currentShape instanceof ImageRect) { // 为了使当前图形在最上层
-        const list = this.imageList.filter((item) => item.uuid !== this.currentShape.uuid);
-        list.push(this.currentShape);
-        this.imageList = list;
-      }
-      if (this.currentShape instanceof Rect) { // 为了使当前图形在最上层
-        const list = this.rectList.filter((item) => item.uuid !== this.currentShape.uuid);
-        list.push(this.currentShape);
-        this.rectList = list;
-      }
+      this.shapeList = sortShape(this.shapeList, this.currentShape); // 把当前图形的层级设为最高
       this.paintAll(hornProps, this.currentShape instanceof CanvsText);
       this.currentContainter = this.currentShape;
     }
@@ -292,7 +240,7 @@ class DragCanvas {
   }
 
   mousemove(e: MouseEvent) {
-    this.canvas.style.cursor = this.mouseJudge(e, 'move');
+    this.canvas.style.cursor = this.mouseJudge(e, 'move') as string;
   }
 
 };
