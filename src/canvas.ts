@@ -111,7 +111,6 @@ class DragCanvas {
       const cancel = lastOperation instanceof CanvsText || this.currentContainter instanceof CanvsText;
       this.paintAll(this.currentContainter, cancel);
     }
-
     this.backOperation = temOperation;
   }
 
@@ -147,12 +146,10 @@ class DragCanvas {
 
   paintAll(option: BaseHornProps, cancel: boolean = false) {
     this.editCtx.clearRect(0, 0, this.width, this.height);
-    this.shapeList.forEach((item: ShapeType) => {
+    this.shapeList.forEach((item) => {
       item instanceof ImageRect ? item.paintImage() : item.paint();
     });
-    if (option) {
-      this.paintHorn(option, cancel);
-    }
+    if (option) this.paintHorn(option, cancel);
   }
 
   Operations(downinfo: ShapeType | Horn, containter: ShapeType, ishorn: boolean) { // 存贮前一步操作
