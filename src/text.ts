@@ -12,11 +12,13 @@ export interface TextProps {
   color?: string;
   radian?: number; 
   input?: HTMLInputElement | null;
+  isOperation?: boolean;
+  level?: number;
 }
 
 class CanvsText {
-  public x: number;
-  public y: number;
+  public x?: number;
+  public y?: number;
   public font: string;
   public Canvas?: DragCanvas;
 
@@ -42,7 +44,11 @@ class CanvsText {
 
   public radian?: number = 0;
 
-  constructor({ x = 0, y = 0, font = '20px serif', Canvas, uuid, color, value = '' }: TextProps) {
+  public isOperation?: boolean; // 是否可以操作（移动变形等）
+
+  public level?: number; // 图形的层级
+
+  constructor({ x, y, font = '20px serif', Canvas, uuid, color, value = '', isOperation = true, level = 1 }: TextProps) {
     this.x = x;
     this.y = y;
     this.font = font;
@@ -55,16 +61,18 @@ class CanvsText {
     this.color = color;
     this.cursorColor = 'black';
     this.height = Number(font.slice(0, font.indexOf('px'))) || 20;
+    this.isOperation = isOperation;
+    this.level = level;
   }
 
-  setInputAttribute(x: number, y: number) {
+  setInputAttribute(x: number = 0, y: number = 0) {
     if (this.input) {
       this.input.style.top = `${y}px`;
       this.input.style.left = `${x}px`;
     }
   }
 
-  createText() {
+  createText(isFoucs = false) {
     if (this.input) {
       this.input.setAttribute(
         'style', 
@@ -74,7 +82,7 @@ class CanvsText {
         left: ${this.x}px;
         top: ${this.y}px;
         border: none; outline: none;
-        z-index: 10;
+        z-index: ${isFoucs ? '10' : '-100'};
         font-size: ${this.height}px;
         caret-color: black;
         color: transparent;
@@ -88,16 +96,27 @@ class CanvsText {
       this.input.addEventListener('foucs', this.onfoucs.bind(this));
       this.input.addEventListener('compositionstart', this.oncompositionstart.bind(this));
       this.input.addEventListener('compositionend', this.oncompositionend.bind(this));
-      setTimeout(() => {
-        this.input && this.input?.focus();
-      }, 10);
+      if (isFoucs) {
+        setTimeout(() => {
+          this.input && this.input?.focus();
+        }, 10);
+      }
     }
 
   }
 
   paint() {
-    if (this.input) {
-      this.setInputAttribute(this.x, this.y);
+    if (this.Canvas && typeof this.x !== 'undefined' && typeof this.y !== 'undefined') {
+      const temInput = this.input;
+      this.input = this.input || document.createElement('input');
+      if (!temInput && this.isOperation) {
+        this.input.value = this.value;
+        this.createText();
+      } else {
+        this.setInputAttribute(this.x, this.y);
+      }
+      this.Canvas.editCtx.font = this.font;
+      this.Canvas.editCtx.fillStyle = this.color || 'black';
       this.Canvas?.editCtx.fillText(this?.value || '', this.x, this.y + this.height / 1.3);
     }
   }
@@ -120,15 +139,12 @@ class CanvsText {
         this.input.value = this.value;
       }
       canvas.onmousedown = (e) => {
-        // 第一次添加input
         const temInput = this.input;
         this.input = this.input || document.createElement('input');
         if (!temInput) {
           this.x = e.offsetX;
           this.y = e.offsetY;
-          this.createText();
-          this.Canvas?.textList.push(this);
-          this.Canvas?.backOperation.push(this);
+          this.createText(true);
         }
         this.mousedown(e);
       }
@@ -162,14 +178,14 @@ class CanvsText {
       this.height = this.height;
       (this.Canvas?.textList || []).forEach((item) => {
         if (item.uuid === this.uuid) {
-          this.Canvas?.editCtx.clearRect(item.x, item.y, item.width, item.height);
+          this.Canvas?.editCtx.clearRect(item.x || 0, item.y || 0, item.width, item.height);
           Object.assign(item, {
             width,
             value: val,
           })
         }
       });
-      val && this.Canvas?.editCtx.fillText(val, this.x, this.y + this.height / 1.3);
+      val && this.Canvas?.editCtx.fillText(val, this.x || 0, (this.y || 0) + this.height / 1.3);
     }
   }
  
@@ -194,8 +210,8 @@ class CanvsText {
 
   mousedown(e: MouseEvent) {
    if (!this.isAddText){
-      const disX = e.pageX - this.x;
-      const disY = e.pageY - this.y;
+      const disX = e.pageX - (this.x || 0);
+      const disY = e.pageY - (this.y || 0);
       if (this.Canvas) {
         this.Canvas.canvas.onmousemove = (mouseEvent) => {
           this.x = mouseEvent.pageX - disX;

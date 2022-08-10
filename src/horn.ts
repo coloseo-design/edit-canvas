@@ -12,6 +12,7 @@ export interface HornProps extends BaseHornProps {
   x2?: number; // 旋转连接线的linetox
   y2?: number; // 旋转连接线的linetoy
   Canvas: DragCanvas;
+  isOperation?: boolean;
 }
 
 class Horn { // 四个顶角
@@ -30,10 +31,13 @@ class Horn { // 四个顶角
   public x2?: number; // 旋转连接线的linetox
   public y2?: number; // 旋转连接线的linetoy
 
+  public isOperation?: boolean;
+
   public offsetScreenCtx?: CanvasRenderingContext2D | null;
   constructor({
     x, y, width, height, Canvas, direction, cursor, containterY, containterX, radian = 0, color = 'red', cancel = false,
     x2 = 0, y2 = 0,
+    isOperation = true,
   }: HornProps) {
     this.x = x;
     this.y = y;
@@ -49,6 +53,7 @@ class Horn { // 四个顶角
     this.cancel = cancel;
     this.x2 = x2;
     this.y2 = y2;
+    this.isOperation = isOperation;
     this.paint();
   }
 

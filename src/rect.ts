@@ -1,7 +1,7 @@
 import DragCanvas from './canvas';
 
 export interface RectProps {
-  color: string;
+  color?: string;
   x: number;
   y: number;
   width: number;
@@ -9,6 +9,9 @@ export interface RectProps {
   Canvas?: DragCanvas;
   radian?: number;
   uuid?: string;
+  backgroundColor?: string;
+  isOperation?: boolean;
+  level?: number; // 图形的层级
 }
 
 class Rect { // 矩形
@@ -16,11 +19,17 @@ class Rect { // 矩形
   public height: number;
   public x: number;
   public y: number;
-  public color: string;
+  public color?: string;
   public Canvas?: DragCanvas;
   public radian?: number; // 旋转的弧度
   public uuid?: string
-  constructor ({ width, height, x, y, color, Canvas, radian = 0, uuid }: RectProps) {
+  public backgroundColor?: string;
+
+  public isOperation?: boolean; // 是否可以操作（移动变形等）
+
+  public level?: number; // 图形的层级
+
+  constructor ({ width, height, x, y, color, Canvas, radian = 0, uuid, backgroundColor, isOperation = true, level = 1 }: RectProps) {
     this.width = width;
     this.height = height;
     this.x = x;
@@ -29,6 +38,9 @@ class Rect { // 矩形
     this.Canvas = Canvas;
     this.radian = radian;
     this.uuid = uuid;
+    this.backgroundColor = backgroundColor;
+    this.isOperation = isOperation;
+    this.level = level;
   }
 
   paint() {
@@ -39,8 +51,13 @@ class Rect { // 矩形
       editCtx.translate(this.x + this.width / 2, this.y + this.height / 2);
       editCtx.rotate(this.radian ?? 0);
       editCtx.translate(-(this.x + this.width / 2), -(this.y + this.height / 2));
-      editCtx.rect(this.x, this.y, this.width, this.height);
+      editCtx.fillStyle = this.backgroundColor || 'black';
       editCtx.strokeStyle = this.color || 'black';
+      if (this.backgroundColor) {
+        editCtx.fillRect(this.x, this.y, this.width, this.height);
+      } else {
+        editCtx.rect(this.x, this.y, this.width, this.height);
+      }
       editCtx.stroke();
       editCtx.restore();
     }

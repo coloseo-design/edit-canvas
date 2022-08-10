@@ -12,6 +12,8 @@ export interface imageProps {
   filter?: string;
   degree?: number;
   src: string;
+  isOperation?: boolean;
+  level?: number;
 }
 
 interface mapping {
@@ -38,11 +40,15 @@ class ImageRect { // 图片
   public filter?: string; // 滤镜
   public degree?: number; // 模糊和马赛克的 模糊程度 数值越大，越模糊
 
+  public isOperation?: boolean; // 是否可以操作（移动变形等
+
+  public level?: number; // 图形的层级
+
 
   public offsetScreenCanvas?: HTMLCanvasElement;
   public offsetScreenCtx?: CanvasRenderingContext2D | null;
 
-  constructor ({ width, height, x, y,  Canvas, radian = 0, uuid, filter, degree = 1, src }: imageProps) {
+  constructor ({ width, height, x, y,  Canvas, radian = 0, uuid, filter, degree = 1, src, isOperation = true, level = 1 }: imageProps) {
     this.width = width;
     this.height = height;
     this.x = x;
@@ -53,6 +59,10 @@ class ImageRect { // 图片
     this.filter = filter;
     this.degree = degree;
     this.src = src;
+
+    this.level = level;
+
+    this.isOperation = isOperation;
 
     const ratio = window.devicePixelRatio || 1;
     this.offsetScreenCanvas = document.createElement('canvas');
