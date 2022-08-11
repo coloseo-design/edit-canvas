@@ -67,20 +67,24 @@ class CanvsText {
 
   setInputAttribute(x: number = 0, y: number = 0) {
     if (this.input) {
-      this.input.style.top = `${y}px`;
-      this.input.style.left = `${x}px`;
+      const tgap = this.Canvas?.topGap || 0;
+      const lgap = this.Canvas?.leftGap || 0;
+      this.input.style.top = `${y + tgap}px`;
+      this.input.style.left = `${x + lgap}px`;
     }
   }
 
   createText(isFoucs = false) {
     if (this.input) {
+      const tgap = this.Canvas?.topGap || 0;
+      const lgap = this.Canvas?.leftGap || 0;
       this.input.setAttribute(
         'style', 
         `position: absolute;
         height: ${this.height}px;
         width: ${this.width}px;
-        left: ${this.x}px;
-        top: ${this.y}px;
+        left: ${(this.x || 0) + lgap}px;
+        top: ${(this.y || 0) + tgap}px;
         border: none; outline: none;
         z-index: ${isFoucs ? '10' : '-100'};
         font-size: ${this.height}px;

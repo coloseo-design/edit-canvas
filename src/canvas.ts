@@ -39,6 +39,10 @@ class DragCanvas {
   public lineWidth: number = 1;
 
   public ratio: number;
+
+  public leftGap: number = 0;
+
+  public topGap: number = 0;
   
   constructor(canvas:HTMLCanvasElement) {
     this.ratio = window.devicePixelRatio || 1;
@@ -51,12 +55,13 @@ class DragCanvas {
     canvas.style.height = h + 'px';
     this.editCtx = this.canvas.getContext('2d') as CanvasRenderingContext2D;
     const parent = document.createElement('div'); // 创建canvas的parent，以便于文字编辑input定位
-    parent.setAttribute('style', `position: relative; width: ${canvas.style.width}; height: ${canvas.style.height}`);
+    parent.setAttribute('style', `position: relative; min-width: ${canvas.style.width}; min-height: ${canvas.style.height}`);
     canvas.parentNode?.insertBefore(parent, canvas); // 把parent插入到canvas的位置
     parent.appendChild(canvas); // 再把canvas 放到 parent中
-    canvas.style.position = 'absolute';
-    canvas.style.top = '0px';
-    canvas.style.left = '0px';
+    const { left: canvasLeft, top: canvasTop } = canvas.getBoundingClientRect();
+    const { left: parentLeft, top: parentTop } = parent.getBoundingClientRect();
+    this.leftGap = canvasLeft - parentLeft; // canvas到父级的left
+    this.topGap = canvasTop - parentTop; // canvas到父级的top
     this.editCtx.scale(this.ratio, this.ratio); // window.devicePixelRatio 解决图片文案不清晰
     this.init();
   }
