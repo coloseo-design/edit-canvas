@@ -72,7 +72,7 @@ class Rect { // 矩形
       editCtx.translate(this.x + this.width / 2, this.y + this.height / 2);
       editCtx.rotate(this.radian ?? 0);
       editCtx.translate(-(this.x + this.width / 2), -(this.y + this.height / 2));
-      editCtx.clearRect(this.x - 2, this.y - 2, this.width + 4, this.height + 4);
+      editCtx.clearRect(this.x, this.y, this.width, this.height);
       editCtx.restore();
     }
   }

@@ -8,6 +8,7 @@ export default () => {
   const [imgae1, $imgae1] = React.useState<ImageRect>();
   const [line, $line] = React.useState<Line>();
   const [text, $text] = React.useState<Text>();
+  const[rect, $rect] = React.useState<Rect>();
 
   const barData = (from: any, to: any, xLength: number) => {
     const width = 40;
@@ -65,6 +66,7 @@ export default () => {
         height: 250,
         width: 250,
         src: require('./assets/3.jpg'),
+        filter: '单色',
       });
       const i1 = new ImageRect({
         x: 350,
@@ -72,16 +74,25 @@ export default () => {
         height: 150,
         width: 150,
         src: require('./assets/test.jpg'),
-        // filter: '单色',
       });
+
+      const r = new Rect({
+        x: 50,
+        y: 500,
+        height: 300,
+        width: 300,
+        backgroundColor: 'pink',
+      })
 
       const t = new Text({ x: 700, y: 100, value: '呵呵呵', color: 'blue', font: '24px serif' }); // 一个实例只能画一段文案
       $imgae(i);
       $imgae1(i1);
       $text(t);
+      $rect(r);
       canvas.add(i);
       canvas.add(i1);
       canvas.add(t);
+      canvas.add(r);
 
 
 
@@ -176,6 +187,7 @@ export default () => {
     imgae && conext?.remove(imgae);
     line && conext?.remove(line);
     text && conext?.remove(text);
+    rect && conext?.remove(rect);
   }
 
   return (

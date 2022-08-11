@@ -12,19 +12,19 @@ export  const isPosInRotationRect = (
   shape: any,
   hornRadinCenter?: { x: number, y: number }
 )  => {
-  let hw = shape.width / 2;
-  let hh = shape.height / 2
-  let radian = shape.radian;
-  let center = shape.position;
-  let X = point.x;
-  let Y = point.y;
+  const hw = shape.width / 2;
+  const hh = shape.height / 2
+  const radian = shape.radian;
+  const center = shape.position;
+  const X = point.x;
+  const Y = point.y;
   const angle = radian * 180 / Math.PI;
-  let r = -angle * Math.PI/180;
+  const r = -angle * Math.PI/180;
   // 当前点击图形上四个顶角和旋转框框时，旋转的中心不是自己的中心的点，而是四个顶角的父级中心点
   const radianCenter = hornRadinCenter && radian ? hornRadinCenter : center;
   // 求旋转到回来后的点坐标
-  let nTempX = radianCenter.x + (X - radianCenter.x) * Math.cos(r) - (Y - radianCenter.y) * Math.sin(r);
-  let nTempY = radianCenter.y + (X - radianCenter.x) * Math.sin(r) + (Y - radianCenter.y) * Math.cos(r);
+  const nTempX = radianCenter.x + (X - radianCenter.x) * Math.cos(r) - (Y - radianCenter.y) * Math.sin(r);
+  const nTempY = radianCenter.y + (X - radianCenter.x) * Math.sin(r) + (Y - radianCenter.y) * Math.cos(r);
   if (nTempX > center.x - hw && nTempX < center.x + hw && nTempY > center.y - hh && nTempY < center.y + hh) {
     return true;
   }
@@ -135,7 +135,7 @@ export const Mosaic = (options: any) => { // 马赛克
   }
 }
 
-export const sortShape = (data: ShapeType[], current: ShapeType) => {
+export const sortShape = (data: ShapeType[], current: ShapeType) => { // 把当前操作的图形层级设为最高，排到最后面渲染
   const sortData = data.sort((a, b) => (a.level || 0) - (b.level || 0));
   const maxLevel = sortData[sortData.length - 1].level;
   const maxCurrent: ShapeType = Object.assign(current, { level: maxLevel || 10000 });

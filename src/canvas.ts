@@ -70,23 +70,22 @@ class DragCanvas {
 
   init() {
     this.canvas.addEventListener('mousedown', this.onmousedown.bind(this));
-    this.canvas.addEventListener('mousemove', this.mousemove.bind(this));
+    this.canvas.addEventListener('mousemove', (e) => {
+      this.canvas.style.cursor = this.mouseJudge(e, 'move') as string;
+    });
   }
 
-  add(options: ImageRect | Rect | Line | CanvsText) {
-    const id = uuid();
+  add(options: ShapeType) {
     options.Canvas = this;
-    options.uuid = id;
+    options.uuid = uuid();
     options.paint();
     options.level = this.shapeList.length;
     this.shapeList.push(options);
   }
 
-  remove(options: ImageRect | Rect | Line | CanvsText) {
+  remove(options: ShapeType) {
     this.shapeList = this.shapeList.filter((item) => {
-      if (item.uuid === options.uuid) {
-        options.delete();
-      }
+      if (item.uuid === options.uuid) options.delete();
       return item.uuid !== options.uuid;
     });
     this.paintAll(this.currentContainter, true);
@@ -176,7 +175,7 @@ class DragCanvas {
   mouseJudge(e: MouseEvent, type: 'down' | 'move') {
     let cursor = 'default';
     const point = {  x: e.offsetX, y: e.offsetY };
-    const list = this.shapeList.filter((item) => !(item instanceof Line)) as OmitShapeType[];
+    const list = this.shapeList.filter((item) => !(item instanceof Line) && item.isOperation) as OmitShapeType[]; // line 和isOperation为false的不需要操作
     const currentDown: OmitShapeType | Horn | undefined = ([...this.hornList, ...list].find((ele: OmitShapeType | Horn) => {
       const w = ele instanceof Horn ? this.hornW : ele.width ?? 0;
       const h = ele instanceof Horn ? this.hornW : ele.height ?? 0;
@@ -191,9 +190,9 @@ class DragCanvas {
         radianCenter = { x: this.currentContainter.x + this.currentContainter.width / 2, y: this.currentContainter.y + this.currentContainter.height / 2 };
       }
       if (ele instanceof Horn) {
-        return ele.isOperation && isPosInRotationRect(point, shape, radianCenter) && !ele.cancel;
+        return isPosInRotationRect(point, shape, radianCenter) && !ele.cancel;
       }
-      return ele.isOperation && isPosInRotationRect(point, shape);
+      return isPosInRotationRect(point, shape);
     }));
 
     if (currentDown && type === 'move' && currentDown.isOperation) {
@@ -235,11 +234,6 @@ class DragCanvas {
     this.Operations(currentDown, this.currentContainter, isHorn);
     this.currentShape.mousedown(e);
   }
-
-  mousemove(e: MouseEvent) {
-    this.canvas.style.cursor = this.mouseJudge(e, 'move') as string;
-  }
-
 };
 
 export default DragCanvas;
