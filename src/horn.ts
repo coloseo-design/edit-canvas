@@ -33,7 +33,6 @@ class Horn { // 四个顶角
 
   public isOperation?: boolean;
 
-  public offsetScreenCtx?: CanvasRenderingContext2D | null;
   constructor({
     x, y, width, height, Canvas, direction, cursor, containterY, containterX, radian = 0, color = 'red', cancel = false,
     x2 = 0, y2 = 0,
@@ -113,7 +112,6 @@ class Horn { // 四个顶角
       }
     });
     this.Canvas.paintAll({ x, y, width: w, height: h, radian, });
-    this.offsetScreenCtx?.rotate(radian);
   }
 
   paint() {

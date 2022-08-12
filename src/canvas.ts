@@ -201,12 +201,9 @@ class DragCanvas {
     }));
 
     if (currentDown && type === 'move' && currentDown.isOperation) {
-      const IsRect = currentDown instanceof Rect || currentDown instanceof ImageRect;
+      const IsRect = currentDown instanceof Rect || currentDown instanceof ImageRect || currentDown instanceof CanvsText;
       const isHorn = currentDown instanceof Horn;
       if (IsRect) {
-        cursor = 'move';
-      }
-      if (currentDown instanceof CanvsText) {
         cursor = 'move';
       }
       if (isHorn && !currentDown.cancel) {
