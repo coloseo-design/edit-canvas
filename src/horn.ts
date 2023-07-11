@@ -1,6 +1,7 @@
 import DragCanvas, { BaseHornProps } from './canvas';
 import ImageRect from './image';
 import Rect from './rect';
+import CanvasText from './text';
 
 export interface HornProps extends BaseHornProps {
   direction: string;
@@ -56,49 +57,49 @@ class Horn { // 四个顶角
     this.paint();
   }
 
-  directionShape(list: Rect[] | ImageRect[], movex: number, movey: number) {
+  directionShape(list: Rect[] | ImageRect[] | CanvasText[], moveX: number, moveY: number) {
     let x = this.containterX;
     let y = this.containterY;
     let w = this.width;
     let h = this.height;
     let radian = this.radian;
     if (this.direction === 'rightBottom') {
-      w = w + movex;
-      h = h + movey;
+      w = w + moveX;
+      h = h + moveY;
     }
     if (this.direction === 'leftTop') {
-      x = x + movex;
-      y = y + movey;
-      w = w - movex;
-      h = h - movey;
+      x = x + moveX;
+      y = y + moveY;
+      w = w - moveX;
+      h = h - moveY;
     }
     if (this.direction === 'rightTop') {
-      y = y + movey;
-      w = w + movex;
-      h = h - movey;
+      y = y + moveY;
+      w = w + moveX;
+      h = h - moveY;
     }
     if (this.direction === 'leftBottom') {
-      x = x + movex;
-      w = w - movex;
-      h = h + movey;
+      x = x + moveX;
+      w = w - moveX;
+      h = h + moveY;
     }
     if (this.direction === 'topMiddle') {
-      y = y + movey;
-      h = h - movey;
+      y = y + moveY;
+      h = h - moveY;
     }
     if (this.direction === 'bottomMiddle') {
-      h = h + movey;
+      h = h + moveY;
     }
     if (this.direction === 'leftMiddle') {
-      x = x + movex;
-      w = w - movex;
+      x = x + moveX;
+      w = w - moveX;
     }
     if (this.direction === 'rightMiddle') {
-     w = w + movex
+     w = w + moveX
     }
 
     if (this.direction === 'rotate') {
-      radian = Math.atan2(movey, movex);
+      radian = Math.atan2(moveY, moveX);
     }
     list.forEach((item) => {
       if (item.uuid === this.Canvas.currentContainter.uuid) {
@@ -127,7 +128,9 @@ class Horn { // 四个顶角
       this.Canvas.editCtx.moveTo(!this.cancel ? this.x : 0 , !this.cancel ? this.y : 0);
       this.Canvas.editCtx.lineTo(!this.cancel ? this.x2 || 0 : 0, !this.cancel ? this.y2 || 0 : 0);
     } else {
-      this.Canvas.editCtx.rect(this.x, this.y, hornW, hornW);
+      const tw = this.direction === 'container-rect' ?(this.cancel ? 0 : this.width) : hornW;
+      const ty = this.direction === 'container-rect' ? (this.cancel ? 0 : this.height) : hornW;
+      this.Canvas.editCtx.rect(this.x, this.y, tw, ty);
     }
     this.Canvas.editCtx.stroke();
     this.Canvas.editCtx.restore();
@@ -137,7 +140,8 @@ class Horn { // 四个顶角
     this.Canvas.canvas.onmousemove = (mouseEvent) => {
       const movex =  mouseEvent.pageX - e.pageX;
       const movey = mouseEvent.pageY - e.pageY;
-      const list = this.Canvas.shapeList.filter((item) => item instanceof ImageRect || item instanceof Rect) as (ImageRect[] | Rect[]);
+      // const list = this.Canvas.shapeList.filter((item) => item instanceof ImageRect || item instanceof Rect) as (ImageRect[] | Rect[]);
+      const list = this.Canvas.shapeList.filter((item) => item instanceof ImageRect || item instanceof Rect || item instanceof CanvasText) as (ImageRect[] | Rect[]| CanvasText[]);
       this.directionShape(list, movex, movey);
     }
     this.Canvas.canvas.onmouseup = () => {

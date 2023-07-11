@@ -3,7 +3,7 @@ import Horn from './horn';
 import Line from './line';
 import ImageRect from './image';
 import Rect from './rect';
-import CanvsText from './text';
+import CanvasText from './text';
 
 export interface BaseHornProps {
   x: number;
@@ -13,9 +13,9 @@ export interface BaseHornProps {
   radian: number; // 容器的旋转弧度
 }
 
-export type ShapeType = Rect | ImageRect | Line | CanvsText;
+export type ShapeType = Rect | ImageRect | Line | CanvasText;
 
-export type OmitShapeType = Rect | ImageRect | CanvsText;
+export type OmitShapeType = Rect | ImageRect | CanvasText;
 
 class DragCanvas {
   public canvas: HTMLCanvasElement;
@@ -74,9 +74,17 @@ class DragCanvas {
   }
 
   init() {
-    this.canvas.addEventListener('mousedown', this.onmousedown.bind(this));
+    console.log('ttt', this.editCtx.measureText('呵呵呵134q'));
+    this.canvas.addEventListener('mousedown', (e) => {
+      this.onmousedown(e);
+    });
     this.canvas.addEventListener('mousemove', (e) => {
       this.canvas.style.cursor = this.mouseJudge(e, 'move') as string;
+    });
+    this.canvas.addEventListener('dblclick', () => {
+      if (this.currentShape instanceof CanvasText) {
+        this.currentShape.writeText();
+      }
     });
   }
 
@@ -112,16 +120,21 @@ class DragCanvas {
       }
     });
     if (this.backOperation.length) {
-      const cancel = lastOperation instanceof CanvsText || this.currentContainter instanceof CanvsText;
+      const cancel = lastOperation instanceof CanvasText || this.currentContainter instanceof CanvasText;
       this.paintAll(this.currentContainter, cancel);
     }
     this.backOperation = temOperation;
   }
 
   paintHorn(option: BaseHornProps, cancel: boolean = false) { // cancel为true表示没有点击到图形上，清除horn
-    const { x, y, width: w, height: h, radian } = option;
+    const { x: tX, y: tY, width: tW, height: tH, radian } = option;
     const intersectionW = this.hornW / 2;
-    const basehorn = {
+    // 新增一个外边框用来拖拽拉伸， 不使用本来的container操作
+    const x = tX - 20;
+    const y = tY - 20;
+    const w = tW + 40;
+    const h = tH + 40;
+    const baseHorn = {
       radian,
       Canvas: this,
       width: w,
@@ -129,50 +142,120 @@ class DragCanvas {
       containterX: x,
       containterY: y,
       cancel,
-      color: 'red',
+      // color: 'red',
+      color: 'blue',
     };
 
     const hornList: Horn[] = [
-      new Horn({ direction: 'rightTop',  x: x - intersectionW + w, y: y - intersectionW, cursor: 'nesw-resize', ...basehorn }),
-      new Horn({ direction: 'leftTop', x: x - intersectionW, y: y - intersectionW, cursor: 'nwse-resize', ...basehorn }),
-      new Horn({ direction: 'leftBottom', x: x - intersectionW, y: y - intersectionW + h, cursor: 'nesw-resize', ...basehorn }),
-      new Horn({ direction: 'rightBottom', x: x - intersectionW + w, y: y - intersectionW + h, cursor: 'nwse-resize', ...basehorn }),
-      new Horn({ direction: 'topMiddle', x: x + w / 2 - intersectionW, y: y - intersectionW, cursor: 'ns-resize', ...basehorn }),
-      new Horn({ direction: 'leftMiddle', x: x - intersectionW, y: y + h / 2 - intersectionW, cursor: 'ew-resize', ...basehorn }),
-      new Horn({ direction: 'rightMiddle', x: x + w - intersectionW, y: y + h / 2 - intersectionW, cursor: 'ew-resize', ...basehorn}),
-      new Horn({ direction: 'bottomMiddle', x: x + w / 2 - intersectionW, y: y + h - intersectionW, cursor: 'ns-resize', ...basehorn }),
-      new Horn({ direction: 'rotate', x: x + w / 2 - intersectionW, y: y - intersectionW - 40, cursor: 'crosshair', ...basehorn }),
-      new Horn({ direction: 'rotateLine', x: x + w / 2, y: y - 40 + intersectionW, x2:  x + w / 2, y2: y - intersectionW, cursor: 'default ', ...basehorn }),
+      new Horn({
+        direction: 'rightTop', 
+        x: x - intersectionW + w,
+        y: y - intersectionW,
+        cursor: 'nesw-resize',
+        ...baseHorn,
+      }),
+      new Horn({
+        direction: 'leftTop',
+        x: x - intersectionW,
+        y: y - intersectionW,
+        cursor: 'nwse-resize',
+        ...baseHorn,
+      }),
+      new Horn({
+        direction: 'leftBottom',
+        x: x - intersectionW,
+        y: y - intersectionW + h,
+        cursor: 'nesw-resize',
+        ...baseHorn,
+      }),
+      new Horn({
+        direction: 'rightBottom',
+        x: x - intersectionW + w,
+        y: y - intersectionW + h,
+        cursor: 'nwse-resize',
+        ...baseHorn,
+      }),
+      new Horn({
+        direction: 'topMiddle',
+        x: x + w / 2 - intersectionW,
+        y: y - intersectionW,
+        cursor: 'ns-resize',
+        ...baseHorn,
+      }),
+      new Horn({
+        direction: 'leftMiddle',
+        x: x - intersectionW,
+        y: y + h / 2 - intersectionW,
+        cursor: 'ew-resize',
+        ...baseHorn,
+      }),
+      new Horn({
+        direction: 'rightMiddle',
+        x: x + w - intersectionW,
+        y: y + h / 2 - intersectionW,
+        cursor: 'ew-resize',
+        ...baseHorn
+      }),
+      new Horn({
+        direction: 'bottomMiddle',
+        x: x + w / 2 - intersectionW,
+        y: y + h - intersectionW,
+        cursor: 'ns-resize',
+        ...baseHorn,
+      }),
+      new Horn({
+        direction: 'rotate',
+        x: x + w / 2 - intersectionW,
+        y: y - intersectionW - 40,
+        cursor: 'crosshair',
+        ...baseHorn,
+      }),
+      new Horn({
+        direction: 'rotateLine',
+        x: x + w / 2,
+        y: y - 40 + intersectionW,
+        x2:  x + w / 2,
+        y2: y - intersectionW,
+        cursor: 'default ',
+        ...baseHorn
+      }),
+      new Horn({ // 新增
+        direction: 'container-rect',
+        x: x,
+        y: y,
+        cursor: 'default ',
+        ...baseHorn
+      }),
     ];
 
     this.hornList = hornList;
   }
 
   paintAll(option: BaseHornProps, cancel: boolean = false) {
-    this.editCtx.clearRect(0, 0, this.width, this.height);
+    this.editCtx.clearRect(0, 0, this.width, this.height); // 线清空画布再绘图
     this.shapeList.forEach((item) => {
       item instanceof ImageRect ? item.paintImage() : item.paint();
     });
     if (option) this.paintHorn(option, cancel);
   }
 
-  Operations(downinfo: ShapeType | Horn, containter: ShapeType, ishorn: boolean) { // 存贮前一步操作
-    if (ishorn) { // 点击四个顶角旋转角
-      if (containter instanceof Rect) {
-        this.backOperation.push(new Rect({ ...containter }));
+  Operations(downInfo: ShapeType | Horn, container: ShapeType, isHorn: boolean) { // 存贮前一步操作
+    if (isHorn) { // 点击四个顶角旋转角
+      if (container instanceof Rect) {
+        this.backOperation.push(new Rect({ ...container }));
       }
-      if (containter instanceof ImageRect) {
-        this.backOperation.push(new ImageRect({ ...containter }));
+      if (container instanceof ImageRect) {
+        this.backOperation.push(new ImageRect({ ...container }));
       }
     } else { // 点击图形本身
-      if (downinfo instanceof Rect) {
-        this.backOperation.push(new Rect({ ...downinfo }));
+      if (downInfo instanceof Rect) {
+        this.backOperation.push(new Rect({ ...downInfo }));
       }
-      if (downinfo instanceof ImageRect) {
-        this.backOperation.push(new ImageRect({ ...downinfo }));
+      if (downInfo instanceof ImageRect) {
+        this.backOperation.push(new ImageRect({ ...downInfo }));
       }
-      if (downinfo instanceof CanvsText) {
-        this.backOperation.push(new CanvsText({ ...downinfo }));
+      if (downInfo instanceof CanvasText) {
+        this.backOperation.push(new CanvasText({ ...downInfo }));
       }
     }
   }
@@ -201,7 +284,7 @@ class DragCanvas {
     }));
 
     if (currentDown && type === 'move' && currentDown.isOperation) {
-      const IsRect = currentDown instanceof Rect || currentDown instanceof ImageRect || currentDown instanceof CanvsText;
+      const IsRect = currentDown instanceof Rect || currentDown instanceof ImageRect || currentDown instanceof CanvasText;
       const isHorn = currentDown instanceof Horn;
       if (IsRect) {
         cursor = 'move';
@@ -216,6 +299,7 @@ class DragCanvas {
   onmousedown(e: MouseEvent) {
     const currentDown = this.mouseJudge(e, 'down') as (ShapeType | Horn | undefined);
     this.currentShape = currentDown;
+    console.log('==currentDown', currentDown);
     if (!currentDown) {
       this.hornList.length > 0 && this.paintAll(this.currentContainter || {}, true); // 删除horn
       return;
@@ -230,7 +314,8 @@ class DragCanvas {
         radian: this.currentShape.radian,
       };
       this.shapeList = sortShape(this.shapeList, this.currentShape); // 把当前图形的层级设为最高
-      this.paintAll(hornProps, this.currentShape instanceof CanvsText);
+      // this.paintAll(hornProps, this.currentShape instanceof CanvasText); // 在text上不画 拖拽拉伸操作
+      this.paintAll(hornProps);
       this.currentContainter = this.currentShape;
     }
     this.Operations(currentDown, this.currentContainter, isHorn);

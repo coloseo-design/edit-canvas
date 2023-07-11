@@ -84,7 +84,7 @@ export default () => {
         backgroundColor: 'pink',
       })
 
-      const t = new Text({ x: 700, y: 100, value: '呵呵呵', color: 'blue', font: '24px serif' }); // 一个实例只能画一段文案
+      const t = new Text({ x: 700, y: 100, value: '呵呵呵123', color: 'black', font: '24px serif' }); // 一个实例只能画一段文案
       $imgae(i);
       $imgae1(i1);
       $text(t);
@@ -180,7 +180,9 @@ export default () => {
   }
 
   const handleWrite = () => {
-    text?.writeText()
+    // text?.writeText();
+    const temp = new Text({ x: 100, y: 100, width: 350, value: '哈哈哈哈哈哈哈哈哈', color: 'green', font: '36px serif' });
+    conext?.add(temp);
   }
 
   const handleDelete = () => {
@@ -188,7 +190,15 @@ export default () => {
     line && conext?.remove(line);
     text && conext?.remove(text);
     rect && conext?.remove(rect);
+    // conext?.clear();
   }
+
+  const handleRect = () => {
+    if (rect) {
+      rect.backgroundColor = 'yellow';
+      rect.paint();
+    }
+  };
 
   return (
     <div style={{ display: 'flex' }}>
@@ -200,6 +210,7 @@ export default () => {
         <button onClick={handleWrite}>
           <img src={require('./assets/text.svg')} style={{ width: 20, height: 20 }} />
         </button>
+        <button onClick={handleRect}>修改背景色</button>
         <div style={{ display: 'flex' }}>
           <p>选择滤镜:</p>
           <select style={{ height: 28, width: 156, marginTop: 14 }} value={filter} onChange={handleChange} >
@@ -216,6 +227,7 @@ export default () => {
           </select>
         </div>
         <button onClick={handleDelete}>删除</button>
+        <div style={{ display: 'inline-block' }}>呵呵呵134q</div>
       </div>
     </div>
   );

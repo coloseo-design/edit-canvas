@@ -14,9 +14,10 @@ export interface TextProps {
   input?: HTMLInputElement | null;
   isOperation?: boolean;
   level?: number;
+  textAlign?: CanvasTextAlign;
 }
 
-class CanvsText {
+class CanvasText {
   public x?: number;
   public y?: number;
   public font: string;
@@ -48,7 +49,12 @@ class CanvsText {
 
   public level?: number; // 图形的层级
 
-  constructor({ x, y, font = '20px serif', Canvas, uuid, color, value = '', isOperation = true, level = 1 }: TextProps) {
+  public textAlign?: CanvasTextAlign;
+
+  constructor({
+    x, y, font = '20px serif', Canvas, uuid, color, value = '', isOperation = true, level = 1,
+    textAlign = 'center', width = 100, height = 20
+  }: TextProps) {
     this.x = x;
     this.y = y;
     this.font = font;
@@ -57,36 +63,37 @@ class CanvsText {
     this.value = value;
     this.notChainese = '';
     this.Canvas = Canvas;
-    this.width = 100;
+    this.width = width;
     this.color = color;
     this.cursorColor = 'black';
-    this.height = Number(font.slice(0, font.indexOf('px'))) || 20;
+    this.height = Number(font.slice(0, font.indexOf('px'))) || height;
     this.isOperation = isOperation;
     this.level = level;
+    this.textAlign = textAlign;
   }
 
   setInputAttribute(x: number = 0, y: number = 0) {
     if (this.input) {
-      const tgap = this.Canvas?.topGap || 0;
-      const lgap = this.Canvas?.leftGap || 0;
-      this.input.style.top = `${y + tgap}px`;
-      this.input.style.left = `${x + lgap}px`;
+      const tGap = this.Canvas?.topGap || 0;
+      const lGap = this.Canvas?.leftGap || 0;
+      this.input.style.top = `${y + tGap}px`;
+      this.input.style.left = `${x + lGap}px`;
     }
   }
 
-  createText(isFoucs = false) {
+  createText(isFocus = false) {
     if (this.input) {
-      const tgap = this.Canvas?.topGap || 0;
-      const lgap = this.Canvas?.leftGap || 0;
+      const tGap = this.Canvas?.topGap || 0;
+      const lGap = this.Canvas?.leftGap || 0;
       this.input.setAttribute(
         'style', 
         `position: absolute;
         height: ${this.height}px;
-        width: ${this.width}px;
-        left: ${(this.x || 0) + lgap}px;
-        top: ${(this.y || 0) + tgap}px;
+        min-width: ${this.width}px;
+        left: ${(this.x || 0) + lGap}px;
+        top: ${(this.y || 0) + tGap}px;
         border: none; outline: none;
-        z-index: ${isFoucs ? '10' : '-100'};
+        z-index: ${isFocus ? '10' : '-100'};
         font-size: ${this.height}px;
         caret-color: black;
         color: transparent;
@@ -97,10 +104,10 @@ class CanvsText {
       parentNode && parentNode.appendChild(this.input);
       this.input.addEventListener('input', this.oninput.bind(this));
       this.input.addEventListener('blur', this.onblur.bind(this));
-      this.input.addEventListener('foucs', this.onfoucs.bind(this));
+      this.input.addEventListener('focus', this.onfocus.bind(this));
       this.input.addEventListener('compositionstart', this.oncompositionstart.bind(this));
       this.input.addEventListener('compositionend', this.oncompositionend.bind(this));
-      if (isFoucs) {
+      if (isFocus) {
         setTimeout(() => {
           this.input && this.input?.focus();
         }, 10);
@@ -119,9 +126,15 @@ class CanvsText {
       } else {
         this.setInputAttribute(this.x, this.y);
       }
+      this.Canvas.editCtx.save();
+      this.Canvas.editCtx.translate(this.x + this.width / 2, this.y + this.height / 2);
+      this.Canvas.editCtx.rotate(this.radian ?? 0);
+      this.Canvas.editCtx.translate(-(this.x + this.width / 2), -(this.y + this.height / 2));
       this.Canvas.editCtx.font = this.font;
+      // this.Canvas.editCtx.textAlign = this.textAlign || 'left';
       this.Canvas.editCtx.fillStyle = this.color || 'black';
       this.Canvas?.editCtx.fillText(this?.value || '', this.x, this.y + this.height / 1.3);
+      this.Canvas.editCtx.restore();
     }
   }
 
@@ -164,23 +177,27 @@ class CanvsText {
     this.changePaint();
   }
 
+  getValueWidth(val: string) {
+    const filterEnglish =/[\A-Za-z0-9\p{P}]/g;
+    const res = val.match(filterEnglish) || '';
+    const punctuationE = /[\x21-\x2f\x3a-\x40\x5b-\x60\x7B-\x7F]/g // 判断英文标点符号
+    const EnglishPun = val.match(punctuationE) || '';
+    const englishPunLen = EnglishPun.length; // 英文标点符号占fontsize的1/3
+    const englishLen = res.length; // 英文数字字符 (英文数字字符宽度占fontsize的一半)
+    const chineseLen = val.length - englishLen - englishPunLen; // 中文字符（中文字符宽度为一个fontsize）
+    const width = this.height * chineseLen + this.height * (englishLen / 2) + this.height * (englishPunLen / 3);
+    return width;
+  }
+
   changePaint() {
     if (this.Canvas && this.input) {
       const val = this.isChinaStart ? this.notChainese : this.value;
-      const partenEnglish =/[\A-Za-z0-9\p{P}]/g;
-      const res = val.match(partenEnglish) || '';
-      const Punpat = /[\x21-\x2f\x3a-\x40\x5b-\x60\x7B-\x7F]/g // 判断英文标点符号
-      const EnglishPun = val.match(Punpat) || '';
-      const enlishpunlen = EnglishPun.length; // 英文标点符号占fontsize的1/3
-      const englishLen = res.length; // 英文数字字符 (英文数字字符宽度占fontsize的一半)
-      const chineseLen = val.length - englishLen - enlishpunlen; // 中文字符（中文字符宽度为一个fontsize）
+      const width = this.getValueWidth(val);
+      this.input.style.minWidth = `${width}px`;
+      this.height = this.height;
       this.Canvas.editCtx.font = this.font;
       this.Canvas.editCtx.fillStyle = this.color || 'black';
-      const width = this.height * chineseLen + this.height * (englishLen / 2) + this.height * (enlishpunlen / 3);
-      this.input.style.width = `${width}px`;
-      this.width = width;
-      this.height = this.height;
-      const textList = this.Canvas.shapeList.filter((item) => item instanceof CanvsText) as CanvsText[];
+      const textList = this.Canvas.shapeList.filter((item) => item instanceof CanvasText) as CanvasText[];
       (textList || []).forEach((item) => {
         if (item.uuid === this.uuid) {
           this.Canvas?.editCtx.clearRect(item.x || 0, item.y || 0, item.width, item.height);
@@ -190,7 +207,8 @@ class CanvsText {
           })
         }
       });
-      val && this.Canvas?.editCtx.fillText(val, this.x || 0, (this.y || 0) + this.height / 1.3);
+      // val && this.Canvas?.editCtx.fillText(val, this.x || 0, (this.y || 0) + this.height / 1.3);
+      this.Canvas?.paintAll({x: this.x || 0, y: this.y || 0, height: this.height, width: this.width, radian: this.radian || 0 }, true);
     }
   }
  
@@ -207,7 +225,7 @@ class CanvsText {
     }
   }
 
-  onfoucs() {
+  onfocus() {
     if (this.input) {
       this.input.style.zIndex = '10';
     }
@@ -222,7 +240,7 @@ class CanvsText {
           this.x = mouseEvent.pageX - disX;
           this.y = mouseEvent.pageY - disY;
           const obj = { x: this.x, y: this.y, width: this.width, height: this.height, radian: 0  };
-          this.Canvas?.paintAll(obj, true);
+          this.Canvas?.paintAll(obj, false);
         }
       }
     }
@@ -237,4 +255,4 @@ class CanvsText {
 
  };
 
-export default CanvsText;
+export default CanvasText;

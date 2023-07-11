@@ -37,7 +37,7 @@ const context = new DragCanvas(canvas: HTMLCanvasElement);
 ### new Text
 | 参数 | 说明 | 类型 | 默认值 |
 | --- | --- | --- | ---    |
-|value|文案(有文案就是编辑，没有就是新增文案)|string|''|
+|value|文案(有文案就是编辑，没有就是新增文案，也可以双击编辑)|string|''|
 |x|文案x轴位置(非必传，没有传的时候调用writeText()方法，鼠标按下的位置就是文案的起始位置x)|number|--|
 |y|文案x轴位置(非必传，没有传的时候调用writeText()方法，鼠标按下的位置就是文案的起始位置y)|number|--|
 |writeText|文案新增编辑实例方法，有value就是编辑没有就是新增|new Text().writeText()|--|
