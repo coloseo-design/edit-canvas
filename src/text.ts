@@ -53,8 +53,12 @@ class CanvasText {
 
   constructor({
     x, y, font = '20px serif', Canvas, uuid, color, value = '', isOperation = true, level = 1,
-    textAlign = 'center', width = 100, height = 20
+    textAlign = 'center', width = 100,
   }: TextProps) {
+    const tH = font.split(' ').filter((i) => i.endsWith('px'));
+    const temH = tH.length > 0 ? Number(tH[0].slice(0, tH[0].indexOf('px'))) : 20;
+    const tw = value ? this.getValueWidth(value, temH) : 0;
+    const temW = width > tw ? width : tw;
     this.x = x;
     this.y = y;
     this.font = font;
@@ -63,10 +67,10 @@ class CanvasText {
     this.value = value;
     this.notChainese = '';
     this.Canvas = Canvas;
-    this.width = width;
+    this.width = temW;
     this.color = color;
     this.cursorColor = 'black';
-    this.height = Number(font.slice(0, font.indexOf('px'))) || height;
+    this.height = temH;
     this.isOperation = isOperation;
     this.level = level;
     this.textAlign = textAlign;
@@ -127,6 +131,7 @@ class CanvasText {
         this.setInputAttribute(this.x, this.y);
       }
       this.Canvas.editCtx.save();
+      this.Canvas.editCtx.beginPath();
       this.Canvas.editCtx.translate(this.x + this.width / 2, this.y + this.height / 2);
       this.Canvas.editCtx.rotate(this.radian ?? 0);
       this.Canvas.editCtx.translate(-(this.x + this.width / 2), -(this.y + this.height / 2));
@@ -134,6 +139,7 @@ class CanvasText {
       // this.Canvas.editCtx.textAlign = this.textAlign || 'left';
       this.Canvas.editCtx.fillStyle = this.color || 'black';
       this.Canvas?.editCtx.fillText(this?.value || '', this.x, this.y + this.height / 1.3);
+      this.Canvas.editCtx.closePath();
       this.Canvas.editCtx.restore();
     }
   }
@@ -177,7 +183,7 @@ class CanvasText {
     this.changePaint();
   }
 
-  getValueWidth(val: string) {
+  getValueWidth(val: string, height: number) {
     const filterEnglish =/[\A-Za-z0-9\p{P}]/g;
     const res = val.match(filterEnglish) || '';
     const punctuationE = /[\x21-\x2f\x3a-\x40\x5b-\x60\x7B-\x7F]/g // 判断英文标点符号
@@ -185,14 +191,14 @@ class CanvasText {
     const englishPunLen = EnglishPun.length; // 英文标点符号占fontsize的1/3
     const englishLen = res.length; // 英文数字字符 (英文数字字符宽度占fontsize的一半)
     const chineseLen = val.length - englishLen - englishPunLen; // 中文字符（中文字符宽度为一个fontsize）
-    const width = this.height * chineseLen + this.height * (englishLen / 2) + this.height * (englishPunLen / 3);
+    const width = height * chineseLen + height * (englishLen / 2) + height * (englishPunLen / 3);
     return width;
   }
 
   changePaint() {
     if (this.Canvas && this.input) {
       const val = this.isChinaStart ? this.notChainese : this.value;
-      const width = this.getValueWidth(val);
+      const width = this.getValueWidth(val, this.height);
       this.input.style.minWidth = `${width}px`;
       this.height = this.height;
       this.Canvas.editCtx.font = this.font;

@@ -1,5 +1,6 @@
 import React from "react";
 import DragCanvas, { Image as ImageRect, Rect, Line, Text } from './index';
+import { useNavigate } from 'react-router-dom'; 
 
 export default () => {
   const [conext, $context] = React.useState<DragCanvas>();
@@ -8,7 +9,7 @@ export default () => {
   const [imgae1, $imgae1] = React.useState<ImageRect>();
   const [line, $line] = React.useState<Line>();
   const [text, $text] = React.useState<Text>();
-  const[rect, $rect] = React.useState<Rect>();
+  const [rect, $rect] = React.useState<Rect>();
 
   const barData = (from: any, to: any, xLength: number) => {
     const width = 40;
@@ -24,15 +25,15 @@ export default () => {
         y: to.y - val - 6,
         font: '12px serif',
         lineFrom: { x: from.x, y: to.y - val },
-        lineTo: { x: from.x + xLength,y: to.y - val },
+        lineTo: { x: from.x + xLength, y: to.y - val },
       }
     });
-    const list =  Array.from({ length: 7 }).map((_, index) => {
-     const height = 35 * (index + 1);
-     const x = from.x + index * width + (index + 1) * gap;
-     const y = to.y - height;
-     const scaleX = { x: from.x + index * gap + index * width + (index == 0 ? 0 : gap/2), y: to.y };
-     const scaleY = { x: from.x + index * gap + index * width + (index == 0 ? 0 : gap/2), y: to.y + 8 };
+    const list = Array.from({ length: 7 }).map((_, index) => {
+      const height = 35 * (index + 1);
+      const x = from.x + index * width + (index + 1) * gap;
+      const y = to.y - height;
+      const scaleX = { x: from.x + index * gap + index * width + (index == 0 ? 0 : gap / 2), y: to.y };
+      const scaleY = { x: from.x + index * gap + index * width + (index == 0 ? 0 : gap / 2), y: to.y + 8 };
       return {
         x,
         y,
@@ -58,7 +59,7 @@ export default () => {
   React.useEffect(() => {
     const canvasEle = document.getElementById('canvas') as HTMLCanvasElement;
     if (canvasEle) {
-      const canvas = new DragCanvas(canvasEle); 
+      const canvas = new DragCanvas(canvasEle);
       $context(canvas);
       const i = new ImageRect({
         x: 50,
@@ -114,7 +115,7 @@ export default () => {
         lineWidth: 1,
       })); // x轴坐标
 
-      const { main: barList, scaley } =  barData(xForm, xTo, yTo.x - yForm.x);
+      const { main: barList, scaley } = barData(xForm, xTo, yTo.x - yForm.x);
       scaley.forEach((item, index) => {
         canvas.add(new Text({
           x: item.x,
@@ -122,12 +123,12 @@ export default () => {
           value: item.value,
           font: item.font,
           isOperation: false,
-         })); // y轴文字
-         index !== 0 && canvas.add(new Line({ // 除去坐标轴那一条线
+        })); // y轴文字
+        index !== 0 && canvas.add(new Line({ // 除去坐标轴那一条线
           from: item.lineFrom,
           to: item.lineTo,
           color: '#DCDFE6',
-         })); // y轴网格线
+        })); // y轴网格线
       });
 
       barList.forEach((item) => {
@@ -138,33 +139,33 @@ export default () => {
           height: item.height,
           backgroundColor: 'green',
           isOperation: false,
-         }));// 柱子
-         canvas.add(new Text({
+        }));// 柱子
+        canvas.add(new Text({
           x: item.textX,
           y: item.textY,
           value: item.textVal,
           font: item.font,
           isOperation: false,
-         })); // 柱子上的文字
-         canvas.add(new Text({
+        })); // 柱子上的文字
+        canvas.add(new Text({
           x: item.textX,
           y: item.axiosXY,
           value: item.axiosXVal,
           font: item.font,
           isOperation: false,
-         })); // x轴文字
-         canvas.add(new Line({
+        })); // x轴文字
+        canvas.add(new Line({
           from: item.scaleX,
           to: item.scaleY,
-         }));// x轴刻度
+        }));// x轴刻度
       });
     }
   }, []);
 
 
   const handleBack = () => {
-      // 传值代表回退的步数 back不传值默认回退一步，传值大于操作步数回到最初状态
-      // conext.back(3);
+    // 传值代表回退的步数 back不传值默认回退一步，传值大于操作步数回到最初状态
+    // conext.back(3);
     conext?.back();
   };
 
@@ -181,7 +182,12 @@ export default () => {
 
   const handleWrite = () => {
     // text?.writeText();
-    const temp = new Text({ x: 100, y: 100, width: 350, value: '哈哈哈哈哈哈哈哈哈', color: 'green', font: '36px serif' });
+    const temp = new Text({
+      x: 0, y: 0,
+      value: '哈哈哈哈哈哈哈哈哈1234',
+      color: 'green', font: '36px serif',
+      textAlign: 'center',
+    });
     conext?.add(temp);
   }
 
@@ -200,35 +206,39 @@ export default () => {
     }
   };
 
+  const navigate = useNavigate();
   return (
-    <div style={{ display: 'flex' }}>
-      <canvas id="canvas" width="1000" height="1800" style={{ border: '1px solid red' }}></canvas>
-      <div style={{ marginRight: 16 }}>
-        <button onClick={handleBack}>
-          <img src={require('./assets/back.svg')} style={{ width: 20, height: 20 }} />
-        </button>
-        <button onClick={handleWrite}>
-          <img src={require('./assets/text.svg')} style={{ width: 20, height: 20 }} />
-        </button>
-        <button onClick={handleRect}>修改背景色</button>
-        <div style={{ display: 'flex' }}>
-          <p>选择滤镜:</p>
-          <select style={{ height: 28, width: 156, marginTop: 14 }} value={filter} onChange={handleChange} >
-            <option value=""></option>
-            <option value="反色">反色滤镜</option>
-            <option value="黑白">黑白滤镜</option>
-            <option value="浮雕">浮雕滤镜</option>
-            <option value="灰色">灰色滤镜</option>
-            <option value="单色">单色滤镜</option>
-            <option value="轻度模糊">轻度模糊</option>
-            <option value="轻度马赛克">轻度马赛克</option>
-            <option value="重度模糊">重度模糊</option>
-            <option value="重度马赛克">重度马赛克</option>
-          </select>
+    <>
+      <button onClick={() => navigate('/test', { replace: true })}>跳转 test</button>
+      <div style={{ display: 'flex' }}>
+        <canvas id="canvas" width="1000" height="700" style={{ border: '1px solid red' }}></canvas>
+        <div style={{ marginRight: 16 }}>
+          <button onClick={handleBack}>
+            <img src={require('./assets/back.svg')} style={{ width: 20, height: 20 }} />
+          </button>
+          <button onClick={handleWrite}>
+            <img src={require('./assets/text.svg')} style={{ width: 20, height: 20 }} />
+          </button>
+          <button onClick={handleRect}>修改背景色</button>
+          <div style={{ display: 'flex' }}>
+            <p>选择滤镜:</p>
+            <select style={{ height: 28, width: 156, marginTop: 14 }} value={filter} onChange={handleChange} >
+              <option value=""></option>
+              <option value="反色">反色滤镜</option>
+              <option value="黑白">黑白滤镜</option>
+              <option value="浮雕">浮雕滤镜</option>
+              <option value="灰色">灰色滤镜</option>
+              <option value="单色">单色滤镜</option>
+              <option value="轻度模糊">轻度模糊</option>
+              <option value="轻度马赛克">轻度马赛克</option>
+              <option value="重度模糊">重度模糊</option>
+              <option value="重度马赛克">重度马赛克</option>
+            </select>
+          </div>
+          <button onClick={handleDelete}>删除</button>
         </div>
-        <button onClick={handleDelete}>删除</button>
-        <div style={{ display: 'inline-block' }}>呵呵呵134q</div>
       </div>
-    </div>
+    </>
+
   );
 };

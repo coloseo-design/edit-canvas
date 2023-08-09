@@ -74,7 +74,6 @@ class DragCanvas {
   }
 
   init() {
-    console.log('ttt', this.editCtx.measureText('呵呵呵134q'));
     this.canvas.addEventListener('mousedown', (e) => {
       this.onmousedown(e);
     });
@@ -130,10 +129,12 @@ class DragCanvas {
     const { x: tX, y: tY, width: tW, height: tH, radian } = option;
     const intersectionW = this.hornW / 2;
     // 新增一个外边框用来拖拽拉伸， 不使用本来的container操作
-    const x = tX - 20;
-    const y = tY - 20;
-    const w = tW + 40;
-    const h = tH + 40;
+    const axios = 20;
+    const axiosW = 40;
+    const x = tX - axios;
+    const y = tY - axios;
+    const w = tW + axiosW;
+    const h = tH + axiosW;
     const baseHorn = {
       radian,
       Canvas: this,
@@ -299,7 +300,6 @@ class DragCanvas {
   onmousedown(e: MouseEvent) {
     const currentDown = this.mouseJudge(e, 'down') as (ShapeType | Horn | undefined);
     this.currentShape = currentDown;
-    console.log('==currentDown', currentDown);
     if (!currentDown) {
       this.hornList.length > 0 && this.paintAll(this.currentContainter || {}, true); // 删除horn
       return;
