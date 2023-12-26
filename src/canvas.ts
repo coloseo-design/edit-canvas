@@ -46,6 +46,7 @@ class DragCanvas {
   
   constructor(canvas:HTMLCanvasElement) {
     this.ratio = window.devicePixelRatio || 1;
+    // this.ratio = 10;
     const w = canvas.width;
     const h = canvas.height;
     this.canvas = canvas;

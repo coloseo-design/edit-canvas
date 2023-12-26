@@ -28,6 +28,7 @@
     "@babel/preset-env": "^7.14.2",
     "@babel/preset-react": "^7.13.13",
     "@babel/preset-typescript": "^7.13.0",
+    "@types/fabric": "^5.3.6",
     "@types/react-instantsearch-dom": "^6.10.0",
     "@types/react-router-dom": "^5.1.7",
     "@typescript-eslint/parser": "^4.24.0",
@@ -49,6 +50,8 @@
     "webpack-dev-server": "^3.5.1"
   },
   "dependencies": {
+    "pixi.js": "5.3.12",
+    "raw-loader": "^4.0.2",
     "react-router-dom": "^6.14.1"
   }
 }

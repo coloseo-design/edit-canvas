@@ -62,6 +62,7 @@ module.exports = {
   resolve: {
     extensions,
   },
+  target: 'web',
   module: {
     rules: [
       {
@@ -76,6 +77,10 @@ module.exports = {
             },
           },
         ],
+      },
+      {
+        test: /\.glsl$/,
+        use: ['raw-loader'],
       },
       {
         test: /\.(ts|tsx|js|jsx)$/,

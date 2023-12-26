@@ -11,8 +11,9 @@
     "moduleResolution": "node",
     "strictNullChecks": true,
     "esModuleInterop": true,
+    "allowJs": true,
     "allowSyntheticDefaultImports": true,
     "sourceMap": true,
   },
-  "include": ["src/"],
+  "include": ["src/", "global.d.ts"],
 }

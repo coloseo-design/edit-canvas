@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import DragCanvas, { Image as ImageRect, Rect, Line, Text } from './index';
 import { useNavigate } from 'react-router-dom'; 
 
@@ -209,7 +209,13 @@ export default () => {
   const navigate = useNavigate();
   return (
     <>
-      <button onClick={() => navigate('/test', { replace: true })}>跳转 test</button>
+      <button
+        onClick={() => {
+          navigate('/', { replace: true })
+        }}
+      >
+        跳转 另一个demo
+      </button>
       <div style={{ display: 'flex' }}>
         <canvas id="canvas" width="1000" height="700" style={{ border: '1px solid red' }}></canvas>
         <div style={{ marginRight: 16 }}>
@@ -239,6 +245,5 @@ export default () => {
         </div>
       </div>
     </>
-
   );
 };
