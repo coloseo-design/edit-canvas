@@ -35,40 +35,42 @@ class Canvas {
 
   public boundary: number = 20000;
 
+  public gap: number = 100;
+
   private drawCanvas() {
     const container = new Container();
-  const mid = new EditText({
-    style: {
-      fontSize: 30,
-      fill: 0x000000,
-      fontWeight: "900",
-      wordWrap: true,
-    },
-    value: '中心点',
-    position: {
-      x: 600,
-      y: 230,
-    },
-    container,
-    operate,
-  });
+    const mid = new EditText({
+      style: {
+        fontSize: 30,
+        fill: 0x000000,
+        fontWeight: "900",
+        wordWrap: true,
+      },
+      value: '中心点',
+      position: {
+        x: 600,
+        y: 230,
+      },
+      container,
+      operate,
+    });
 
-  this.add(mid);
+    this.add(mid);
 
-  const start = new EditText({
-    style: {
-      fontSize: 20,
-      fill: 0x000000,
-    },
-    value: '起点',
-    position: {
-      x: 30, y: 30,
-    },
-    container,
-    operate,
-  });
+    const start = new EditText({
+      style: {
+        fontSize: 20,
+        fill: 0x000000,
+      },
+      value: '起点',
+      position: {
+        x: 30, y: 30,
+      },
+      container,
+      operate,
+    });
 
-  this.add(start);
+    this.add(start);
     return container;
   }
   attach(root: HTMLElement) {
@@ -99,7 +101,7 @@ class Canvas {
     canvas.addChild(operate.rightTop);
     canvas.addChild(operate.leftBottom);
     canvas.addChild(operate.rightBottom);
-    
+
     app.stage.addChild(canvas);
     app.stage.addChild(top.topContainer);
     app.stage.addChild(top.leftContainer);
@@ -109,10 +111,11 @@ class Canvas {
     let select: any;
     let list: any[] = [];
 
+
     app.renderer.plugins.interaction.on('pointerdown', (e: InteractionEvent) => {
       if (e.target) {
-        if(['leftTop', 'leftBottom', 'rightTop', 'rightBottom', 'main'].includes(e.target.name)) {
-         operate.hornDown(e.target.name, e);
+        if (['leftTop', 'leftBottom', 'rightTop', 'rightBottom', 'main'].includes(e.target.name)) {
+          operate.hornDown(e.target.name, e);
         }
       } else { // 框选
         const startPosition = getPoint(e);
@@ -132,6 +135,11 @@ class Canvas {
     app.renderer.plugins.interaction.on('pointerup', (e: InteractionEvent) => {
       this.isTouch = false;
       operate.isDrag = false;
+      (this.GraphicsList || []).forEach((item) => {
+        if (typeof item.isDrag !== 'undefined') {
+          item.isDrag = false;
+        }
+      })
       if (select) {
         list = select.end();
         if (list.length > 0) {
@@ -164,26 +172,66 @@ class Canvas {
           operate.multi = false;
         }
       }
-     operate.hornUp(e);
+      operate.hornUp(e);
     });
 
     // 监听帧更新
 
     app.ticker.add(() => {
       const { x, y } = CanvasStore.screen;
-      const {x: scaleX, y: scaleY } = CanvasStore.scale;
-      const sx = scaleX <= 0.1 ? 0.1 : scaleX;
-      if (Math.abs(-sx * x) + root.clientWidth <= this.boundary && Math.abs(-scaleY * y) + root.clientHeight <= this.boundary) {
-        canvas.position.set(-sx * x, -scaleY * y);
-        canvas.scale.set(sx, scaleY);
-
-        top.topContainer.position.set(-sx * x, 0);
-
-        top.leftContainer.position.set(0, -scaleY * y);
-      }
-
+      const { x: scaleX, y: scaleY } = CanvasStore.scale;
+      canvas.position.set(-scaleX * x, -scaleY * y);
+      canvas.scale.set(scaleX, scaleY);
     });
+
     root.addEventListener("mousewheel", (e: any) => {
+      const { x, y, width, height } = CanvasStore.screen;
+      const { x: scaleX, y: scaleY } = CanvasStore.scale;
+      if (!e.ctrlKey) {
+        const lenX = Math.ceil(width / top.gap);
+        const lenY = Math.ceil(height / top.gap);
+        top.topContainer.position.set(-scaleX * x, 0);
+        top.leftContainer.position.set(0, -scaleY * y);
+        // 横向滚动
+        if (x > 0) {
+          if (e.deltaX >= 0 && x > top.swipeList[1][lenX - 1].start) {
+            top.paintX(top.swipeList[1][lenX - 1].start, top.gap);
+          }
+          if (e.deltaX < 0 && x < top.swipeList[0][lenX - 1].start) {
+            top.paintX(top.swipeList[0][lenX - 1].start, top.gap);
+          }
+        } else {
+          if (e.deltaX <= 0 && Math.abs(x) > Math.abs(top.swipeList[0][0].start)) {
+            top.paintX(top.swipeList[0][0].start, top.gap);
+          }
+          if (e.deltaX > 0 && x > top.swipeList[1][lenX - 1].start) {
+            top.paintX(top.swipeList[1][lenX - 1].start, top.gap);
+          }
+        }
+
+        // 竖向滚动
+        if (y > 0) {
+          if (e.deltaY >= 0 && y > top.verticalSwipes[1][lenY - 1].start) {
+            top.paintY(top.verticalSwipes[1][lenY - 1].start, top.gap);
+          }
+          if (e.deltaY < 0 && y < top.verticalSwipes[0][lenY - 1].start) {
+            top.paintY(top.verticalSwipes[0][lenY - 1].start, top.gap);
+          }
+        } else {
+          if (e.deltaY <= 0 && Math.abs(y) > Math.abs(top.verticalSwipes[0][0].start)) {
+            top.paintY(top.verticalSwipes[0][0].start, top.gap);
+          }
+          if (e.deltaY > 0 && y > top.verticalSwipes[1][lenY - 1].start) {
+            top.paintY(top.verticalSwipes[1][lenY - 1].start, top.gap);
+          }
+        }
+      } else {  // 缩放
+        const gap = Math.ceil(this.gap * scaleX);
+        top.gap = gap;
+        top.paintX(0, gap);
+        top.paintY(0, gap);
+        console.log('=>>', top.topContainer.children, top.leftContainer.children);
+      }
       wheelListener(e)
     }, { passive: false });
     root.addEventListener("pointermove", (e) => {

@@ -1,134 +1,129 @@
 import { Graphics, Text } from 'pixi.js';
+import CanvasStore from './store';
+import { uuid } from './utils';
 
 
 
 class ScaleLine {
-  width: number;
   topContainer: any;
   topContainer1: any;
   leftContainer: any;
-  // public boundary: number = 135000;
-  public boundary: number = 20000;
+  public boundary: number = 135000;
   public gap: number;
-  public lines: any;
-  constructor({ width = 0, gap = 50 }: any) {
-    this.gap = 50;
-    const topContainer = new Graphics();
-    topContainer.beginFill(0xffffff);
-    topContainer.lineStyle(1, 0xA6A8A9);
-    topContainer.drawRect(
-      -this.boundary,
-      0,
-      this.boundary * 2,
-      30
-    );
-    topContainer.endFill();
-
-
-    this.width = width;
-    this.topContainer = topContainer;
-    const leftContainer = new Graphics();
-    leftContainer.beginFill(0xffffff);
-    leftContainer.lineStyle(1, 0xA6A8A9);
-    leftContainer.drawRect(0, -this.boundary, 30, this.boundary * 2);
-    leftContainer.beginFill();
-    this.leftContainer = leftContainer;
-    this.lines = new Graphics();
-    this.paint(50, true);
-    this.paint1();
+  public countX: number = 1;
+  public countY: number = 1;
+  private scrollList: any;
+  public swipeList: any[] = [];
+  public verticalSwipes: any[] = [];
+  private verticalScroll: any;
+  constructor({ gap = 100 }: any) {
+    this.gap = gap;
+    this.topContainer = this.paintContainer(-this.boundary, 0, this.boundary * 2, 30);
+    this.leftContainer = this.paintContainer(0, -this.boundary, 30, this.boundary * 2);
+    this.countX = Math.ceil(CanvasStore.screen.width / gap);
+    this.countY = Math.ceil(CanvasStore.screen.height / gap);
+    const currentW = Math.ceil(CanvasStore.screen.height / this.countX);
+    this.swipeList = [];
+    this.scrollList = new Graphics();
+    this.verticalScroll = new Graphics();
+    this.paintX();
+    this.paintY();
   }
-  paintLine(move: any, end: any) {
+  paintContainer(x: number, y: number, width: number, height: number) {
+    const container = new Graphics();
+    container.beginFill(0xffffff);
+    container.lineStyle(1, 0xA6A8A9);
+    container.drawRect(
+      x,
+      y,
+      width,
+      height,
+    );
+    container.endFill();
+    return container;
+  }
+  paint(start: number, isVertical: boolean = false, gap: number = 100) {
+    const mid: any = [];
+    const prefix: any = [];
+    const suffix: any[] = [];
+    const temList: any[] = [];
+    const count = isVertical ? this.countY : this.countX;
+    const suffixStart = (count - 1) * gap + start;
+    Array.from({ length: count }).forEach((_, key) => {
+      const uid = `${uuid()}`;
+      const dm = key * gap + start; // 当前位置
+      const ds = suffixStart + (key + 1) * gap; // 后一屏位置
+      const dp = start - (count - key) * gap; // 前一屏位置
+
+      this.write(dm , temList, uid, mid, isVertical);
+      this.write(ds, temList, uid, suffix, isVertical);
+      this.write(dp, temList, uid, prefix, isVertical);
+    });
+    if (isVertical) {
+      this.verticalSwipes = [prefix, mid, suffix];
+      this.verticalScroll.children = temList;
+      this.leftContainer.addChild(this.verticalScroll);
+    } else {
+      this.swipeList = [prefix, mid, suffix];
+      this.scrollList.children = temList;
+      this.topContainer.addChild(this.scrollList);
+    }
+  }
+  paintX(start: number = 0, gap: number = 100) {
+    this.paint(start, false, gap);
+    console.log(this.swipeList);
+  }
+
+  paintY(start: number = 0, gap: number = 100) {
+    this.paint(start, true, gap);
+  }
+
+  write(distance: number, temList: any = [], uid: string, list: any = [], isVertical: boolean = false) {
+    const tx = isVertical ? 20 : distance;
+    const ty = isVertical ? distance : 10;
+    const txt: any = this.text(`${distance}`, tx, ty, isVertical);
+    txt.uuid = uid;
+    const linM = {
+      x: isVertical ? 25 : distance,
+      y: isVertical ? distance : 25,
+    }
+    const lineT = {
+      x: isVertical ? 30 : distance,
+      y: isVertical ? distance : 30,
+    }
+    const line: any = this.line(linM, lineT);
+    line.uuid = uid;
+    if (isVertical) {
+      this.verticalScroll.addChild(line);
+      this.verticalScroll.addChild(txt);
+    } else {
+      this.scrollList.addChild(line);
+      this.scrollList.addChild(txt);
+    }
+    list.push({ start: distance, uid });
+    temList.push(...[txt, line]);
+  }
+  line(move: any, end: any) {
     const line = new Graphics();
     line.lineStyle(1, 0xA6A8A9, 1);
     line.clear();
     line.lineStyle(1, 0xA6A8A9, 1);
-    line.moveTo(move.start, move.end);
-    line.lineTo(end.start, end.end);
-    this.lines.addChild(line);
+    line.moveTo(move.x, move.y);
+    line.lineTo(end.x, end.y);
+    return line;
   }
-  paintText(txt: string, x: number, y: number, negative: boolean = false) {
+  text(txt: string, x: number, y: number, isVertical: boolean) {
     const text = new Text(txt, {
       fill: 0xA6A8A9,
       fontSize: 10,
     });
-    let tx = x - text.width / 2
-    if (negative) {
-      tx = -(x + text.width / 2);
-    }
-    text.position.set(tx, y);
-    this.lines.addChild(text);;
-  }
-
-  test(x: number, width: number, gap: number = 50) {
-    this.lines.children = [];
-    this.topContainer.removeChild(this.lines);
-    const tx = Math.floor(x);
-    const list = Array.from({ length: Math.ceil(width / gap) }).map((_, k) => k);
-    const tem: any = [];
-    list.forEach((item) => {
-      tem.push(tx + item * gap);
-      this.paintText(`${tx + item * gap}`, tx + item * gap, 10);
-      this.paintLine({ start: tx + item * gap, end: 25 }, { start: tx + item * gap, end: 30 });
-    });
-    this.topContainer.addChild(this.lines);
-  }
-
-  paint(gap = 50, init: boolean = false) {
-    if (init || (this.gap !== gap)) {
-      this.gap = gap;
-      this.lines.children = [];
-      this.topContainer.removeChild(this.lines);
-      Array.from({ length: Math.ceil(this.boundary / gap) }).forEach((_, key) => {
-        const move = {
-          start: key * gap,
-          end: 25
-        }
-        const to = {
-          start: key * gap,
-          end: 30
-        }
-        this.paintLine(move, to);
-        this.paintText(`${key * gap}`, key * gap, 10);
-      });
-      Array.from({ length: Math.ceil(this.boundary / gap) }).forEach((_, key) => {
-        this.paintText(`-${(key + 1) * gap}`, (key + 1) * gap, 10, true);
-        this.paintLine({ start: -(key + 1) * gap, end: 25 }, { start: -(key + 1) * gap, end: 30 });
-      });
-      this.topContainer.addChild(this.lines);
-    }
-  }
-
-  paint1(gap = 50) {
-    Array.from({ length: Math.ceil(this.boundary / gap) }).forEach((_, key) => {
-      const line = new Graphics();
-      const text = new Text(`${(key) * gap}`, {
-        fill: 0xA6A8A9,
-        fontSize: 10,
-      });
-      text.position.set(20, key * gap - (text.width / 2));
+    const tx = isVertical ? x : x - text.width / 2;
+    const ty = isVertical ? y - text.width / 2 : y;
+    if (isVertical) {
       text.rotation = Math.PI / 2;
-      line.clear();
-      line.lineStyle(1, 0xA6A8A9, 1);
-      line.moveTo(25, key * gap);
-      line.lineTo(30, key * gap);
-      this.leftContainer.addChild(line);
-      this.leftContainer.addChild(text);
-    });
-    Array.from({ length: Math.ceil(this.boundary / gap) }).forEach((_, key) => {
-      const line = new Graphics();
-      const text = new Text(`-${(key + 1) * gap}`, {
-        fill: 0xA6A8A9,
-        fontSize: 10,
-      });
-      text.position.set(20, -((key + 1) * gap + (text.width / 2)));
-      text.rotation = Math.PI / 2;
-      line.clear();
-      line.lineStyle(1, 0xA6A8A9, 1);
-      line.moveTo(25, -(key + 1) * gap);
-      line.lineTo(30, -(key + 1) * gap);
-      this.leftContainer.addChild(line);
-      this.leftContainer.addChild(text);
-    });
+    }
+    text.position.set(tx, ty);
+    return text;
   }
 };
 

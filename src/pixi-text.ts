@@ -1,5 +1,6 @@
 import PIXI, { InteractionEvent, Text } from 'pixi.js';
 import { getPoint } from './pixi-utils';
+import { uuid } from './utils';
 
 
 type positionType = { x: number; y: number };
@@ -14,7 +15,7 @@ class EditText {
   public operate: any
   public width: number = 0;
   public height: number = 0;
-  public uuid: string = `${new Date().getTime()}`;
+  public uuid: string = `${uuid()}`;
   constructor({ width = 0, height = 0, value = '', style = {}, position = {}, container, resolution = 2, operate }: any) {
     this.style = style;
     this.position = position;
