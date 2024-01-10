@@ -22,7 +22,6 @@ class ScaleLine {
     this.leftContainer = this.paintContainer(0, -this.boundary, 30, this.boundary * 2);
     this.countX = Math.ceil(CanvasStore.screen.width / gap);
     this.countY = Math.ceil(CanvasStore.screen.height / gap);
-    const currentW = Math.ceil(CanvasStore.screen.height / this.countX);
     this.swipeList = [];
     this.scrollList = new Graphics();
     this.verticalScroll = new Graphics();
@@ -71,7 +70,6 @@ class ScaleLine {
   }
   paintX(start: number = 0, gap: number = 100) {
     this.paint(start, false, gap);
-    console.log(this.swipeList);
   }
 
   paintY(start: number = 0, gap: number = 100) {
@@ -79,17 +77,19 @@ class ScaleLine {
   }
 
   write(distance: number, temList: any = [], uid: string, list: any = [], isVertical: boolean = false) {
-    const tx = isVertical ? 20 : distance;
-    const ty = isVertical ? distance : 10;
+    const { x } = CanvasStore.scale;
+    const d = Math.ceil(distance * x);
+    const tx = isVertical ? 20 : d;
+    const ty = isVertical ? d : 10;
     const txt: any = this.text(`${distance}`, tx, ty, isVertical);
     txt.uuid = uid;
     const linM = {
-      x: isVertical ? 25 : distance,
-      y: isVertical ? distance : 25,
+      x: isVertical ? 25 : d,
+      y: isVertical ? d : 25,
     }
     const lineT = {
-      x: isVertical ? 30 : distance,
-      y: isVertical ? distance : 30,
+      x: isVertical ? 30 : d,
+      y: isVertical ? d : 30,
     }
     const line: any = this.line(linM, lineT);
     line.uuid = uid;

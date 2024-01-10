@@ -1,4 +1,6 @@
 import { Graphics, Text } from 'pixi.js';
+import { getBoundRect } from './pixi-utils';
+
 class SelectorTool {
   private pixiApp: any;
   private p1: any;
@@ -45,8 +47,8 @@ class SelectorTool {
         return true;
       }
    }).forEach((child: any) => {
-    const { x, y, width: w, height: h } = this.rect.getBounds();
-    const { x: x1, y: y1, width: w1, height: h1 } = child.getBounds();
+    const { x, y, width: w, height: h } = getBoundRect(this.rect);
+    const { x: x1, y: y1, width: w1, height: h1 } = getBoundRect(child);
     if (x1 >= x && y1 >= y && x1 + w1 <= x + w && y1 + h1 <= y + h) {
       selected.push(child);
     }

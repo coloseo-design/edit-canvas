@@ -4,7 +4,7 @@ import { getPoint } from './pixi-utils';
 
 type positionType = { x: number; y: number };
 
-type lineStyle = { width?: number, color?: number, alpha?: number, alignment?: number, native?: boolean };
+export type lineStyle = { width?: number, color?: number, alpha?: number, alignment?: number, native?: boolean };
 
 type argType = {
   w: number,
@@ -20,6 +20,7 @@ class OperateRect {
   leftBottom: PIXI.Graphics;
   rightTop: PIXI.Graphics;
   rightBottom: PIXI.Graphics;
+  operateContainer: PIXI.Graphics;
   main: PIXI.Graphics;
   child: any;
   isDrag: boolean = false;
@@ -40,6 +41,8 @@ class OperateRect {
   }: any) {
     this.lineStyle = lineStyle;
     this.position = position;
+    this.operateContainer = new Graphics();
+    this.operateContainer.name = 'operateContainer';
     this.main = new Graphics();
     this.leftBottom = new Graphics();
     this.leftTop = new Graphics();
@@ -52,6 +55,7 @@ class OperateRect {
       'rightTop': this.rightTop,
       'main': this.main,
     };
+    this.operateContainer.addChild(this.main, this.leftBottom, this.leftTop, this.rightBottom, this.rightTop);
     this.paint({ x: 0, y: 0, width: 0, height: 0 }, true, true);
   }
 
@@ -66,11 +70,13 @@ class OperateRect {
       if (item === 'main') {
         if (init) {
           this.dirMap[item].interactive = true;
-          this.dirMap[item].endFill();
-          this.dirMap[item].on('pointerup', this.hornUp);
+          // this.dirMap[item].on('pointerup', this.hornUp);
           this.dirMap[item].name = `${item}`;
+          this.dirMap[item].zIndex = -1;
+          this.dirMap[item].endFill();
         } else {
-          this.dirMap[item].beginFill(0xffffff, 0.0001);
+          this.dirMap[item].beginFill(0xffffff, 0);
+          // this.dirMap[item].beginFill(0xffffff, 0.0001);
           this.dirMap[item].lineStyle(this.lineStyle.width, this.lineStyle.color, this.lineStyle.alpha, this.lineStyle.alignment, this.lineStyle.native);
           this.dirMap[item].drawRect(x - 4, y - 4, w + 8, h + 8);
         }
@@ -81,7 +87,7 @@ class OperateRect {
           // this.dirMap[item].on('pointerdown', (e: InteractionEvent) => {
           //   this.hornDown(item, e);
           // });
-          this.dirMap[item].on('pointerup', this.hornUp);
+          // this.dirMap[item].on('pointerup', this.hornUp);
           this.dirMap[item].endFill();
         } else {
           this.dirMap[item].beginFill(0xffffff);
