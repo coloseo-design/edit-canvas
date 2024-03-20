@@ -1,6 +1,7 @@
 import PIXI, { InteractionEvent, Text, TextStyle, Container } from 'pixi.js';
 import { getPoint, getBoundRect, overflowContainer } from './pixi-utils';
 import { uuid } from './utils';
+import CanvasStore from './store';
 
 
 export type positionType = { x: number; y: number };
@@ -33,6 +34,7 @@ class EditText {
 
   private isDrag = false;
 
+
   paintText = () => {
     const textStyle = new TextStyle({ ...this.style });
     this.text = new Text(this.value, textStyle);
@@ -64,8 +66,10 @@ class EditText {
     this.parent = getBoundRect(this.container);
   }
 
-  changePosition = ({ x, y }: positionType) => {
+  changePosition = ({ x, y, width, height }: positionType & { width: number, height: number}) => {
     this.position = { x, y };
+    if (width) this.width = width;
+    if (height) this.height = height;
   }
 
   down = (e: InteractionEvent) => {
@@ -74,16 +78,14 @@ class EditText {
     const startPosition = getPoint(e);
     this.startPosition = startPosition;
     this.move(startPosition);
-    this.operate.clear();
-    this.operate.paint(getBoundRect(this.text));
 
   }
   move(start: positionType) {
     this.text.on('pointermove', (e: InteractionEvent) => {
       if (this.isDrag) {
         const scalePosition = getPoint(e);
-        const x = (scalePosition.x - start.x) + this.position.x;
-        const y = (scalePosition.y - start.y) + this.position.y;
+        const x = (scalePosition.x - start.x) / CanvasStore.scale.x + this.position.x;
+        const y = (scalePosition.y - start.y) / CanvasStore.scale.x + this.position.y;
         this.text.position.set(x, y);
         this.operate.clear();
       }
@@ -93,17 +95,17 @@ class EditText {
     e.stopPropagation();
     if (this.isDrag) {
       this.isDrag = false;
-      const { ax, ay } = overflowContainer(this.text, this.parent);
-      if (!ax || !ay) {
+      const isOverflow = overflowContainer(this.text, {...getBoundRect(this.container), width: this.parent.width, height: this.parent.height });
+      if (isOverflow) {
         this.container.removeChild(this.text);
         this.rootContainer.addChild(this.text);
         this.container = this.rootContainer;
-        this.parentData();
       }
       this.position = {
         x: getBoundRect(this.text).x,
         y: getBoundRect(this.text).y,
       };
+      this.parentData();
     }
   }
 }

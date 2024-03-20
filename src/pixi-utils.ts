@@ -10,20 +10,28 @@ export const getPoint = (e: InteractionEvent) => {
 };
 
 export const getBoundRect = (ele: any) => {
-  const { x, y, width, height } = ele.getBounds();
-  const { x: screenX, y: screenY } = CanvasStore.screen;
-  const { x: scaleX, y: scaleY } =  CanvasStore.scale;
-  const moveX = screenX * scaleX;
-  const moveY = screenY * scaleY;
-  const originX = (x + moveX) / scaleX;
-  const originY = (y + moveY) / scaleY;
-  const originW = width / scaleX;
-  const originH = height / scaleY;
+  if (ele) {
+    const { x, y, width, height } = ele.getBounds();
+    const { x: screenX, y: screenY } = CanvasStore.screen;
+    const { x: scaleX, y: scaleY } =  CanvasStore.scale;
+    const moveX = screenX * scaleX;
+    const moveY = screenY * scaleY;
+    const originX = (x + moveX) / scaleX;
+    const originY = (y + moveY) / scaleY;
+    const originW = width / scaleX;
+    const originH = height / scaleY;
+    return {
+      x: originX,
+      y: originY,
+      width: Number(originW.toFixed(2)),
+      height: Number(originH.toFixed(2)),
+    }
+  }
   return {
-    x: originX,
-    y: originY,
-    width: Number(originW.toFixed(2)),
-    height: Number(originH.toFixed(2)),
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
   }
 }
 
@@ -39,23 +47,20 @@ export const overflowContainer = (ele: any, parent: any) => {
   if ((y > 0 && y >= y1 && y + h <= y1 + h1) || (y < 0 && y <= y1 && Math.abs(y) + h <= Math.abs(y1) + h1)) {
     ay = true;
   }
-  return {
-    ax,
-    ay
-  }
+  return (!ax || !ay) ? true : false
 }
 
 
 export const loopChild = (data: any[] = [], editInfo: {x: number, y: number} | null = null) => {
   data.forEach((item) => {
     const { x, y } = getBoundRect(item);
+
     let x2 = 0, y2 = 0;
     if (item instanceof Text) {
       const x1 = editInfo ? x + editInfo.x : x;
       const y1 = editInfo ? y + editInfo.y : y;;
       (item as any).changePosition?.({ x: x1, y: y1 });
       item.position.set(x1, y1);
-
     }
     if (item instanceof Graphics) {
       x2 = item.x;

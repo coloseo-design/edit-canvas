@@ -1,5 +1,6 @@
 import PIXI, { Graphics, InteractionEvent } from 'pixi.js';
 import { getPoint } from './pixi-utils';
+import CanvasStore from './store';
 
 
 type positionType = { x: number; y: number };
@@ -22,10 +23,11 @@ class OperateRect {
   rightBottom: PIXI.Graphics;
   operateContainer: PIXI.Graphics;
   main: PIXI.Graphics;
-  child: any;
   isDrag: boolean = false;
   startPosition: positionType = { x: 0, y: 0 };
   dirMap: any;
+  operateGraphical: any;
+  moveType: string = '';
   x: number = 0;
   y: number = 0;
   originX: number = 0;
@@ -33,8 +35,6 @@ class OperateRect {
   originW: number = 0;
   originH: number = 0;
   root: HTMLElement | null = null;
-  GraphicsList: any[] = [];
-  multi: boolean = false;
   constructor({
     lineStyle = { width: 1, color: 0x0000ff },
     position = {},
@@ -142,7 +142,7 @@ class OperateRect {
   }
   hornMove = (type: string) => {
     this.dirMap[type].on('pointermove', (e: InteractionEvent) => {
-      if (this.isDrag) {
+      if (this.isDrag && type === this.moveType) {
         this.diffMove(type, e);
       }
     })
@@ -151,9 +151,12 @@ class OperateRect {
   diffMove = (type: string, e: InteractionEvent) => {
     this.clear();
     const scalePosition = getPoint(e);
-    const diffX = scalePosition.x - this.startPosition.x + this.dirMap[type].x;
-    const diffY = scalePosition.y - this.startPosition.y + this.dirMap[type].y;
+    const dx = (scalePosition.x - this.startPosition.x) / CanvasStore.scale.x;
+    const dy = (scalePosition.y - this.startPosition.y) / CanvasStore.scale.x;
+    const diffX = dx + this.dirMap[type].x;
+    const diffY = dy + this.dirMap[type].y;
     let x = this.originX, y = this.originY, width = this.originW, height = this.originH;
+
     if (type === 'leftBottom') {
       x = x + diffX;
       width = width - diffX;
@@ -178,32 +181,27 @@ class OperateRect {
       x = diffX + x;
       y = diffY + y;
     }
+
+    if (this.operateGraphical) {
+      if (this.operateGraphical instanceof Graphics) {
+        (this.operateGraphical as any).isMove = false;
+        this.operateGraphical.clear();
+        this.operateGraphical.position.set(0, 0);
+        (this.operateGraphical as any)?.changePosition({ x, y, width, height });
+        (this.operateGraphical as any)?.repeat();
+      } else {
+        this.operateGraphical.position.set(x, y);
+        this.operateGraphical.changePosition({ x, y, width, height });
+      }
+    }
     this.paint({ x, y, width, height }, true);
-    (this.main.children || []).forEach((item: any) => {
-      this.GraphicsList.filter((i, index) => {
-        if (i.uuid === item.uuid) {
-          item.position.set(i.position.x + diffX, i.position.y + diffY);
-        }
-      })
-    });
   }
 
-  hornUp = (e: InteractionEvent) => {
+  hornUp = () => {
     if (this.isDrag) {
       this.isDrag = false;
-      const scalePosition = getPoint(e);
-      const diffX = scalePosition.x - this.startPosition.x + this.dirMap['main'].x;
-      const diffY = scalePosition.y - this.startPosition.y + this.dirMap['main'].y;
-      (this.main.children || []).forEach((item: any) => {
-        this.GraphicsList.filter((i) => {
-          if (i.uuid === item.uuid) {
-            i.position = {
-              x: i.position.x + diffX,
-              y: i.position.y + diffY,
-            }
-          }
-        })
-      });
+      this.operateGraphical = null;
+      this.moveType = '';
     }
   }
 }

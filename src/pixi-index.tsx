@@ -1,9 +1,8 @@
 import { Application, Container, Graphics, Text, Sprite, Loader, BitmapFont, BitmapText, InteractionEvent } from "pixi.js";
-import { getPoint } from './pixi-utils';
+import { getPoint, getBoundRect } from './pixi-utils';
 import CanvasStore from './store';
 import EditText from './pixi-text';
 import OperateRect from './pixi-operate';
-import SelectorTool from './pixi-select';
 import ScaleLine from './pixi-scale';
 import EditGraphics from './pixi-graphics';
 
@@ -28,8 +27,6 @@ const pointerListener = (event: PointerEvent) => {
 
 const operate = new OperateRect({});
 class Canvas {
-  private isTouch: boolean = false;
-  private GraphicsList: any[] = [];
   public app: Application | null = null;
   public mainContainer: Container | null = null;
   public root: HTMLElement | null = null;
@@ -38,24 +35,15 @@ class Canvas {
 
   public rod: any
 
-  private add(item: any) {
-    if (Array.isArray(item)) {
-      item.forEach((i) => {
-        this.GraphicsList.push(i);
-      })
-    } else {
-      this.GraphicsList.push(item);
-    }
-  }
 
   public gap: number = 100;
 
   public temStartX: number = 0;
   public temStartY: number = 0;
 
-  private drawCanvas() {
+
+  public drawCanvas() {
     const container = new Container();
-    // console
     const mid = new EditText({
       style: {
         fontSize: 30,
@@ -74,7 +62,7 @@ class Canvas {
 
     const contain = new EditGraphics({
       width: 750,
-      height: 700,
+      height: 1000,
       background: 0xF5F6F6,
       position: {
         x: 130,
@@ -99,9 +87,8 @@ class Canvas {
       operate,
       name: 'header',
     });
-    this.add([contain, header]);
 
-    Array.from({ length: 2 }).forEach((_, key) => {
+    Array.from({ length: 3 }).forEach((_, key) => {
       const ry = 158 + key * 209 + key * 20;
       const item = new EditGraphics({
         width: 702,
@@ -181,8 +168,7 @@ class Canvas {
         style: {
           fontSize: 24,
           fontWeight: 400,
-          // fill: 0xffffff,
-          fill: 0x000000,
+          fill: 0xffffff,
         },
         rootContainer: container,
         value: '修改',
@@ -197,8 +183,7 @@ class Canvas {
         style: {
           fontSize: 12,
           fontWeight: 400,
-          // fill: 0xffffff,
-          fill: 0x000000,
+          fill: 0xffffff,
         },
         rootContainer: container,
         value: '连琦',
@@ -209,7 +194,6 @@ class Canvas {
         operate,
         container: r1.graphics
       });
-      this.add([item, t1, t2, r1, r2, t3, r2t]);
     })
 
     const title = new EditText({
@@ -221,17 +205,13 @@ class Canvas {
       },
       value: '标题',
       position: {
-        x: 400,
+        x: 440,
         y: 80,
       },
       operate,
       container: header.graphics,
       rootContainer: container,
     });
-    this.add(title);
-
-
-    this.add(mid);
 
     const start = new EditText({
       style: {
@@ -247,83 +227,49 @@ class Canvas {
       rootContainer: container,
     });
 
-    this.add(start);
+    new EditGraphics({
+      width: 200,
+      height: 88,
+      background: 0x00ff00,
+      position: {
+        x: 930,
+        y: 50,
+      },
+      rootContainer: container,
+      container,
+      operate,
+      name: 'test-graphical',
+    })
 
     return container;
   }
+  setIndex = (target: any, parent: any) => {
+    if (parent?.children.length > 0) {
+      parent.setChildIndex(target, parent.children.length - 1);
+    }
+  }
+  pointerDown = (e: InteractionEvent) => {
+    if (e.target) {
+      e.stopPropagation();
+      this.setIndex(e.target, e.target.parent); // 设置当前层级
+      this.setIndex(operate.operateContainer, this.mainContainer); // 设置框架层级
+      if (['leftTop', 'leftBottom', 'rightTop', 'rightBottom', 'main'].includes(e.target.name)) {
+        operate.moveType = e.target.name;
+        operate.hornDown(e.target.name, e);
+      } else {
+        operate.operateGraphical = e.target;
+        operate.clear();
+        operate.paint(getBoundRect(e.target));
+      }
+    }
+  }
   appOperate = () => {
-    let select: any;
-    let list: any[] = [];
     if (this.app && this.mainContainer) {
-      this.app.renderer.plugins.interaction.on('pointerdown', (e: InteractionEvent) => {
-        if (e.target) {
-          e.stopPropagation();
-          e.target.parent.children.length > 0 && e.target.parent.setChildIndex(e.target, e.target.parent.children.length - 1);
-          (this.mainContainer as any).children.length > 0 && (this.mainContainer as any).setChildIndex(operate.operateContainer, (this.mainContainer as any).children.length - 1);
-          if (['leftTop', 'leftBottom', 'rightTop', 'rightBottom', 'main'].includes(e.target.name)) {
-            operate.hornDown(e.target.name, e);
-          }
-        } else { // 框选
-          const startPosition = getPoint(e);
-          const stagePos = this.app?.stage.localTransform.clone().applyInverse(startPosition);
-          this.isTouch = true;
-          select = new SelectorTool(this.mainContainer, stagePos);
-          operate.multi = true;
-          operate.clear(); // 点击空白处
-        }
-      });
-      this.app.renderer.plugins.interaction.on('pointermove', (e: InteractionEvent) => {
-        if (this.isDrag && e.target) {
-          operate.clear()
-        }
-        if (this.isTouch && select) {
-          const scalePosition = getPoint(e);
-          select.move(this.app?.stage.localTransform.clone().applyInverse(scalePosition))
-        }
-      })
+      this.app.renderer.plugins.interaction.on('pointerdown', this.pointerDown);
+      this.app.renderer.plugins.interaction.on('pointermove', (e: InteractionEvent) => {})
       this.app.renderer.plugins.interaction.on('pointerup', (e: InteractionEvent) => {
         e.stopPropagation();
-        this.isTouch = false;
-        operate.isDrag = false;
-        this.isDrag = false;
-        (this.GraphicsList || []).forEach((item) => {
-          if (typeof item.isDrag !== 'undefined') {
-            item.isDrag = false;
-          }
-        })
-        if (select) {
-          if (select.end().length > 0) {
-            list = select.end();
-            const { x, y, width, height } = select.rect.getLocalBounds();
-            operate.clear();
-            operate.originW = width;
-            operate.originH = height;
-            operate.x = x;
-            operate.y = y;
-            operate.width = width;
-            operate.height = height;
-            operate.originX = x;
-            operate.originY = y;
-            operate.paint({ x, y, width, height }, true);
-            list.forEach((item) => {
-              operate.main.addChild(item);
-            });
-            this.mainContainer?.removeChild(select.rect);
-          }
-          select.rect.clear();
-          select = null;
-        } else {
-          (operate.main.children || []).forEach((item) => {
-            operate.main.removeChild(item);
-            this.mainContainer?.addChild(item);
-          });
-          if (operate.multi) {
-            list = [];
-            operate.clear();
-            operate.multi = false;
-          }
-        }
-        operate.hornUp(e);
+        operate.hornUp();
       });
     }
   }
@@ -418,8 +364,6 @@ class Canvas {
       autoDensity: true,
     });
     this.app = app;
-    // operate.child = root;
-
     root.appendChild(app.view);
     root.onpointerup = () => {
       operate.isDrag = false;
@@ -440,8 +384,7 @@ class Canvas {
     app.stage.addChild(mainContainer);
     app.stage.addChild(top.topContainer);
     app.stage.addChild(top.leftContainer);
-
-    operate.GraphicsList = this.GraphicsList;
+    
 
     // 监听帧更新
 

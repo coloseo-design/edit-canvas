@@ -3,6 +3,7 @@ import { lineStyle } from './pixi-operate';
 import { getPoint, getBoundRect, overflowContainer, loopChild } from './pixi-utils';
 import { positionType } from './pixi-text';
 import { uuid } from './utils';
+import CanvasStore from './store';
 
 class EditGraphics {
   width: number;
@@ -54,6 +55,7 @@ class EditGraphics {
     this.paint();
     this.parentData();
   }
+
   parentData = () => {
     this.parent = getBoundRect(this.container);
   }
@@ -69,14 +71,18 @@ class EditGraphics {
     this.repeat();
     this.graphics.on('pointerdown', this.down);
     this.graphics.on('pointerup', this.up);
-    this.graphics.antialias = true;
-    this.graphics.autoDensity = true;
+    this.graphics.antialias = true; // 抗锯齿
+    this.graphics.autoDensity = true;// 模糊处理
     this.graphics.interactive = this.isEdit;
-    this.container.addChild(this.graphics);
+    if (this.container) {
+      this.container.addChild(this.graphics);
+    }
   }
 
-  changePosition = ({ x, y }: positionType) => {
+  changePosition = ({ x, y, width, height }: positionType & { width?: number, height?: number}) => {
     this.position = { x, y };
+    if (width) this.width = width;
+    if (height) this.height = height;
   }
 
   repeat = () => {
@@ -97,11 +103,10 @@ class EditGraphics {
   down = (e: InteractionEvent) => {
     e.stopPropagation();
     this.isDrag = true;
+    this.graphics.isMove = true;
     const startPosition = getPoint(e);
     this.startPosition = startPosition;
     this.move({x: e.data.global.x, y: e.data.global.y });
-    this.operate.clear();
-    this.operate.paint(getBoundRect(this.graphics));
 
 
   }
@@ -112,19 +117,19 @@ class EditGraphics {
         // Graphics 容器里面的位置并不是实际的position x, y 是父级原点 0, 0;
         const x = scalePosition.x - start.x;
         const y = scalePosition.y - start.y;
-        this.graphics.position.set(x, y);
+        this.graphics.position.set(x / CanvasStore.scale.x, y / CanvasStore.scale.x);
         this.operate.clear();
       }
     });
   }
 
-  up = (e: InteractionEvent) => {
+  up = (e: InteractionEvent) => { // 超出换Container TODO
     e.stopPropagation();
     this.isDrag = false;
-    const { ax, ay } = overflowContainer(this.graphics, this.parent);
+    const isOverflow = overflowContainer(this.graphics, {...getBoundRect(this.container), width: this.parent.width, height: this.parent.height });
     const { x, y ,width, height } = getBoundRect(this.graphics);
     this.position = { x, y};
-    if ((!ax || !ay) && this.isEdit && this.container instanceof Graphics) {
+    if (isOverflow && this.isEdit) {
       this.container = this.rootContainer;
       this.container.removeChild(this.graphics);
       this.rootContainer.addChild(this.graphics);
@@ -132,12 +137,12 @@ class EditGraphics {
       this.height = height;
       this.graphics.clear();
       this.repeat();
-      this.parentData();
       if (this.graphics.children) {
         loopChild(this.graphics.children);
       }
       this.graphics.position.set(0, 0);
     }
+    this.parentData();
   }
 };
 
