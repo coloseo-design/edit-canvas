@@ -21,7 +21,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 const workspace = path.resolve(process.cwd(), '');
-const entryPath = path.join(workspace, 'src');
+const entryPath = path.join(workspace, 'src/components');
 const entryDir = fs.readdirSync(entryPath);
 
 const extensions = ['.tsx', '.ts', '.js'];
@@ -36,13 +36,14 @@ entryDir.forEach((file) => {
   }
 });
 
+
 const output = process.env.NODE_ENV !== 'production' ? {
   path: path.join(__dirname, './dist'),
   publicPath: './',
   filename: '[name]-[hash].js',
 } : {
   path: path.join(__dirname, './dist'),
-  publicPath: './src/',
+  publicPath: './src',
   filename: '[name].js',
   library: 'canvas',
   libraryTarget: 'umd',
@@ -50,7 +51,7 @@ const output = process.env.NODE_ENV !== 'production' ? {
 
 module.exports = {
   mode: 'development',
-  devtool: 'cheap-module-source-map',
+  // devtool: 'cheap-module-source-map',
   devServer: {
     contentBase: path.join(__dirname, './index.js'),
     publicPath: '/',
