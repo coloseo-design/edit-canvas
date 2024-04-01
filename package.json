@@ -1,6 +1,6 @@
 {
   "name": "canvas",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "",
   "main": "lib/index.js",
   "types": "dist/index.d.ts",
@@ -10,7 +10,9 @@
     "compile": "node build.js && tsc --declaration --outDir lib src/components/*.ts -t es5",
     "start": "webpack-dev-server --mode development --open"
   },
-  "file": ["lib"],
+  "file": [
+    "lib"
+  ],
   "author": "",
   "license": "ISC",
   "devDependencies": {
