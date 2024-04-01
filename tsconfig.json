@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "emitDeclarationOnly": true,
-    "declaration": true,
+    // "emitDeclarationOnly": true,
+    // "declaration": true,
     // "outDir": "lib",
     // "declarationDir": "lib",
     "target": "esnext",
