@@ -46,7 +46,7 @@ const Demo = () => {
 
   const start = () => {
     const graffiti = new Graffiti();
-    graffiti.setStyle({ color: 0xff0000, alpha: 1 })
+    // graffiti.setStyle({ color: 0xffff00, alpha: 1 })
     app?.add(graffiti);
     app?.startGraffiti();
   }

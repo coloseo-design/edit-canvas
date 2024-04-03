@@ -63,7 +63,7 @@ class Graffiti {
   }
 
   private repeat = (rect: positionType & { width: number, height: number }) => {
-    this.brush.beginFill(0xffffff, 0);
+    this.brush.beginFill(this.app.app?.renderer.backgroundColor, 0.1);
     this.brush.drawRect(rect.x, rect.y, rect.width, rect.height);
     this.brush.endFill();
   }

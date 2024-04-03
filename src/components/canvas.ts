@@ -92,6 +92,9 @@ class Canvas {
         operate.isDrag = false;
         operate.hornUp();
         this.isDown = false;
+        if (this.GraffitiList.length) {
+          this.GraffitiList.forEach((i) => i.brush.isDrag = false);
+        }
       });
     }
   }
@@ -217,13 +220,13 @@ class Canvas {
   public add(ele: any) {
     if (ele instanceof Graffiti) {
       this.getBrushParent();
-      const gra = new Graffiti();
-      gra.operate = operate;
-      gra.app = this;
-      this.GraffitiContainer.addChild(gra.brush);
-      this.GraffitiList.push(gra);
-      gra.brush.interactive = true;
-      gra.container = this.GraffitiContainer;
+      // const gra = new Graffiti();
+      ele.operate = operate;
+      ele.app = this;
+      this.GraffitiContainer.addChild(ele.brush);
+      this.GraffitiList.push(ele);
+      ele.brush.interactive = true;
+      ele.container = this.GraffitiContainer;
     } else {
       ele.operate = operate;
       ele.container = this.mainContainer;
@@ -248,7 +251,7 @@ class Canvas {
     if (this.GraffitiList.length) {
       const b = this.GraffitiList[this.GraffitiList.length - 1].brush; // 绘制当前涂鸦的父级
       const obj = getBoundRect(b);
-      b.beginFill(0xffffff, 0);
+      b.beginFill(this.app?.renderer.backgroundColor, 0.05);
       b.drawRect(obj.x, obj.y, obj.width, obj.height);
       b.endFill();
     }
