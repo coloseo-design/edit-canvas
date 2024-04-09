@@ -102,7 +102,12 @@ const Demo = () => {
       <button onClick={() => app?.back()}>回退</button>
       <button onClick={() => app?.revoke()}>撤销回退</button>
       <button onClick={() => {
-        app?.setScale(true);
+        app?.clearCanvas();
+        setTimeout(() => {
+          app?.setScale(true);
+          img && app?.add(img);
+
+        }, 1000);
       }}>展示刻度</button>
       <div id="canvas-container" style={{ width: '100%', height: '90vh', position: 'relative' }} />
     </div>

@@ -183,10 +183,11 @@ class Canvas {
     }
   }
   public clearCanvas = () => {
-    (this.app?.stage?.children || []).forEach((i) => {
-      this.app?.stage?.removeChild(i);
-    })
-
+    if (this.app) {
+      this.mainContainer.removeChildren();
+      this.GraffitiContainer.removeChildren();
+     this.app.stage.removeChildren();
+    }
   }
   public deleteGraffiti() {
     if (this.GraffitiList.length) {
@@ -253,7 +254,14 @@ class Canvas {
     return this.selected;
   }
   public add(ele: childType) {
+    const hasMain = (this.app?.stage?.children || []).includes(this.mainContainer);
+    if (!hasMain) {
+      this.mainContainer.addChild(operate.operateContainer);
+      this.app?.stage.addChild(this.mainContainer);
+    }
     if (ele instanceof Graffiti) {
+      const hasGra = (this.app?.stage?.children || []).includes(this.GraffitiContainer);
+      this.app?.stage.addChild(this.GraffitiContainer);
       this.getBrushParent();
       ele.operate = operate;
       ele.app = this;
@@ -298,11 +306,15 @@ class Canvas {
     if (show) {
       this.app?.stage.addChild(this.rod?.topContainer);
       this.app?.stage.addChild(this.rod?.leftContainer);
+      this.app?.stage.setChildIndex(this.rod?.leftContainer, this.app.stage.children.length -1);
+      this.app?.stage.setChildIndex(this.rod?.topContainer, this.app.stage.children.length -1);
       this.app?.ticker.add(() => {
         const { x, y } = CanvasStore.screen;
         const { x: scaleX, y: scaleY } = CanvasStore.scale;
-        this.rod?.topContainer.position.set(-scaleX * x, 0);
-        this.rod?.leftContainer.position.set(0, -scaleY * y);
+        if ((this.app?.stage.children || []).includes(this.rod?.leftContainer)) {
+          this.rod?.topContainer.position.set(-scaleX * x, 0);
+          this.rod?.leftContainer.position.set(0, -scaleY * y);
+        }
       });
     } else {
       this.app?.stage.removeChild(this.rod?.topContainer);
