@@ -57,49 +57,58 @@ const canvas = new EditCanvas();
 - **delete**: 清除矩形，() => void;
 
 
-#### demo示例
+### demo示例
+```
+import React, { useEffect, useRef } from 'react';
 import EditCanvas, { Text, Image, Graphics, Graffiti } from 'edit-canvas';
-const canvasRef = useRef<EditCanvas>(null);
-useEffect(() => {
-  const app = new EditCanvas();
-  app.attach(canvasRef.current);
-  const text = new Text({
-    value: '测试文案',
-    position: {
-      x: 200,
-      y: 20,
-    },
-    style: {
-      fontSize: 30,
-      fill: 0x000000,
-      fontWeight: "900",
-      wordWrap: true,
-    },
-  });
-  const img = new Image({
-    url: require('./assets/cat.png'),
-    position: {
-      x: 200,
-      y: 200,
-    },
-    width: 300,
-    height: 300,
-  });
-  const graphics = new Graphics({
-    position: {
-      x: 0,
-      y: 0,
-    },
-    background: 0xff0000,
-    width: 100,
-    height: 100,
-  });
-  const graffiti = new Graffiti();
-  app.add(text);
-  app.add(img);
-  app.add(graphics);
-  app.add(graffiti);
-}, []);
-<div>
-  <div ref={canvasRef}></div>
-</div>
+const Demo = () => {
+  const canvasRef = useRef<EditCanvas>(null);
+  useEffect(() => {
+    const app = new EditCanvas();
+    app.attach(canvasRef.current);
+    const text = new Text({
+      value: '测试文案',
+      position: {
+        x: 200,
+        y: 20,
+      },
+      style: {
+        fontSize: 30,
+        fill: 0x000000,
+        fontWeight: "900",
+        wordWrap: true,
+      },
+    });
+    const img = new Image({
+      url: require('./assets/cat.png'),
+      position: {
+        x: 200,
+        y: 200,
+      },
+      width: 300,
+      height: 300,
+    });
+    const graphics = new Graphics({
+      position: {
+        x: 0,
+        y: 0,
+      },
+      background: 0xff0000,
+      width: 100,
+      height: 100,
+    });
+    const graffiti = new Graffiti();
+    app.add(text);
+    app.add(img);
+    app.add(graphics);
+    app.add(graffiti);
+  }, []);
+  return (
+    <div>
+      <div ref={canvasRef}></div>
+    </div>
+  )
+}
+
+
+```
