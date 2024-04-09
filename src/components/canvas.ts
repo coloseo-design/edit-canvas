@@ -205,7 +205,7 @@ class Canvas {
     }
   }
 
-  public revokeGraffiti() {
+  public revokeGraffiti() { // 撤销删除的涂鸦
     if (this.cacheGraffitiList.length) {
       const current = this.cacheGraffitiList[this.cacheGraffitiList.length - 1];
       if (current.children.length) {
