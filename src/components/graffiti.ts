@@ -1,7 +1,7 @@
 import { Graphics, InteractionEvent } from 'pixi.js';
 import { uuid } from './utils';
 import { positionType } from './canvas';
-import { getPoint, getBoundRect } from './utils';
+import { getPoint } from './utils';
 import CanvasStore from './store';
 
 

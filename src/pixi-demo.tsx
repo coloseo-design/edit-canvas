@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import EditCanvas, { Image, Text, Graffiti } from './components/index';;
+import EditCanvas, { Image, Text, Graffiti, Graphics } from './components/index';;
 
 
 const Demo = () => {
@@ -12,6 +12,7 @@ const Demo = () => {
     setApp(app);
     if (canvasContainer) {
       app.attach(canvasContainer);
+      app.setScale(true);
       const image = new Image({
         url: require('./assets/cat.png'),
         position: {
@@ -34,10 +35,21 @@ const Demo = () => {
           y: 230,
         },
       });
+      const g = new Graphics({
+        position: {
+          x: 0,
+          y: 0,
+        },
+        width: 100,
+        height: 100,
+      })
       setText(text1);
       setImg(image);
+      app.add(g);
       app.add(image);
       app.add(text1);
+      const graffiti = new Graffiti();
+      app?.add(graffiti);
     }
     return () => {
       canvasContainer && app.detach(canvasContainer);
@@ -45,9 +57,6 @@ const Demo = () => {
   }, []);
 
   const start = () => {
-    const graffiti = new Graffiti();
-    // graffiti.setStyle({ color: 0xffff00, alpha: 1 })
-    app?.add(graffiti);
     app?.startGraffiti();
   }
 
@@ -90,6 +99,8 @@ const Demo = () => {
       <button onClick={handleDelete}>删除当前选中图形</button>
       <button onClick={handleText}>编辑文字</button>
       <button onClick={handleImage}>生成图片</button>
+      <button onClick={() => app?.back()}>回退</button>
+      <button onClick={() => app?.revoke()}>撤销回退</button>
       <button onClick={() => {
         app?.setScale(true);
       }}>展示刻度</button>

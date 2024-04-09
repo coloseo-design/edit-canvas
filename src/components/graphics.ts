@@ -1,8 +1,7 @@
 import { Graphics, InteractionEvent, Container } from 'pixi.js';
 import { lineStyle } from './operate';
-import { getPoint, getBoundRect } from './utils';
+import { getPoint, getBoundRect, uuid } from './utils';
 import { positionType } from './canvas';
-import { uuid } from './utils';
 import CanvasStore from './store';
 
 class EditGraphics {
@@ -15,7 +14,6 @@ class EditGraphics {
   radius: number;
   lineStyle: lineStyle;
   background: number;
-  rootContainer: Container;
   private parent: any = {};
   public app: any;
   private uuid: string;
@@ -34,7 +32,6 @@ class EditGraphics {
       width: 0,
     },
     background = 0xff0000,
-    rootContainer,
     operate,
     name = '',
     isEdit = true,
@@ -43,7 +40,6 @@ class EditGraphics {
     this.width = width;
     this.height = height;
     this.position = position;
-    this.rootContainer = rootContainer;
     this.container = container;
     this.shape = shape;
     this.radius = radius;
@@ -111,6 +107,7 @@ class EditGraphics {
   down = (e: InteractionEvent) => {
     e.stopPropagation();
     if (!this.app.isGraffiti) {
+      this.app.backCanvasList.push({...this.position, width: this.width, height: this.height, uuid: this.uuid });
       this.graphics.isDrag = true;
       this.graphics.isMove = true;
       this.move(getPoint(e));

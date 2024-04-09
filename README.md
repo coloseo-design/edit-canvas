@@ -8,7 +8,8 @@ const canvas = new EditCanvas();
 - **attach**: 为canvas添加container, attach(HTMLElement) => void
 - **add**: 为canvas添加子集 例如:Image, Text, Graffiti,Graphics, add(Image|Text|Graffiti|Graphics) => void
 - **clearCanvas**: 清空画布方法, () => void
-- **deleteGraffiti**: 删除上一步画笔方法 () => void;
+- - **back**: 返回画布图形上一步操作, () => void
+- **revoke**: 撤销画布图形返回的上一步操作, () => void;
 - **revokeGraffiti**:撤销删除画笔的方法 () => void;
 - **getSelectedGraphics**: 获取当前选中的图形 () => void;
 - **startGraffiti**: 画笔开始调用的方法 () => void;
@@ -34,7 +35,7 @@ const canvas = new EditCanvas();
 - **style**: 文字样式, PIXI.TextStyle
 - **value**: 文字描述: string
 - **height**:文字的高, number；
-- - **width**:文字的宽, number
+- **width**:文字的宽, number
 - **delete**: 清除文字，() => void;
 
 
@@ -46,7 +47,7 @@ const canvas = new EditCanvas();
 - **background**:矩形填充色
 - **alpha**:矩形填充色透明度
 - **width**:矩形的宽, number
-- **delete**: 清除矩形，() => void;
+- **delete**: 清除画笔，() => void;
 
 
 ### Graffiti 矩形 API
@@ -55,6 +56,7 @@ const canvas = new EditCanvas();
 - **lineWidth**:画笔的宽度
 - **alpha**:画笔颜色透明度
 - **delete**: 清除矩形，() => void;
+- **setStyle**: 修改画笔样式({color, alpha, lineWidth}) => void;
 
 
 ### demo示例

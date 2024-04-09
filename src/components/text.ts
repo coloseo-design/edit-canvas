@@ -15,13 +15,12 @@ class EditText {
   public height: number = 0;
   public uuid: string = `${uuid()}`;
   private parent: any = {};
-  private rootContainer: Container;
   private input: HTMLInputElement | null = null;
   public rootDom: HTMLElement | null = null;
   private isPinyin: boolean = false;
   private isFocus: boolean = false;
   public app: any;
-  constructor({ width = 0, height = 0, value = '', style = {}, position = {}, container, rootContainer, operate }: any) {
+  constructor({ width = 0, height = 0, value = '', style = {}, position = {}, container, operate }: any) {
     this.style = style;
     this.position = position;
     this.value = value;
@@ -29,7 +28,6 @@ class EditText {
     this.operate = operate;
     this.width = width;
     this.height = height;
-    this.rootContainer = rootContainer;
   }
 
   paint = () => {
@@ -145,6 +143,7 @@ class EditText {
   down = (e: InteractionEvent) => {
     e.stopPropagation();
     if (!this.app.isGraffiti) {
+      this.app.backCanvasList.push({...this.position, width: this.width, height: this.height,  uuid: this.uuid });
       this.text.isDrag = true;
       if (!this.isFocus) {
         this.move(getPoint(e));

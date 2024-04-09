@@ -1,9 +1,12 @@
-import { Application, Container, InteractionEvent } from "pixi.js";
+import { Application, Container, InteractionEvent, Graphics as PIXIGraphics } from "pixi.js";
 import { getBoundRect, exportImage } from './utils';
 import CanvasStore from './store';
 import OperateRect from './operate';
 import ScaleLine from './scale';
 import Graffiti from './graffiti';
+import Image from './image';
+import Text from './text';
+import Graphics from './graphics';
 
 export type positionType = { x: number; y: number };
 
@@ -26,13 +29,15 @@ const pointerListener = (event: PointerEvent) => {
   CanvasStore.movePointer(event.offsetX, event.offsetY);
 };
 
+type childType = Graffiti | Image | Text | Graphics;
+
 const operate = new OperateRect({});
 class Canvas {
   public app: Application | null = null;
   private mainContainer: Container = new Container();
   private root: HTMLElement | null = null;
   private isDown: boolean = false;
-  private rod: any
+  private rod: any;
   private temStartX: number = 0;
   private temStartY: number = 0;
   private selected: any;
@@ -40,6 +45,8 @@ class Canvas {
   public isGraffiti: boolean = false;
   private GraffitiList: Graffiti[] = []; // 所有的存在的涂鸦
   private cacheGraffitiList: Graffiti[] = []; // 缓存当前画笔下的涂鸦
+  public backCanvasList: any[] = [] // 存储画布前一步的状态
+  public revokeBackList: any[] = [] // 存储画布回退时的状态
   public showScale: boolean = false;
 
 
@@ -214,13 +221,40 @@ class Canvas {
     }
   }
 
+  private utilsBack(isBack: boolean) {
+    const list = isBack ? this.backCanvasList : this.revokeBackList;
+    const last = list.pop();
+    if (last) {
+      const current = (this.mainContainer.children || []).find((i: any) => i.uuid === last.uuid);
+      if (current) {
+        isBack && this.revokeBackList.push({ ...getBoundRect(current), uuid: (current as any).uuid });
+        if (current instanceof PIXIGraphics) {
+          (current as any).changePosition({ ...last });
+          (current as any).clear();
+          (current as any).repeat();
+        } else {
+          (current as any).changePosition({ ...last});
+          current.position.set(last.x, last.y);
+        }
+      }
+      operate.clear();
+    }
+  }
+
+  public back() { //回退
+    this.utilsBack(true);
+  }
+
+  public revoke() {
+    this.utilsBack(false);
+  }
+
   public getSelectedGraphics() {
     return this.selected;
   }
-  public add(ele: any) {
+  public add(ele: childType) {
     if (ele instanceof Graffiti) {
       this.getBrushParent();
-      // const gra = new Graffiti();
       ele.operate = operate;
       ele.app = this;
       this.GraffitiContainer.addChild(ele.brush);
@@ -230,8 +264,6 @@ class Canvas {
     } else {
       ele.operate = operate;
       ele.container = this.mainContainer;
-      ele.rootContainer = this.mainContainer;
-      ele.rootDom = this.root;
       ele.app = this;
       ele.paint();
     }
@@ -256,10 +288,9 @@ class Canvas {
       b.endFill();
     }
   }
-  public async  getImage(ele: any) {
+  public async getImage(ele: any) {
     this.endGraffiti();
     return await exportImage(ele, this.GraffitiList, this.mainContainer, this.GraffitiContainer);
-
   }
 
   public setScale(show: boolean) {
@@ -329,6 +360,8 @@ class Canvas {
     this.temStartX = top.swipeList[1][0].start;
   }
   public detach(root: HTMLElement) {
+    this.cacheGraffitiList = [];
+    this.backCanvasList = [];
     root.removeEventListener("mousewheel", wheelListener);
     root.removeEventListener("pointermove", pointerListener);
   }

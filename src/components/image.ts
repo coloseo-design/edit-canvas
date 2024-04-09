@@ -1,7 +1,7 @@
 import { InteractionEvent, Loader, Sprite } from 'pixi.js';
-import { getPoint } from './utils';
+import { getPoint, uuid, getBoundRect } from './utils';
 import CanvasStore from './store';
-
+import Canvas from './canvas';
 
 type positionType = { x: number; y: number };
 
@@ -14,7 +14,8 @@ class EditImage {
   public height: number = 0;
   public operate: any;
   public text: any;
-  public app: any;
+  public app: Canvas | null = null;
+  public uuid: string = `${uuid()}`;
   constructor({ url = '', position = {}, container, width, height, operate, text }: any) {
     this.url = url;
     this.position = position;
@@ -40,6 +41,7 @@ class EditImage {
         this.sprite.interactive = true;
         this.sprite.changePosition = this.changePosition;
         this.sprite.delete = this.delete;
+        this.sprite.uuid = this.uuid;
         // 配置文字遮罩层
         if (this.text) {
           this.sprite.mask = this.text;
@@ -54,12 +56,12 @@ class EditImage {
     });
   }
 
-  change = ({ x, y, w, h}: any) => {
-    this.sprite.position.set(x, y);
-    this.position = { x,y };
-    this.sprite.width = w;
-    this.sprite.height = h;
-  }
+  // change = ({ x, y, w, h}: any) => {
+  //   this.sprite.position.set(x, y);
+  //   this.position = { x,y };
+  //   this.sprite.width = w;
+  //   this.sprite.height = h;
+  // }
 
   changePosition = ({ x, y, width, height }: positionType & { width: number, height: number}) => {
     this.position = { x, y };
@@ -75,7 +77,8 @@ class EditImage {
   }
 
   down = (e: InteractionEvent) => {
-    if (!this.app.isGraffiti) {
+    if (!this.app?.isGraffiti) {
+      this.app?.backCanvasList.push({...getBoundRect(this.sprite), uuid: this.uuid });
       this.sprite.isDrag = true;
       this.move(getPoint(e));
     }
