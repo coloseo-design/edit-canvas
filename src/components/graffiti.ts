@@ -27,6 +27,7 @@ class Graffiti {
     this.brush = brush;
     this.color = color;
     this.brush.repeat = this.repeat;
+    this.brush.ele = this;
     this.lineWidth = lineWidth;
     this.brush.delete = this.delete;
     this.brush.paint = this.paint;

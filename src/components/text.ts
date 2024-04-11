@@ -44,6 +44,7 @@ class EditText {
     this.text.changePosition = this.changePosition;
     this.text.parentData = this.parentData;
     this.text.delete = this.delete;
+    this.text.ele = this;
     if (this.width) {
       this.text.width = this.width;
     } else {
@@ -143,7 +144,7 @@ class EditText {
   down = (e: InteractionEvent) => {
     e.stopPropagation();
     if (!this.app.isGraffiti) {
-      this.app.backCanvasList.push({...this.position, width: this.width, height: this.height,  uuid: this.uuid });
+      this.app.backCanvasList.push({...this.position, width: this.width, height: this.height,  uuid: this.uuid, type: 'Text' });
       this.text.isDrag = true;
       if (!this.isFocus) {
         this.move(getPoint(e));

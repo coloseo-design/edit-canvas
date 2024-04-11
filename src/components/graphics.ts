@@ -1,4 +1,4 @@
-import { Graphics, InteractionEvent, Container } from 'pixi.js';
+import { Graphics, InteractionEvent } from 'pixi.js';
 import { lineStyle } from './operate';
 import { getPoint, getBoundRect, uuid } from './utils';
 import { positionType } from './canvas';
@@ -70,6 +70,7 @@ class EditGraphics {
     this.graphics.delete = this.delete;
     this.graphics.parentData = this.parentData;
     this.graphics.radius = this.radius;
+    this.graphics.ele = this;
     this.graphics.shape = this.shape;
     this.graphics.isDrag = false;
     this.repeat();
@@ -107,7 +108,7 @@ class EditGraphics {
   down = (e: InteractionEvent) => {
     e.stopPropagation();
     if (!this.app.isGraffiti) {
-      this.app.backCanvasList.push({...this.position, width: this.width, height: this.height, uuid: this.uuid });
+      this.app.backCanvasList.push({...this.position, width: this.width, height: this.height, uuid: this.uuid, type: 'Graphics' });
       this.graphics.isDrag = true;
       this.graphics.isMove = true;
       this.move(getPoint(e));

@@ -41,6 +41,7 @@ class EditImage {
         this.sprite.interactive = true;
         this.sprite.changePosition = this.changePosition;
         this.sprite.delete = this.delete;
+        this.sprite.ele = this;
         this.sprite.uuid = this.uuid;
         // 配置文字遮罩层
         if (this.text) {
@@ -78,7 +79,7 @@ class EditImage {
 
   down = (e: InteractionEvent) => {
     if (!this.app?.isGraffiti) {
-      this.app?.backCanvasList.push({...getBoundRect(this.sprite), uuid: this.uuid });
+      this.app?.backCanvasList.push({...getBoundRect(this.sprite), uuid: this.uuid, type: 'Image' });
       this.sprite.isDrag = true;
       this.move(getPoint(e));
     }

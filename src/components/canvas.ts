@@ -68,7 +68,7 @@ class Canvas {
       item.paint(e);
     } else if (e.target) {
       e.stopPropagation();
-      this.selected = e.target;
+      this.selected = (e.target as any)?.ele || e.target;
       this.setIndex(e.target, e.target.parent); // 设置当前层级
       this.setIndex(operate.operateContainer, this.mainContainer); // 设置框架层级
       if (['leftTop', 'leftBottom', 'rightTop', 'rightBottom', 'main'].includes(e.target.name)) {
@@ -226,15 +226,15 @@ class Canvas {
     const list = isBack ? this.backCanvasList : this.revokeBackList;
     const last = list.pop();
     if (last) {
-      const current = (this.mainContainer.children || []).find((i: any) => i.uuid === last.uuid);
+      const current: any = (this.mainContainer.children || []).find((i: any) => i.uuid === last.uuid);
       if (current) {
         isBack && this.revokeBackList.push({ ...getBoundRect(current), uuid: (current as any).uuid });
-        if (current instanceof PIXIGraphics) {
-          (current as any).changePosition({ ...last });
-          (current as any).clear();
-          (current as any).repeat();
+        if (last.type === 'Graphics') {
+          current.changePosition({ ...last });
+          current.clear();
+          current.repeat();
         } else {
-          (current as any).changePosition({ ...last});
+          current.changePosition({ ...last});
           current.position.set(last.x, last.y);
         }
       }
@@ -306,8 +306,8 @@ class Canvas {
     if (show) {
       this.app?.stage.addChild(this.rod?.topContainer);
       this.app?.stage.addChild(this.rod?.leftContainer);
-      this.app?.stage.setChildIndex(this.rod?.leftContainer, this.app.stage.children.length -1);
-      this.app?.stage.setChildIndex(this.rod?.topContainer, this.app.stage.children.length -1);
+      this.setIndex(this.rod?.leftContainer, this.app?.stage);
+      this.setIndex(this.rod?.topContainer, this.app?.stage);
       this.app?.ticker.add(() => {
         const { x, y } = CanvasStore.screen;
         const { x: scaleX, y: scaleY } = CanvasStore.scale;

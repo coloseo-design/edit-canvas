@@ -6,6 +6,7 @@ const Demo = () => {
   const [app, setApp] = useState<EditCanvas>();
   const [text, setText] = useState<Text>();
   const [img, setImg] = useState<Image>();
+  const [gra, setGra] = useState<Graphics>();
   useEffect(() => {
     const canvasContainer = document.getElementById('canvas-container');
     const app = new EditCanvas();
@@ -45,11 +46,10 @@ const Demo = () => {
       })
       setText(text1);
       setImg(image);
+      setGra(g);
       app.add(g);
       app.add(image);
       app.add(text1);
-      const graffiti = new Graffiti();
-      app?.add(graffiti);
     }
     return () => {
       canvasContainer && app.detach(canvasContainer);
@@ -57,6 +57,8 @@ const Demo = () => {
   }, []);
 
   const start = () => {
+    const graffiti = new Graffiti();
+    app?.add(graffiti);
     app?.startGraffiti();
   }
 
@@ -106,6 +108,7 @@ const Demo = () => {
         setTimeout(() => {
           app?.setScale(true);
           img && app?.add(img);
+          gra && app?.add(gra);
 
         }, 1000);
       }}>展示刻度</button>
