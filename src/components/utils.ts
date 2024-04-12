@@ -57,34 +57,6 @@ export const overflowContainer = (ele: any, parent: any) => {
   return (!ax || !ay) ? true : false
 }
 
-
-export const loopChild = (data: any[] = [], editInfo: { x: number, y: number } | null = null) => {
-  data.forEach((item) => {
-    const { x, y } = getBoundRect(item);
-
-    let x2 = 0, y2 = 0;
-    if (item instanceof Text) {
-      const x1 = editInfo ? x + editInfo.x : x;
-      const y1 = editInfo ? y + editInfo.y : y;;
-      (item as any).changePosition?.({ x: x1, y: y1 });
-      item.position.set(x1, y1);
-    }
-    if (item instanceof Graphics) {
-      x2 = item.x;
-      y2 = item.y;
-      const r = (item as any).shape === 'circle' ? (item as any)?.radius || 0 : 0;
-      (item as any).changePosition?.({ x: x + r, y: y + r });
-      item.clear();
-      (item as any)?.repeat(getBoundRect(item));
-      item.position.set(0, 0);
-    }
-    item?.parentData();
-    if (item.children && item.children.length) {
-      loopChild(item.children, item instanceof Graphics ? { x: x2, y: y2 } : null);
-    }
-  });
-}
-
 export type positionType = { x: number; y: number };
 
 const sleep = (num: number) =>

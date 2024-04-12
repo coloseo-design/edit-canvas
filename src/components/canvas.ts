@@ -44,7 +44,7 @@ class Canvas {
   private GraffitiContainer: Container = new Container;
   public isGraffiti: boolean = false;
   private GraffitiList: Graffiti[] = []; // 所有的存在的涂鸦
-  private cacheGraffitiList: Graffiti[] = []; // 缓存当前画笔下的涂鸦
+  private cacheGraffitiList: any[] = []; // 缓存当前画笔下的涂鸦
   public backCanvasList: any[] = [] // 存储画布前一步的状态
   public revokeBackList: any[] = [] // 存储画布回退时的状态
   public showScale: boolean = false;
@@ -66,6 +66,7 @@ class Canvas {
       currentP.brush.addChild(item.brush);
       (currentP?.children || []).push(item);
       item.paint(e);
+      this.backCanvasList.push({ uuid: item.uuid, type: 'Graffiti'});
     } else if (e.target) {
       e.stopPropagation();
       this.selected = (e.target as any)?.ele || e.target;
@@ -192,21 +193,26 @@ class Canvas {
   public deleteGraffiti() {
     if (this.GraffitiList.length) {
       const deleteP = this.GraffitiList[this.GraffitiList.length - 1];
-      if (deleteP.children.length) {
+      if (deleteP && deleteP.children.length > 0) {
         const deleteItem = deleteP.children[deleteP.children.length - 1];
         if (deleteItem) {
           deleteP.children = deleteP.children.filter((i) => i !== deleteItem);
           deleteP.brush.removeChild(deleteItem.brush);
           const findP = this.cacheGraffitiList.find((i) => i.uuid === deleteP.uuid);
+          this.revokeBackList.push({ uuid: deleteItem.uuid, type: 'Graffiti' });
+          this.getBrushParent();
           if (findP) {
             Object.assign(findP, {
-              children: [...findP.children, deleteItem],
+              deleteChildren: [...(findP.deleteChildren || []), deleteItem],
             })
           } else {
             this.cacheGraffitiList.push({
               ...deleteP,
-              children: [deleteItem],
+              deleteChildren: [deleteItem],
             } as any)
+          }
+          if (deleteP.children.length === 0) {
+            this.GraffitiList.pop();
           }
         }
       }
@@ -216,8 +222,28 @@ class Canvas {
   public revokeGraffiti() { // 撤销删除的涂鸦
     if (this.cacheGraffitiList.length) {
       const current = this.cacheGraffitiList[this.cacheGraffitiList.length - 1];
-      if (current.children.length) {
-        current.brush.addChild(current.children[current.children.length - 1].brush);
+      if (current) {
+        Object.assign(current, {
+          children: current.children.filter((i: any) => !(current.deleteChildren || []).includes(i))
+        });
+        this.getBrushParent();
+        if ((current.children || []).length === 0) {
+          const item = current.deleteChildren.pop();
+          current.children = [item];
+          current.brush.addChild(item.brush);
+          this.GraffitiList.push(current);
+        } else {
+          this.GraffitiList.forEach((i) => {
+            if (i.uuid === current.uuid) {
+              const item = current.deleteChildren.pop();
+              i.children = [...i.children, item];
+              i.brush.addChild(item.brush);
+            }
+          })
+        }
+        if ((current.deleteChildren || []).length === 0) {
+          this.cacheGraffitiList.pop();
+        }
       }
     }
   }
@@ -226,16 +252,20 @@ class Canvas {
     const list = isBack ? this.backCanvasList : this.revokeBackList;
     const last = list.pop();
     if (last) {
-      const current: any = (this.mainContainer.children || []).find((i: any) => i.uuid === last.uuid);
-      if (current) {
-        isBack && this.revokeBackList.push({ ...getBoundRect(current), uuid: (current as any).uuid });
-        if (last.type === 'Graphics') {
-          current.changePosition({ ...last });
-          current.clear();
-          current.repeat();
-        } else {
-          current.changePosition({ ...last});
-          current.position.set(last.x, last.y);
+      if (last.type === 'Graffiti') {
+        isBack ? this.deleteGraffiti() : this.revokeGraffiti();
+      } else {
+        const current: any = (this.mainContainer.children || []).find((i: any) => i.uuid === last.uuid);
+        if (current) {
+          isBack && this.revokeBackList.push({ ...getBoundRect(current), uuid: (current as any).uuid });
+          if (last.type === 'Graphics') {
+            current.changePosition({ ...last });
+            current.clear();
+            current.repeat();
+          } else {
+            current.changePosition({ ...last});
+            current.position.set(last.x, last.y);
+          }
         }
       }
       operate.clear();
@@ -246,7 +276,7 @@ class Canvas {
     this.utilsBack(true);
   }
 
-  public revoke() {
+  public revoke() { // 撤销回退
     this.utilsBack(false);
   }
 
@@ -255,13 +285,13 @@ class Canvas {
   }
   public add(ele: childType) {
     const hasMain = (this.app?.stage?.children || []).includes(this.mainContainer);
-    if (!hasMain) {
+    if (!hasMain) { // 清除画布后重新添加mainContainer
       this.mainContainer.addChild(operate.operateContainer);
       this.app?.stage.addChild(this.mainContainer);
     }
     if (ele instanceof Graffiti) {
       const hasGra = (this.app?.stage?.children || []).includes(this.GraffitiContainer);
-      this.app?.stage.addChild(this.GraffitiContainer);
+      !hasGra && this.app?.stage.addChild(this.GraffitiContainer);
       this.getBrushParent();
       ele.operate = operate;
       ele.app = this;
@@ -288,13 +318,22 @@ class Canvas {
     this.cacheGraffitiList = [];
   }
   private getBrushParent() {
-    if (this.GraffitiList.length) {
-      const b = this.GraffitiList[this.GraffitiList.length - 1].brush; // 绘制当前涂鸦的父级
-      const obj = getBoundRect(b);
-      b.beginFill(this.app?.renderer.backgroundColor, 0.05);
-      b.drawRect(obj.x, obj.y, obj.width, obj.height);
-      b.endFill();
-    }
+    // if (this.GraffitiList.length) {
+    //   const b = this.GraffitiList[this.GraffitiList.length - 1].brush; // 绘制当前涂鸦的父级
+    //   const obj = getBoundRect(b);
+    //   b.beginFill(this.app?.renderer.backgroundColor, 0.05);
+    //   b.drawRect(obj.x, obj.y, obj.width, obj.height);
+    //   b.endFill();
+    // }
+    (this.GraffitiList || []).forEach((item) => {
+      if (item) {
+        item.brush.clear();
+        const obj = getBoundRect(item.brush);
+        item.brush.beginFill(this.app?.renderer.backgroundColor, 0.05);
+        item.brush.drawRect(obj.x, obj.y, obj.width, obj.height);
+        item.brush.drawRect(obj.x, obj.y, obj.width, obj.height);
+      }
+    })
   }
   public async getImage(ele: any) {
     this.endGraffiti();
@@ -374,6 +413,7 @@ class Canvas {
   public detach(root: HTMLElement) {
     this.cacheGraffitiList = [];
     this.backCanvasList = [];
+    this.revokeBackList = [];
     root.removeEventListener("mousewheel", wheelListener);
     root.removeEventListener("pointermove", pointerListener);
   }

@@ -57,13 +57,6 @@ class EditImage {
     });
   }
 
-  // change = ({ x, y, w, h}: any) => {
-  //   this.sprite.position.set(x, y);
-  //   this.position = { x,y };
-  //   this.sprite.width = w;
-  //   this.sprite.height = h;
-  // }
-
   changePosition = ({ x, y, width, height }: positionType & { width: number, height: number}) => {
     this.position = { x, y };
     if (width) {

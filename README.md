@@ -10,7 +10,6 @@ const canvas = new EditCanvas();
 - **clearCanvas**: 清空画布方法, () => void
 - **back**: 返回画布图形上一步操作, () => void
 - **revoke**: 撤销画布图形返回的上一步操作, () => void;
-- **revokeGraffiti**:撤销删除画笔的方法 () => void;
 - **getSelectedGraphics**: 获取当前选中的图形 () => void;
 - **startGraffiti**: 画笔开始调用的方法 () => void;
 - **endGraffiti**: 画笔结束调用的方法 () => void;

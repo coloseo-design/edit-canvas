@@ -71,13 +71,6 @@ const Demo = () => {
     selected && selected.delete();
   }
 
-  const deleteBrush = () => {
-    app?.deleteGraffiti();
-  }
-
-  const backBrush = () => {
-    app?.revokeGraffiti();
-  }
 
   const handleText = () => {
     text?.writeText();
@@ -96,8 +89,6 @@ const Demo = () => {
     <div>
       <button onClick={start}>涂鸦</button>
       <button onClick={end}>停止涂鸦</button>
-      <button onClick={deleteBrush}>删除涂鸦</button>
-      <button onClick={backBrush}>撤销删除</button>
       <button onClick={handleDelete}>删除当前选中图形</button>
       <button onClick={handleText}>编辑文字</button>
       <button onClick={handleImage}>生成图片</button>
