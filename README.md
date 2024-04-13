@@ -24,8 +24,8 @@ const canvas = new EditCanvas();
 - **url**: 图片的src,必传m string
 - **width**: 图片的宽, number
 - **height**:图片的高, number
-- **text**: 图片文案, string 类型
 - **delete**: 清除图片，() => void;
+- - **onClick**: 点击事件(e: InteractionEvent) => void;
 
 
 ### Text 文字 API
@@ -36,6 +36,7 @@ const canvas = new EditCanvas();
 - **height**:文字的高, number；
 - **width**:文字的宽, number
 - **delete**: 清除文字，() => void;
+- - **onClick**: 点击事件(e: InteractionEvent) => void;
 
 
 ### Graphics 矩形 API
@@ -47,6 +48,7 @@ const canvas = new EditCanvas();
 - **alpha**:矩形填充色透明度
 - **width**:矩形的宽, number
 - **delete**: 清除画笔，() => void;
+- - **onClick**: 点击事件(e: InteractionEvent) => void;
 
 
 ### Graffiti 矩形 API
@@ -56,6 +58,7 @@ const canvas = new EditCanvas();
 - **alpha**:画笔颜色透明度
 - **delete**: 清除矩形，() => void;
 - **setStyle**: 修改画笔样式({color, alpha, lineWidth}) => void;
+- **onClick**: 点击事件(e: InteractionEvent) => void;
 
 
 ### demo示例
@@ -103,6 +106,10 @@ const Demo = () => {
     app.add(img);
     app.add(graphics);
     app.add(graffiti);
+
+    image.onClick = (e) => {
+      console.log('=image click>>', e);
+    }
   }, []);
   return (
     <div>

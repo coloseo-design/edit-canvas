@@ -2,18 +2,27 @@ import { InteractionEvent, Loader, Sprite } from 'pixi.js';
 import { getPoint, uuid, getBoundRect } from './utils';
 import CanvasStore from './store';
 import Canvas from './canvas';
+import OperateRect from './operate';
 
 type positionType = { x: number; y: number };
 
+type SP = {
+  changePosition?: (obj: positionType & { width: number, height: number}) => void;
+  delete?: () => void;
+  ele?: EditImage;
+  uuid?: string;
+  isDrag?: boolean;
+} & Sprite
+
 class EditImage {
   public url: string = '';
-  public position: positionType;
-  public sprite: any;
+  public position: positionType = {x: 0, y: 0 };
+  public sprite: SP | null = null;
   public container: any;
   public width: number = 0;
   public height: number = 0;
-  public operate: any;
-  public text: any;
+  public operate: OperateRect;
+  public text: string = '';
   public app: Canvas | null = null;
   public uuid: string = `${uuid()}`;
   constructor({ url = '', position = {}, container, width, height, operate, text }: any) {
@@ -43,10 +52,6 @@ class EditImage {
         this.sprite.delete = this.delete;
         this.sprite.ele = this;
         this.sprite.uuid = this.uuid;
-        // 配置文字遮罩层
-        if (this.text) {
-          this.sprite.mask = this.text;
-        }
         this.sprite.on('pointerdown', this.down);
         this.sprite.isDrag = false;
         this.sprite.on('pointerup', this.up);
@@ -54,33 +59,42 @@ class EditImage {
           this.container.addChild(this.sprite);
         }
       }
-    });
+    })
+  }
+
+  onClick(e: InteractionEvent) {
+  }
+
+  getBoundRect() {
+    return getBoundRect(this.sprite);
   }
 
   changePosition = ({ x, y, width, height }: positionType & { width: number, height: number}) => {
     this.position = { x, y };
-    if (width) {
+    if (width && this.sprite) {
       this.sprite.width = width;
       this.width = width
     }
 
-    if (height) {
+    if (height && this.sprite) {
       this.sprite.height = height;
       this.height = height;
     }
   }
 
-  down = (e: InteractionEvent) => {
+  private down = (e: InteractionEvent) => {
     if (!this.app?.isGraffiti) {
       this.app?.backCanvasList.push({...getBoundRect(this.sprite), uuid: this.uuid, type: 'Image' });
-      this.sprite.isDrag = true;
+      if (this.sprite) {
+        this.sprite.isDrag = true;
+      }
       this.move(getPoint(e));
     }
 
   }
-  move(start: positionType) {
-    this.sprite.on('pointermove', (e: InteractionEvent) => {
-      if (this.sprite.isDrag) {
+  private move(start: positionType) {
+    this.sprite?.on('pointermove', (e: InteractionEvent) => {
+      if (this.sprite?.isDrag) {
         const scalePosition = getPoint(e);
         const x = (scalePosition.x - start.x) / CanvasStore.scale.x + this.position.x;
         const y = (scalePosition.y - start.y) / CanvasStore.scale.x + this.position.y;
@@ -89,8 +103,8 @@ class EditImage {
       }
     });
   }
-  up = () => {
-    if (this.sprite.isDrag) {
+  private up = () => {
+    if (this.sprite?.isDrag) {
       this.sprite.isDrag = false;
       this.position = {
         x: this.sprite.x,

@@ -1,4 +1,4 @@
-import { InteractionEvent, Text, TextStyle, Container } from 'pixi.js';
+import { InteractionEvent, Text, TextStyle } from 'pixi.js';
 import { getPoint, getBoundRect, uuid } from './utils';
 import { positionType } from './canvas';
 import CanvasStore from './store';
@@ -14,7 +14,6 @@ class EditText {
   public width: number = 0;
   public height: number = 0;
   public uuid: string = `${uuid()}`;
-  private parent: any = {};
   private input: HTMLInputElement | null = null;
   public rootDom: HTMLElement | null = null;
   private isPinyin: boolean = false;
@@ -42,7 +41,6 @@ class EditText {
     this.text.uuid = this.uuid;
     this.text.isDrag = false;
     this.text.changePosition = this.changePosition;
-    this.text.parentData = this.parentData;
     this.text.delete = this.delete;
     this.text.ele = this;
     if (this.width) {
@@ -59,10 +57,12 @@ class EditText {
       this.container.addChild(this.text);
     }
     this.createInput();
-    this.parentData();
+  }
+  public getBoundRect() {
+    return getBoundRect(this.text);
   }
 
-  createInput() {
+  private createInput() {
     const input = document.createElement('input');
     input.setAttribute('style', 
     `position: absolute;
@@ -85,6 +85,9 @@ class EditText {
     this.input.addEventListener('compositionstart', this.oncompositionstart);
     this.input.addEventListener('compositionend', this.oncompositionend);
     this.rootDom?.appendChild(input);
+    if (this.isFocus) {
+      input.focus();
+    }
 
   }
   oninput = (e: any) => {
@@ -126,10 +129,6 @@ class EditText {
     this.oninput(e);
   }
 
-  parentData = () => {
-    this.parent = getBoundRect(this.container);
-  }
-
   changePosition = ({ x, y, width, height }: positionType & { width: number, height: number}) => {
     this.position = { x, y };
     if (width) this.width = width;
@@ -141,7 +140,10 @@ class EditText {
     this.operate?.clear();
   }
 
-  down = (e: InteractionEvent) => {
+  onClick(e: InteractionEvent) {
+  }
+
+  private down = (e: InteractionEvent) => {
     e.stopPropagation();
     if (!this.app.isGraffiti) {
       this.app.backCanvasList.push({...this.position, width: this.width, height: this.height,  uuid: this.uuid, type: 'Text' });
@@ -152,7 +154,7 @@ class EditText {
     }
 
   }
-  move(start: positionType) {
+  private move(start: positionType) {
     this.text.on('pointermove', (e: InteractionEvent) => {
       if (this.text.isDrag) {
         const scalePosition = getPoint(e);
@@ -163,7 +165,7 @@ class EditText {
       }
     });
   }
-  up = (e: InteractionEvent) => {
+  private up = (e: InteractionEvent) => {
     e.stopPropagation();
     if (this.text.isDrag) {
       this.text.isDrag = false;

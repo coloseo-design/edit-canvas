@@ -1,5 +1,5 @@
 import { Graphics, InteractionEvent } from 'pixi.js';
-import { uuid } from './utils';
+import { getBoundRect, uuid, overflowContainer } from './utils';
 import { positionType } from './canvas';
 import { getPoint } from './utils';
 import CanvasStore from './store';
@@ -17,10 +17,12 @@ class Graffiti {
   public lineWidth: number;
   public children: Graffiti[] = [];
   public uuid: string;
+  public deleteChildren: Graffiti[] = []
   app: any;
   operate: any;
   container: any;
   alpha: number;
+  start: positionType = { x: 0, y: 0};
   constructor(props?: GraffitiType) {
     const { color = 0x6078F4, lineWidth = 10, alpha = 0.7 } = props || {};
     const brush = new Graphics();
@@ -46,6 +48,9 @@ class Graffiti {
 
   }
 
+  onClick(e: InteractionEvent) {
+  }
+
   public setStyle({ color, alpha, lineWidth }: GraffitiType) {
     if (color) {
       this.color = color;
@@ -64,34 +69,37 @@ class Graffiti {
   }
 
   private repeat = (rect: positionType & { width: number, height: number }) => {
-    this.brush.beginFill(this.app.app?.renderer.backgroundColor, 0.1);
+    this.brush.beginFill(this.app.app?.renderer.backgroundColor, 0.05);
     this.brush.drawRect(rect.x, rect.y, rect.width, rect.height);
     this.brush.endFill();
   }
 
+  public getBoundRect() {
+    return getBoundRect(this.brush);
+  }
 
-  down = (e: InteractionEvent) => { // TODO
+
+  private down = (e: InteractionEvent) => { // TODO
     e.stopPropagation();
     if (!this.app.isGraffiti) {
       this.brush.isDrag = true;
-      this.move(getPoint(e));
+      this.start = getPoint(e);
+      this.move();
     }
-
-
   }
-  move = (start: positionType) => {
+  private move = () => {
     this.brush.on('pointermove', (e: InteractionEvent) => {
       if (this.brush.isDrag) {
         const scalePosition = getPoint(e);
-        const x = (scalePosition.x - start.x) / CanvasStore.scale.x;
-        const y = (scalePosition.y - start.y)/ CanvasStore.scale.x;
+        const x = (scalePosition.x - this.start.x) / CanvasStore.scale.x;
+        const y = (scalePosition.y - this.start.y)/ CanvasStore.scale.x;
         this.brush.position.set(x, y);
         this.operate.clear();
       }
     });
   }
 
-  up = () => {
+  private up = () => {
     if (this.brush.isDrag) {
       this.brush.isDrag = false;
     }

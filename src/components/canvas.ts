@@ -44,7 +44,7 @@ class Canvas {
   private GraffitiContainer: Container = new Container;
   public isGraffiti: boolean = false;
   private GraffitiList: Graffiti[] = []; // 所有的存在的涂鸦
-  private cacheGraffitiList: any[] = []; // 缓存当前画笔下的涂鸦
+  private cacheGraffitiList: Graffiti[] = []; // 缓存当前画笔下的涂鸦
   public backCanvasList: any[] = [] // 存储画布前一步的状态
   public revokeBackList: any[] = [] // 存储画布回退时的状态
   public showScale: boolean = false;
@@ -69,13 +69,14 @@ class Canvas {
       this.backCanvasList.push({ uuid: item.uuid, type: 'Graffiti'});
     } else if (e.target) {
       e.stopPropagation();
-      this.selected = (e.target as any)?.ele || e.target;
       this.setIndex(e.target, e.target.parent); // 设置当前层级
       this.setIndex(operate.operateContainer, this.mainContainer); // 设置框架层级
       if (['leftTop', 'leftBottom', 'rightTop', 'rightBottom', 'main'].includes(e.target.name)) {
         operate.moveType = e.target.name;
         operate.hornDown(e.target.name, e);
       } else {
+        this.selected = (e.target as any)?.ele || e.target;
+        (e.target as any).ele?.onClick(e);
         operate.operateGraphical = e.target;
         operate.clear();
         operate.paint(getBoundRect(e.target));
@@ -229,15 +230,19 @@ class Canvas {
         this.getBrushParent();
         if ((current.children || []).length === 0) {
           const item = current.deleteChildren.pop();
-          current.children = [item];
-          current.brush.addChild(item.brush);
-          this.GraffitiList.push(current);
+          if (item) {
+            current.children = [item];
+            current.brush.addChild(item.brush);
+            this.GraffitiList.push(current);
+          }
         } else {
           this.GraffitiList.forEach((i) => {
             if (i.uuid === current.uuid) {
               const item = current.deleteChildren.pop();
-              i.children = [...i.children, item];
-              i.brush.addChild(item.brush);
+              if (item) {
+                i.children = [...(i.children || []) as Graffiti[], item];
+                i.brush.addChild(item.brush);
+              }
             }
           })
         }
@@ -303,6 +308,9 @@ class Canvas {
       ele.operate = operate;
       ele.container = this.mainContainer;
       ele.app = this;
+      if (ele instanceof Text) {
+        ele.rootDom = this.root;
+      }
       ele.paint();
     }
   }
@@ -318,13 +326,6 @@ class Canvas {
     this.cacheGraffitiList = [];
   }
   private getBrushParent() {
-    // if (this.GraffitiList.length) {
-    //   const b = this.GraffitiList[this.GraffitiList.length - 1].brush; // 绘制当前涂鸦的父级
-    //   const obj = getBoundRect(b);
-    //   b.beginFill(this.app?.renderer.backgroundColor, 0.05);
-    //   b.drawRect(obj.x, obj.y, obj.width, obj.height);
-    //   b.endFill();
-    // }
     (this.GraffitiList || []).forEach((item) => {
       if (item) {
         item.brush.clear();

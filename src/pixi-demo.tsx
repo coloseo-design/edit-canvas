@@ -50,6 +50,10 @@ const Demo = () => {
       app.add(g);
       app.add(image);
       app.add(text1);
+
+      image.onClick = (e) => {
+        console.log('=image click>>', e);
+      }
     }
     return () => {
       canvasContainer && app.detach(canvasContainer);
@@ -69,6 +73,7 @@ const Demo = () => {
   const handleDelete = () => {
     const selected = app?.getSelectedGraphics();
     selected && selected.delete();
+    console.log('=55>>', img);
   }
 
 
@@ -86,14 +91,22 @@ const Demo = () => {
   }
 
   return (
-    <div>
-      <button onClick={start}>涂鸦</button>
+    <div style={{ display: 'flex', height: '100vh'}}>
+      <div style={{ display: 'flex', padding: 16, flexDirection: 'column', flex: '0 0 auto', justifyContent: 'center' }}>
+      <button  onClick={start}>涂鸦</button>
+      <br />
       <button onClick={end}>停止涂鸦</button>
+      <br />
       <button onClick={handleDelete}>删除当前选中图形</button>
+      <br />
       <button onClick={handleText}>编辑文字</button>
+      <br />
       <button onClick={handleImage}>生成图片</button>
+      <br />
       <button onClick={() => app?.back()}>回退</button>
+      <br />
       <button onClick={() => app?.revoke()}>撤销回退</button>
+      <br />
       <button onClick={() => {
         app?.clearCanvas();
         setTimeout(() => {
@@ -103,7 +116,8 @@ const Demo = () => {
 
         }, 1000);
       }}>展示刻度</button>
-      <div id="canvas-container" style={{ width: '100%', height: '90vh', position: 'relative' }} />
+      </div>
+      <div id="canvas-container" style={{ flex: 1, height: '100%', position: 'relative' }} />
     </div>
   )
 }

@@ -14,7 +14,6 @@ class EditGraphics {
   radius: number;
   lineStyle: lineStyle;
   background: number;
-  private parent: any = {};
   public app: any;
   private uuid: string;
   name: string;
@@ -51,24 +50,21 @@ class EditGraphics {
     this.isEdit = isEdit;
     this.alpha = alpha;
     this.paint();
-    this.parentData();
   }
 
-  parentData = () => {
-    this.parent = getBoundRect(this.container);
-  }
-  delete = () => {
+
+  public delete = () => {
     this.container.removeChild(this.graphics)
     this.operate?.clear?.();
   }
-  paint() {
+
+  public paint() {
     this.graphics = new Graphics();
     this.graphics.name = this.name;
     this.graphics.uuid = this.uuid;
     this.graphics.repeat = this.repeat;
     this.graphics.changePosition = this.changePosition;
     this.graphics.delete = this.delete;
-    this.graphics.parentData = this.parentData;
     this.graphics.radius = this.radius;
     this.graphics.ele = this;
     this.graphics.shape = this.shape;
@@ -84,13 +80,18 @@ class EditGraphics {
     }
   }
 
-  changePosition = ({ x, y, width, height }: positionType & { width?: number, height?: number}) => {
+  public getBoundRect() {
+    return getBoundRect(this.graphics);
+  }
+  onClick(e: InteractionEvent) {
+  }
+  public changePosition = ({ x, y, width, height }: positionType & { width?: number, height?: number}) => {
     this.position = { x, y };
     if (width) this.width = width;
     if (height) this.height = height;
   }
 
-  repeat = () => {
+  public repeat = () => {
     this.graphics.beginFill(this.background, this.alpha);
     this.graphics.lineStyle(this.lineStyle.width, this.lineStyle.color, this.lineStyle.alpha, this.lineStyle.alignment, this.lineStyle.native);
     if (this.shape === 'circle') {
@@ -113,7 +114,6 @@ class EditGraphics {
       this.graphics.isMove = true;
       this.move(getPoint(e));
     }
-
   }
   move(start: positionType) {
     this.graphics.on('pointermove', (e: InteractionEvent) => {
