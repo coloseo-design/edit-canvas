@@ -73,7 +73,6 @@ const Demo = () => {
   const handleDelete = () => {
     const selected = app?.getSelectedGraphics();
     selected && selected.delete();
-    console.log('=55>>', img);
   }
 
 
@@ -106,6 +105,10 @@ const Demo = () => {
       <button onClick={() => app?.back()}>回退</button>
       <br />
       <button onClick={() => app?.revoke()}>撤销回退</button>
+      <br />
+      <button onClick={() => {
+        app?.setIndex(text)
+      }}>改变文字的层级</button>
       <br />
       <button onClick={() => {
         app?.clearCanvas();

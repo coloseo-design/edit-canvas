@@ -1,4 +1,4 @@
-import { Application, Container, InteractionEvent, Graphics as PIXIGraphics } from "pixi.js";
+import { Application, Container, InteractionEvent } from "pixi.js";
 import { getBoundRect, exportImage } from './utils';
 import CanvasStore from './store';
 import OperateRect from './operate';
@@ -50,10 +50,34 @@ class Canvas {
   public showScale: boolean = false;
 
 
-  private setIndex = (target: any, parent: any) => {
-    if (parent?.children.length > 0) {
-      parent.setChildIndex(target, parent.children.length - 1);
+  private getPixiGra(ele: childType) {
+    if (ele instanceof Graffiti) {
+      return 'brush';
     }
+    if (ele instanceof Graphics) {
+      return 'graphics';
+    }
+    if (ele instanceof Image) {
+      return 'sprite';
+    }
+    if (ele instanceof Text) {
+      return 'text';
+    }
+    throw new Error('传参不对');
+  }
+
+  public setIndex = (target: any, parent?: any) => {
+    if (parent && parent?.children.length > 0) {
+      parent.setChildIndex(target, parent.children.length - 1);
+    } else {
+      const ele = this.getPixiGra(target);
+      if (ele === 'brush') {
+        this.GraffitiContainer?.setChildIndex(target[ele], this.GraffitiContainer?.children.length - 1);
+      } else {
+        this.mainContainer?.setChildIndex(target[ele], this.mainContainer?.children.length - 1);
+      }
+    }
+  
   }
   private pointerDown = (e: InteractionEvent) => {
     if (this.isGraffiti && this.GraffitiList.length) {

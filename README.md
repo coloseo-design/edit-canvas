@@ -101,11 +101,9 @@ const Demo = () => {
       width: 100,
       height: 100,
     });
-    const graffiti = new Graffiti();
     app.add(text);
     app.add(img);
     app.add(graphics);
-    app.add(graffiti);
 
     image.onClick = (e) => {
       console.log('=image click>>', e);
