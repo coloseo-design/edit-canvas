@@ -1,9 +1,8 @@
 import { Graphics, InteractionEvent } from 'pixi.js';
 import { getPoint } from './utils';
+import type { positionType } from './utils';
 import CanvasStore from './store';
 
-
-type positionType = { x: number; y: number };
 
 export type lineStyle = { width?: number, color?: number, alpha?: number, alignment?: number, native?: boolean };
 
@@ -34,7 +33,6 @@ class OperateRect {
   originY: number = 0;
   originW: number = 0;
   originH: number = 0;
-  root: HTMLElement | null = null;
   constructor({
     lineStyle = { width: 1, color: 0x0000ff },
     position = {},
@@ -73,6 +71,7 @@ class OperateRect {
           // this.dirMap[item].on('pointerup', this.hornUp);
           this.dirMap[item].name = `${item}`;
           this.dirMap[item].zIndex = -1;
+          this.dirMap[item].buttonMode = true;
           this.dirMap[item].endFill();
         } else {
           this.dirMap[item].beginFill(0xffffff, 0);
@@ -121,24 +120,6 @@ class OperateRect {
     const startPosition = getPoint(e);
     this.startPosition = startPosition;
     this.hornMove(type);
-    if (this.root) {
-      this.root.style.cursor = this.getCursor(type);
-    }
-  }
-  getCursor = (type: string) => {
-    let cursor = 'default';
-    switch(type) {
-      case 'leftBottom': 
-      cursor = 'nesw-resize';
-        break;
-      case 'leftTop':
-        cursor = 'nwse-resize'
-        break;
-      default:
-        cursor = 'default';
-        break;   
-    }
-    return cursor;
   }
   hornMove = (type: string) => {
     this.dirMap[type].on('pointermove', (e: InteractionEvent) => {

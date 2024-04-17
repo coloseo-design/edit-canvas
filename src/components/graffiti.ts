@@ -1,26 +1,38 @@
-import { Graphics, InteractionEvent } from 'pixi.js';
-import { getBoundRect, uuid, overflowContainer } from './utils';
-import { positionType } from './canvas';
-import { getPoint } from './utils';
+import { Graphics, InteractionEvent, Container } from 'pixi.js';
+import { getBoundRect, uuid, getImage, getBoxImage } from './utils';
+import type { eleType, positionType, boundRectType } from './utils';
+import { getPoint, getScalePoint } from './utils';
 import CanvasStore from './store';
+import Canvas from './canvas';
+import OperateRect from './operate';
 
 
-type GraffitiType = {
+export interface GraffitiType {
   color?: number,
   lineWidth?: number,
   alpha?: number,
 }
 
+type brushAttr = {
+  repeat?: (rect: boundRectType) => void;
+  ele?: Graffiti;
+  delete?: () => void;
+  isDrag?: boolean;
+  paint?: (e: InteractionEvent) => void;
+} & Graphics;
+
+
+
 class Graffiti {
-  public brush: any;
+  public brush!: brushAttr;
   public color: number;
   public lineWidth: number;
   public children: Graffiti[] = [];
   public uuid: string;
   public deleteChildren: Graffiti[] = []
-  app: any;
-  operate: any;
-  container: any;
+  app!: Canvas;
+  operate!: OperateRect;
+  container!: Container;
   alpha: number;
   start: positionType = { x: 0, y: 0};
   constructor(props?: GraffitiType) {
@@ -40,7 +52,7 @@ class Graffiti {
   }
 
   paint = (e: InteractionEvent) => {
-    const scalePosition = getPoint(e);
+    const scalePosition = getScalePoint(e);
     this.brush.beginFill(this.color, this.alpha);
     this.brush.isDrag = false;
     this.brush.drawCircle(scalePosition.x, scalePosition.y, this.lineWidth);
@@ -68,8 +80,19 @@ class Graffiti {
     this.operate?.clear?.();
   }
 
+  public async getImage(container?: eleType) {
+    if (container) {
+      this.app?.endGraffiti();
+      const src = await getBoxImage(container, this);
+      this.app.GraffitiContainer.addChild(this.brush);
+      return src; 
+    }
+    const { base64 } = getImage(this);
+    return base64;
+  }
+
   private repeat = (rect: positionType & { width: number, height: number }) => {
-    this.brush.beginFill(this.app.app?.renderer.backgroundColor, 0.05);
+    // this.brush.beginFill(this.app.app?.renderer.backgroundColor, 0.05);
     this.brush.drawRect(rect.x, rect.y, rect.width, rect.height);
     this.brush.endFill();
   }

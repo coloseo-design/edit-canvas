@@ -1,5 +1,5 @@
 import { InteractionEvent, Loader, Sprite } from 'pixi.js';
-import { getPoint, uuid, getBoundRect } from './utils';
+import { getPoint, uuid, getBoundRect, getImage } from './utils';
 import CanvasStore from './store';
 import Canvas from './canvas';
 import OperateRect from './operate';
@@ -17,13 +17,13 @@ type SP = {
 class EditImage {
   public url: string = '';
   public position: positionType = {x: 0, y: 0 };
-  public sprite: SP | null = null;
+  public sprite!: SP;
   public container: any;
   public width: number = 0;
   public height: number = 0;
   public operate: OperateRect;
   public text: string = '';
-  public app: Canvas | null = null;
+  public app!: Canvas;
   public uuid: string = `${uuid()}`;
   constructor({ url = '', position = {}, container, width, height, operate, text }: any) {
     this.url = url;
@@ -48,6 +48,7 @@ class EditImage {
         this.sprite.width = this.width;
         this.sprite.height = this.height;
         this.sprite.interactive = true;
+        this.sprite.buttonMode = true;
         this.sprite.changePosition = this.changePosition;
         this.sprite.delete = this.delete;
         this.sprite.ele = this;
@@ -63,6 +64,13 @@ class EditImage {
   }
 
   onClick(e: InteractionEvent) {
+  }
+
+  public getImage() {
+    this.app?.endGraffiti();
+    const { base64 } = getImage(this);
+    this.sprite && this.app?.mainContainer.addChild(this.sprite);
+    return base64;
   }
 
   getBoundRect() {

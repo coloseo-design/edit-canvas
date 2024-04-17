@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import EditCanvas, { Image, Text, Graffiti, Graphics } from './components/index';;
+import EditCanvas, { Image, Text, Graffiti, Graphics, Layer } from './components/index';;
 
 
 const Demo = () => {
   const [app, setApp] = useState<EditCanvas>();
   const [text, setText] = useState<Text>();
   const [img, setImg] = useState<Image>();
+  const [img1, setImg1] = useState<Image>();
   const [gra, setGra] = useState<Graphics>();
+  const [ffi, setFfi] = useState<Graffiti>();
+  const [lay, setLay] = useState<Layer>()
   useEffect(() => {
     const canvasContainer = document.getElementById('canvas-container');
     const app = new EditCanvas();
@@ -23,6 +26,15 @@ const Demo = () => {
         width: 300,
         height: 300,
       });
+      const image1 = new Image({
+        url: 'http://47.109.84.94/file-1713170051377.jpg',
+        position: {
+          x: 20,
+          y: 200,
+        },
+        width: 150,
+        height: 250,
+      })
       const text1 = new Text({
         style: {
           fontSize: 30,
@@ -47,10 +59,14 @@ const Demo = () => {
       setText(text1);
       setImg(image);
       setGra(g);
+      setImg1(image1);
       app.add(g);
       app.add(image);
       app.add(text1);
-
+      app.add(image1);
+      const graffiti = new Graffiti();
+      app?.add(graffiti);
+      setFfi(graffiti);
       image.onClick = (e) => {
         console.log('=image click>>', e);
       }
@@ -61,8 +77,8 @@ const Demo = () => {
   }, []);
 
   const start = () => {
-    const graffiti = new Graffiti();
-    app?.add(graffiti);
+    // const graffiti = new Graffiti();
+    // app?.add(graffiti);
     app?.startGraffiti();
   }
 
@@ -81,17 +97,38 @@ const Demo = () => {
   }
 
   const handleImage =  async () => {
-    if (app) {
-      const { cropSrc, mainSrc, graffitiSrc } =  await app.getImage(img);
-      console.log('=graffitiSrc', graffitiSrc);
-      console.log('==croppingSrc', cropSrc);
-      console.log('==mainSrc', mainSrc);
+    if (app && img) {
+      const image = img.getImage();
+      const graffitiImg = await ffi?.getImage();
+      const boxGraffitiImg = await ffi?.getImage(img);
+      console.log('==>>底片', image);
+      console.log('==>>涂鸦', graffitiImg);
+      console.log('==>> 涂鸦与底片同大', boxGraffitiImg);
     }
   }
 
+  const handleAdd = () => {
+    const layer = new Layer({
+      position: {
+        x: 150,
+        y: 150,
+      },
+      width: 350,
+      height: 350,
+    });
+    app?.add(layer);
+    setLay(layer);
+  }
+
+  const handleLayer = async () => {
+    const src = await lay?.getImage();
+    console.log('==src', src);
+  };
+
   return (
     <div style={{ display: 'flex', height: '100vh'}}>
-      <div style={{ display: 'flex', padding: 16, flexDirection: 'column', flex: '0 0 auto', justifyContent: 'center' }}>
+
+      <div style={{ display: 'flex', padding: 16, flexDirection: 'column' }}>
       <button  onClick={start}>涂鸦</button>
       <br />
       <button onClick={end}>停止涂鸦</button>
@@ -106,6 +143,9 @@ const Demo = () => {
       <br />
       <button onClick={() => app?.revoke()}>撤销回退</button>
       <br />
+      <button onClick={handleAdd}>添加新的图层</button>
+      <br />
+      <button onClick={handleLayer}>生成图像外延图片</button>
       <button onClick={() => {
         app?.setIndex(text)
       }}>改变文字的层级</button>

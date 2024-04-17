@@ -1,57 +1,86 @@
-import { Graphics, InteractionEvent } from 'pixi.js';
+import { Graphics, InteractionEvent, Container } from 'pixi.js';
 import { lineStyle } from './operate';
-import { getPoint, getBoundRect, uuid } from './utils';
-import { positionType } from './canvas';
+import { getPoint, getBoundRect, uuid, getImage } from './utils';
+import type { positionType, boundRectType } from './utils';
 import CanvasStore from './store';
+import OperateRect from './operate';
+import Canvas from './canvas';
+
+type shapeT = 'rect' | 'circle' | 'roundedRect';
+
+export interface GraphicsProps {
+  position: positionType;
+  width: number;
+  height: number;
+  shape?: shapeT;
+  radius?: 0;
+  lineStyle?: lineStyle;
+  background?: number;
+  name?: string;
+  alpha?: number;
+}
+
+
+type graphicsAttr = {
+  uuid?: string;
+  repeat?: () => void;
+  changePosition?: (rect: boundRectType) =>  void;
+  delete?: () => void;
+  radius?: number;
+  ele?: EditGraphics;
+  shape?: shapeT;
+  isDrag?: boolean;
+  antialias?: boolean;
+  autoDensity?: boolean;
+} & Graphics;
 
 class EditGraphics {
   width: number;
   height: number;
-  position: any;
-  graphics: any;
-  container: any;
-  shape: any;
+  position: positionType;
+  graphics!: graphicsAttr;
+  container!: Container;
+  shape: shapeT;
   radius: number;
   lineStyle: lineStyle;
   background: number;
-  public app: any;
-  private uuid: string;
+  public app!: Canvas;
+  public uuid: string;
   name: string;
-  operate: any;
-  alpha: number = 1;
-  isEdit: boolean;
+  operate!: OperateRect;
+  alpha: number;
   constructor({
     width = 0,
     height = 0,
     position,
-    container,
     shape = 'rect',
     radius = 0,
     lineStyle = {
       width: 0,
     },
     background = 0xff0000,
-    operate,
     name = '',
-    isEdit = true,
     alpha = 1,
-  }: any) {
+  }: GraphicsProps) {
     this.width = width;
     this.height = height;
     this.position = position;
-    this.container = container;
     this.shape = shape;
     this.radius = radius;
     this.lineStyle = lineStyle;
     this.background = background;
-    this.operate = operate;
     this.name = name;
     this.uuid = `${uuid()}`;
-    this.isEdit = isEdit;
     this.alpha = alpha;
     this.paint();
   }
 
+  public getImage() {
+    this.app?.endGraffiti();
+    const { base64 } = getImage(this);
+    this.app?.mainContainer.addChild(this.graphics);
+    return base64;
+  }
 
   public delete = () => {
     this.container.removeChild(this.graphics)
@@ -74,7 +103,8 @@ class EditGraphics {
     this.graphics.on('pointerup', this.up);
     this.graphics.antialias = true; // 抗锯齿
     this.graphics.autoDensity = true;// 模糊处理
-    this.graphics.interactive = this.isEdit;
+    this.graphics.interactive = true;
+    this.graphics.buttonMode = true;
     if (this.container) {
       this.container.addChild(this.graphics);
     }
@@ -111,7 +141,6 @@ class EditGraphics {
     if (!this.app.isGraffiti) {
       this.app.backCanvasList.push({...this.position, width: this.width, height: this.height, uuid: this.uuid, type: 'Graphics' });
       this.graphics.isDrag = true;
-      this.graphics.isMove = true;
       this.move(getPoint(e));
     }
   }

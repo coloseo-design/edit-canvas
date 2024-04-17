@@ -1,7 +1,37 @@
-import { InteractionEvent, Graphics, Text, Application, Container } from 'pixi.js';
+import { InteractionEvent, Graphics, Sprite, Application, Container } from 'pixi.js';
 import EditText from './text';
 import EditGraphics from './graphics';
+import EditImage from './image';
+import EditGraffiti from './graffiti';
 import CanvasStore from './store';
+import Layer from './layer';
+
+
+export type positionType = { x: number; y: number };
+
+export type boundRectType = positionType & { width: number, height: number };
+
+export type eleType = EditGraffiti | EditText | EditImage | EditGraphics | Layer;
+
+export const wheelListener = (e: Event) => {
+  e.preventDefault();
+  e.stopPropagation();
+  const friction = 1;
+  const event = e as WheelEvent;
+  const deltaX = event.deltaX * friction;
+  const deltaY = event.deltaY * friction;
+  if (!event.ctrlKey) { // 滚轮移动
+    CanvasStore.moveCamera(deltaX, deltaY);
+  } else { // 缩放
+    CanvasStore.zoomCamera(deltaX, deltaY);
+  }
+};
+
+export const pointerListener = (event: PointerEvent) => {
+  CanvasStore.movePointer(event.offsetX, event.offsetY);
+};
+
+
 export const getPoint = (e: InteractionEvent) => {
   return {
     x: e.data.global.x,
@@ -15,6 +45,20 @@ export const uuid = (): string => {
   }
   return `${S4()}${S4()}-${S4()}-${S4()}-${S4()}-${S4()}${S4()}${S4()}`;
 };
+
+export const getScalePoint = (e: InteractionEvent) => {
+  const { x: screenX, y: screenY } = CanvasStore.screen;
+  const { x: scaleX, y: scaleY } = CanvasStore.scale;
+  const scalePosition = getPoint(e);
+  const moveX = screenX * scaleX;
+  const moveY = screenY * scaleY;
+  const originX = (scalePosition.x + moveX) / scaleX;
+  const originY = (scalePosition.y + moveY) / scaleY;
+  return {
+    x: originX,
+    y: originY,
+  }
+}
 
 export const getBoundRect = (ele: any) => {
   if (ele) {
@@ -57,12 +101,75 @@ export const overflowContainer = (ele: any, parent: any) => {
   return (!ax || !ay) ? true : false
 }
 
-export type positionType = { x: number; y: number };
 
 const sleep = (num: number) =>
   new Promise((resolve) => {
     setTimeout(() => resolve(null), num);
   });
+
+
+
+export const getPixiGra = (ele: eleType) => {
+  if (ele instanceof EditGraffiti) {
+    return 'brush';
+  } else if (ele instanceof EditGraphics) {
+    return 'graphics';
+  } else if (ele instanceof EditImage) {
+    return 'sprite';
+  } else if (ele instanceof EditText) {
+    return 'text';
+  } else if (ele instanceof Layer) {
+    return 'layer';
+  } else {
+    throw new Error('传参不对');
+  };
+}
+
+export const getImage = (main: eleType | Container) => {
+  const rect = main instanceof Container ? main :  (main as any)[getPixiGra(main)] || '';
+  if (rect) {
+    const { width, height } = getBoundRect(rect);
+    const imageApp = new Application({
+      width,
+      height,
+      resolution: 12,
+      antialias: true, // 抗锯齿
+      autoDensity: true,
+      transparent: true,
+    });
+    const imageContainer = new Container();
+    imageContainer.addChild(rect);
+    imageApp.stage.addChild(imageContainer);
+    const mainSrc = imageApp.renderer.plugins.extract.base64(imageContainer);
+    const img = imageApp.renderer.plugins.extract.image(imageContainer, "image/png", 1);
+    return {
+      base64: mainSrc,
+      img,
+    }
+  }
+  return {
+    base64: '',
+    img: '',
+  };
+}
+
+export const getBoxImage = async (container: eleType, main: eleType | Container) => {
+  const { img } = getImage(main);
+  const rect = (container as any)[getPixiGra(container)] || '';
+  await sleep(100);
+  const { x, y, width, height } = getBoundRect(rect);
+  const temp = main instanceof Container ? main : (main as any)[getPixiGra(main)];
+  const { x: bx, y: by } = getBoundRect(temp);
+  const tx = x - bx;
+  const ty = y - by;
+  const canvasElement: HTMLCanvasElement = document.createElement('canvas');
+  const ctx: CanvasRenderingContext2D | null = canvasElement.getContext('2d');
+  canvasElement.width = width;
+  canvasElement.height = height;
+  ctx?.drawImage(img, tx, ty, width, height, 0, 0, width, height);
+  const src = canvasElement.toDataURL("image/png");
+  return src
+}
 
 
 export const exportImage = async (main: any, graffitiL: any[], mainContainer: Container, GraffitiContainer: Container) => {

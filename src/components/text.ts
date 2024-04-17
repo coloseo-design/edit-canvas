@@ -1,30 +1,45 @@
-import { InteractionEvent, Text, TextStyle } from 'pixi.js';
-import { getPoint, getBoundRect, uuid } from './utils';
-import { positionType } from './canvas';
+import { InteractionEvent, Text, TextStyle, Container } from 'pixi.js';
+import { getPoint, getBoundRect, uuid, getImage } from './utils';
+import type { positionType, boundRectType } from './utils';
+import Canvas from './canvas';
 import CanvasStore from './store';
+import OperateRect from './operate';
 
+export interface TextProps {
+  width?: number;
+  height?: number;
+  value: string;
+  style?: TextStyle | any;
+  position: positionType;
+}
+
+type TextAttr = {
+  ele?: EditText;
+  isDrag?:  boolean;
+  uuid?: string;
+  changePosition?: (rect: boundRectType) => void;
+  delete?: () => void;
+} & Text;
 
 class EditText {
   public value: string = '';
   public position: positionType;
   public style: any | TextStyle = {};
-  public text: any;
-  public container: any;
-  public operate: any
+  public text!: TextAttr;
+  public container!: Container;
+  public operate!: OperateRect
   public width: number = 0;
   public height: number = 0;
   public uuid: string = `${uuid()}`;
-  private input: HTMLInputElement | null = null;
-  public rootDom: HTMLElement | null = null;
+  private input!: HTMLInputElement;
+  public rootDom!: HTMLElement;
   private isPinyin: boolean = false;
   private isFocus: boolean = false;
-  public app: any;
-  constructor({ width = 0, height = 0, value = '', style = {}, position = {}, container, operate }: any) {
+  public app!: Canvas;
+  constructor({ width = 0, height = 0, value = '', style, position }: TextProps) {
     this.style = style;
     this.position = position;
     this.value = value;
-    this.container = container;
-    this.operate = operate;
     this.width = width;
     this.height = height;
   }
@@ -58,6 +73,14 @@ class EditText {
     }
     this.createInput();
   }
+
+  public getImage() {
+    this.app?.endGraffiti();
+    const { base64 } = getImage(this);
+    this.app?.mainContainer.addChild(this.text);
+    return base64;
+  }
+
   public getBoundRect() {
     return getBoundRect(this.text);
   }
@@ -129,7 +152,7 @@ class EditText {
     this.oninput(e);
   }
 
-  changePosition = ({ x, y, width, height }: positionType & { width: number, height: number}) => {
+  changePosition = ({ x, y, width, height }: boundRectType) => {
     this.position = { x, y };
     if (width) this.width = width;
     if (height) this.height = height;

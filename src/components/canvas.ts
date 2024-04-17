@@ -1,47 +1,24 @@
 import { Application, Container, InteractionEvent } from "pixi.js";
-import { getBoundRect, exportImage } from './utils';
+import { getBoundRect, getPixiGra, wheelListener, pointerListener } from './utils';
+import type { eleType } from './utils';
 import CanvasStore from './store';
 import OperateRect from './operate';
 import ScaleLine from './scale';
 import Graffiti from './graffiti';
-import Image from './image';
 import Text from './text';
-import Graphics from './graphics';
 
-export type positionType = { x: number; y: number };
-
-
-const wheelListener = (e: Event) => {
-  e.preventDefault();
-  e.stopPropagation();
-  const friction = 1;
-  const event = e as WheelEvent;
-  const deltaX = event.deltaX * friction;
-  const deltaY = event.deltaY * friction;
-  if (!event.ctrlKey) { // 滚轮移动
-    CanvasStore.moveCamera(deltaX, deltaY);
-  } else { // 缩放
-    CanvasStore.zoomCamera(deltaX, deltaY);
-  }
-};
-
-const pointerListener = (event: PointerEvent) => {
-  CanvasStore.movePointer(event.offsetX, event.offsetY);
-};
-
-type childType = Graffiti | Image | Text | Graphics;
 
 const operate = new OperateRect({});
 class Canvas {
-  public app: Application | null = null;
-  private mainContainer: Container = new Container();
-  private root: HTMLElement | null = null;
+  public app!: Application;
+  public mainContainer: Container = new Container();
+  private root!: HTMLElement;
   private isDown: boolean = false;
   private rod: any;
   private temStartX: number = 0;
   private temStartY: number = 0;
   private selected: any;
-  private GraffitiContainer: Container = new Container;
+  public GraffitiContainer: Container = new Container;
   public isGraffiti: boolean = false;
   private GraffitiList: Graffiti[] = []; // 所有的存在的涂鸦
   private cacheGraffitiList: Graffiti[] = []; // 缓存当前画笔下的涂鸦
@@ -50,27 +27,11 @@ class Canvas {
   public showScale: boolean = false;
 
 
-  private getPixiGra(ele: childType) {
-    if (ele instanceof Graffiti) {
-      return 'brush';
-    }
-    if (ele instanceof Graphics) {
-      return 'graphics';
-    }
-    if (ele instanceof Image) {
-      return 'sprite';
-    }
-    if (ele instanceof Text) {
-      return 'text';
-    }
-    throw new Error('传参不对');
-  }
-
   public setIndex = (target: any, parent?: any) => {
     if (parent && parent?.children.length > 0) {
       parent.setChildIndex(target, parent.children.length - 1);
     } else {
-      const ele = this.getPixiGra(target);
+      const ele = getPixiGra(target);
       if (ele === 'brush') {
         this.GraffitiContainer?.setChildIndex(target[ele], this.GraffitiContainer?.children.length - 1);
       } else {
@@ -292,6 +253,7 @@ class Canvas {
             current.clear();
             current.repeat();
           } else {
+            console.log('=333', current);
             current.changePosition({ ...last});
             current.position.set(last.x, last.y);
           }
@@ -312,7 +274,7 @@ class Canvas {
   public getSelectedGraphics() {
     return this.selected;
   }
-  public add(ele: childType) {
+  public add(ele: eleType) {
     const hasMain = (this.app?.stage?.children || []).includes(this.mainContainer);
     if (!hasMain) { // 清除画布后重新添加mainContainer
       this.mainContainer.addChild(operate.operateContainer);
@@ -354,15 +316,14 @@ class Canvas {
       if (item) {
         item.brush.clear();
         const obj = getBoundRect(item.brush);
-        item.brush.beginFill(this.app?.renderer.backgroundColor, 0.05);
+        // item.brush.beginFill(this.app?.renderer.backgroundColor, 0.05);
         item.brush.drawRect(obj.x, obj.y, obj.width, obj.height);
         item.brush.drawRect(obj.x, obj.y, obj.width, obj.height);
       }
     })
   }
-  public async getImage(ele: any) {
-    this.endGraffiti();
-    return await exportImage(ele, this.GraffitiList, this.mainContainer, this.GraffitiContainer);
+  public async getImage() {
+    return this.app?.renderer.plugins.extract.base64(this.mainContainer);
   }
 
   public setScale(show: boolean) {
