@@ -71,6 +71,10 @@ class Layer {
 
   }
 
+  public getBoundRect() {
+    return getBoundRect(this.layer);
+  }
+
   delete() {
     this.layer.clear();
     this.container.removeChild(this.layer);

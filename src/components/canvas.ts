@@ -396,12 +396,13 @@ class Canvas {
     this.temStartY = top.verticalSwipes[1][0].start;
     this.temStartX = top.swipeList[1][0].start;
   }
-  public detach(root: HTMLElement) {
+  public detach(root?: HTMLElement) {
     this.cacheGraffitiList = [];
     this.backCanvasList = [];
     this.revokeBackList = [];
-    root.removeEventListener("mousewheel", wheelListener);
-    root.removeEventListener("pointermove", pointerListener);
+    const dom = root || this.root;
+    dom.removeEventListener("mousewheel", wheelListener);
+    dom.removeEventListener("pointermove", pointerListener);
   }
 }
 

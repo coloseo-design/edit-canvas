@@ -68,7 +68,6 @@ class OperateRect {
       if (item === 'main') {
         if (init) {
           this.dirMap[item].interactive = true;
-          // this.dirMap[item].on('pointerup', this.hornUp);
           this.dirMap[item].name = `${item}`;
           this.dirMap[item].zIndex = -1;
           this.dirMap[item].buttonMode = true;
@@ -83,10 +82,6 @@ class OperateRect {
         if (init) {
           this.dirMap[item].interactive = true;
           this.dirMap[item].name = `${item}`;
-          // this.dirMap[item].on('pointerdown', (e: InteractionEvent) => {
-          //   this.hornDown(item, e);
-          // });
-          // this.dirMap[item].on('pointerup', this.hornUp);
           this.dirMap[item].endFill();
         } else {
           this.dirMap[item].beginFill(0xffffff);
