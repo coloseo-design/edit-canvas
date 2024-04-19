@@ -81,6 +81,7 @@ class Graffiti {
   }
 
   public async getImage(container?: eleType) {
+    this.operate?.clear();
     if (container) {
       this.app?.endGraffiti();
       const src = await getBoxImage(container, this);
@@ -91,8 +92,7 @@ class Graffiti {
     return base64;
   }
 
-  private repeat = (rect: positionType & { width: number, height: number }) => {
-    // this.brush.beginFill(this.app.app?.renderer.backgroundColor, 0.05);
+  private repeat = (rect: boundRectType) => {
     this.brush.drawRect(rect.x, rect.y, rect.width, rect.height);
     this.brush.endFill();
   }
@@ -107,6 +107,8 @@ class Graffiti {
     if (!this.app.isGraffiti) {
       this.brush.isDrag = true;
       this.start = getPoint(e);
+      this.app?.setIndex(this.brush, this.container);
+      this.app?.setIndex(this.operate.operateContainer, this.app?.mainContainer); // 设置操作框架层级
       this.move();
     }
   }
@@ -125,6 +127,7 @@ class Graffiti {
   private up = () => {
     if (this.brush.isDrag) {
       this.brush.isDrag = false;
+      this.operate?.paint(getBoundRect(this.brush));
     }
   }
 };

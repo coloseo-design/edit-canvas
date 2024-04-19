@@ -140,6 +140,8 @@ class EditGraphics {
     e.stopPropagation();
     if (!this.app.isGraffiti) {
       this.app.backCanvasList.push({...this.position, width: this.width, height: this.height, uuid: this.uuid, type: 'Graphics' });
+      this.app.setIndex(this.graphics, this.container);
+      this.app.setIndex(this.operate.operateContainer, this.container); // 设置操作框架层级
       this.graphics.isDrag = true;
       this.move(getPoint(e));
     }
@@ -161,7 +163,8 @@ class EditGraphics {
     e.stopPropagation();
     if (this.graphics.isDrag) {
       this.graphics.isDrag = false;
-      const { x, y } = getBoundRect(this.graphics);
+      const { x, y, width, height } = getBoundRect(this.graphics);
+      this.operate?.paint({x, y, width, height});
       this.position = { x, y};
       this.graphics.clear();
       this.repeat();

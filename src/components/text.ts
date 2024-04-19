@@ -75,6 +75,7 @@ class EditText {
   }
 
   public getImage() {
+    this.operate?.clear();
     this.app?.endGraffiti();
     const { base64 } = getImage(this);
     this.app?.mainContainer.addChild(this.text);
@@ -170,6 +171,8 @@ class EditText {
     e.stopPropagation();
     if (!this.app.isGraffiti) {
       this.app.backCanvasList.push({...this.position, width: this.width, height: this.height,  uuid: this.uuid, type: 'Text' });
+      this.app.setIndex(this.text, this.container); // 设置当前元素层次
+      this.app.setIndex(this.operate.operateContainer, this.container); // 设置操作框架层级
       this.text.isDrag = true;
       if (!this.isFocus) {
         this.move(getPoint(e));
@@ -192,9 +195,11 @@ class EditText {
     e.stopPropagation();
     if (this.text.isDrag) {
       this.text.isDrag = false;
+      const { x, y ,width, height } = getBoundRect(this.text);
+      this.operate?.paint({ x, y, width, height });
       this.position = {
-        x: getBoundRect(this.text).x,
-        y: getBoundRect(this.text).y,
+        x,
+        y,
       };
     }
   }

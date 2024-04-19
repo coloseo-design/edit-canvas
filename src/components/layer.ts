@@ -6,9 +6,11 @@ import Canvas from './canvas';
 import CanvasStore from './store';
 
 export interface LayerProps {
-  position: positionType,
-  width: number,
-  height: number,
+  position: positionType;
+  width: number;
+  height: number;
+  background?: number;
+  alpha?: number;
 }
 
 type layerAttr = {
@@ -28,18 +30,24 @@ class Layer {
   layer!: layerAttr;
   container!: Container;
   uuid: string = `${uuid()}`;
+  background: number;
+  alpha: number;
   constructor({
     position,
     width,
-    height
+    height,
+    background = 0xffffff,
+    alpha = 1,
   }: LayerProps) {
     this.position = position;
     this.height = height;
     this.width = width;
+    this.background = background;
+    this.alpha = alpha;
   }
   paint() {
     this.layer = new Graphics();
-    this.layer.beginFill(0xffffff, 1);
+    this.layer.beginFill(this.background, this.alpha);
     this.layer.drawRect(this.position.x, this.position.y, this.width, this.height);
     this.layer.beginFill();
     this.layer.interactive = true;
@@ -59,6 +67,7 @@ class Layer {
   }
 
    public async getImage() {
+    this.operate?.clear();
     this.layer.alpha = 0;
     const src = await getBoxImage(this, this.container);
     this.layer.alpha = 1;
@@ -76,16 +85,16 @@ class Layer {
   }
 
   delete() {
-    this.layer.clear();
+    this.operate.clear();
     this.container.removeChild(this.layer);
   }
-  public changePosition = (rect: boundRectType) => {
+  changePosition = (rect: boundRectType) => {
     this.position = { x: rect.x, y: rect.y };
     if (rect.width) this.width = rect.width;
     if (rect.height) this.height = rect.height;
   }
 
-  public repeat = () => {
+  repeat = () => {
     this.layer.beginFill(0xffffff, 1);
     this.layer.drawRect(this.position.x, this.position.y, this.width, this.height);
     this.layer.endFill();
@@ -121,7 +130,8 @@ class Layer {
     e.stopPropagation();
     if (this.layer.isDrag) {
       this.layer.isDrag = false;
-      const { x, y } = getBoundRect(this.layer);
+      const { x, y, width, height } = getBoundRect(this.layer);
+      this.operate?.paint({ x, y, width, height  });
       this.position = { x, y};
       this.layer.clear();
       this.repeat();

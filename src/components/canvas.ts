@@ -40,22 +40,24 @@ class Canvas {
     }
   
   }
+
+  private brushStartPaint = (e: InteractionEvent) => {
+    this.isDown = true;
+    const currentP = this.GraffitiList[this.GraffitiList.length - 1];
+    const item = new Graffiti({ color: currentP.color, lineWidth: currentP.lineWidth, alpha: currentP.alpha });
+    item.operate = operate;
+    item.app = this;
+    item.container = currentP.brush;
+    currentP.brush.addChild(item.brush);
+    (currentP?.children || []).push(item);
+    item.paint(e);
+    this.backCanvasList.push({ uuid: item.uuid, type: 'Graffiti'}); // 存储画布操作
+  }
   private pointerDown = (e: InteractionEvent) => {
     if (this.isGraffiti && this.GraffitiList.length) {
-      this.isDown = true;
-      const currentP = this.GraffitiList[this.GraffitiList.length - 1];
-      const item = new Graffiti({ color: currentP.color, lineWidth: currentP.lineWidth, alpha: currentP.alpha });
-      item.operate = operate;
-      item.app = this;
-      item.container = currentP.brush;
-      currentP.brush.addChild(item.brush);
-      (currentP?.children || []).push(item);
-      item.paint(e);
-      this.backCanvasList.push({ uuid: item.uuid, type: 'Graffiti'});
+      this.brushStartPaint(e);
     } else if (e.target) {
       e.stopPropagation();
-      this.setIndex(e.target, e.target.parent); // 设置当前层级
-      this.setIndex(operate.operateContainer, this.mainContainer); // 设置框架层级
       if (['leftTop', 'leftBottom', 'rightTop', 'rightBottom', 'main'].includes(e.target.name)) {
         operate.moveType = e.target.name;
         operate.hornDown(e.target.name, e);
@@ -63,7 +65,7 @@ class Canvas {
         this.selected = (e.target as any)?.ele || e.target;
         (e.target as any).ele?.onClick(e);
         operate.operateGraphical = e.target;
-        operate.clear();
+        !operate.isClear && operate.clear();
         operate.paint(getBoundRect(e.target));
       }
     }
@@ -82,8 +84,11 @@ class Canvas {
       })
       this.app.renderer.plugins.interaction.on('pointerup', (e: InteractionEvent) => {
         e.stopPropagation();
-        if (e.target) (e.target as any).isDrag = false;
-        operate.isDrag = false;
+        if (e.target) {
+          (e.target as any).isDrag = false
+        } else {
+          operate.clear();
+        }
         operate.hornUp();
         this.isDown = false;
         if (this.GraffitiList.length) {
@@ -253,7 +258,6 @@ class Canvas {
             current.clear();
             current.repeat();
           } else {
-            console.log('=333', current);
             current.changePosition({ ...last});
             current.position.set(last.x, last.y);
           }
@@ -289,6 +293,7 @@ class Canvas {
       this.GraffitiContainer.addChild(ele.brush);
       this.GraffitiList.push(ele);
       ele.brush.interactive = true;
+      ele.brush.buttonMode = true;
       ele.container = this.GraffitiContainer;
     } else {
       ele.operate = operate;
@@ -316,13 +321,13 @@ class Canvas {
       if (item) {
         item.brush.clear();
         const obj = getBoundRect(item.brush);
-        // item.brush.beginFill(this.app?.renderer.backgroundColor, 0.05);
         item.brush.drawRect(obj.x, obj.y, obj.width, obj.height);
         item.brush.drawRect(obj.x, obj.y, obj.width, obj.height);
       }
-    })
+    });
   }
   public async getImage() {
+    operate?.clear();
     return this.app?.renderer.plugins.extract.base64(this.mainContainer);
   }
 

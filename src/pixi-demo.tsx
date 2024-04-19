@@ -68,7 +68,7 @@ const Demo = () => {
       app?.add(graffiti);
       setFfi(graffiti);
       image.onClick = (e) => {
-        console.log('=image click>>', e);
+        // console.log('=image click>>', e);
       }
     }
     return () => {
@@ -152,13 +152,7 @@ const Demo = () => {
       <br />
       <button onClick={() => {
         app?.clearCanvas();
-        setTimeout(() => {
-          app?.setScale(true);
-          img && app?.add(img);
-          gra && app?.add(gra);
-
-        }, 1000);
-      }}>展示刻度</button>
+      }}>清空画布</button>
       </div>
       <div id="canvas-container" style={{ flex: 1, height: '100%', position: 'relative' }} />
     </div>

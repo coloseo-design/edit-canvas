@@ -1,38 +1,41 @@
-import { InteractionEvent, Loader, Sprite } from 'pixi.js';
+import { InteractionEvent, Loader, Sprite, Container } from 'pixi.js';
 import { getPoint, uuid, getBoundRect, getImage } from './utils';
+import type { positionType, boundRectType } from './utils';
 import CanvasStore from './store';
 import Canvas from './canvas';
 import OperateRect from './operate';
 
-type positionType = { x: number; y: number };
 
 type SP = {
-  changePosition?: (obj: positionType & { width: number, height: number}) => void;
+  changePosition?: (obj: boundRectType) => void;
   delete?: () => void;
   ele?: EditImage;
   uuid?: string;
   isDrag?: boolean;
 } & Sprite
 
+export interface EditImageProps {
+  url: string;
+  position: positionType;
+  width: number;
+  height: number;
+}
+
 class EditImage {
   public url: string = '';
   public position: positionType = {x: 0, y: 0 };
   public sprite!: SP;
-  public container: any;
+  public container!: Container;
   public width: number = 0;
   public height: number = 0;
-  public operate: OperateRect;
-  public text: string = '';
+  public operate!: OperateRect;
   public app!: Canvas;
   public uuid: string = `${uuid()}`;
-  constructor({ url = '', position = {}, container, width, height, operate, text }: any) {
+  constructor({ url = '', position, width, height }: EditImageProps) {
     this.url = url;
     this.position = position;
-    this.container = container;
     this.width = width;
     this.height = height;
-    this.operate = operate;
-    this.text = text;
   }
 
   delete = () => {
@@ -67,6 +70,7 @@ class EditImage {
   }
 
   public getImage() {
+    this.operate?.clear();
     this.app?.endGraffiti();
     const { base64 } = getImage(this);
     this.sprite && this.app?.mainContainer.addChild(this.sprite);
@@ -77,14 +81,13 @@ class EditImage {
     return getBoundRect(this.sprite);
   }
 
-  changePosition = ({ x, y, width, height }: positionType & { width: number, height: number}) => {
+  changePosition = ({ x, y, width, height }: boundRectType) => {
     this.position = { x, y };
-    if (width && this.sprite) {
+    if (width) {
       this.sprite.width = width;
       this.width = width
     }
-
-    if (height && this.sprite) {
+    if (height) {
       this.sprite.height = height;
       this.height = height;
     }
@@ -92,10 +95,14 @@ class EditImage {
 
   private down = (e: InteractionEvent) => {
     if (!this.app?.isGraffiti) {
-      this.app?.backCanvasList.push({...getBoundRect(this.sprite), uuid: this.uuid, type: 'Image' });
-      if (this.sprite) {
-        this.sprite.isDrag = true;
-      }
+      this.app?.backCanvasList.push({
+        ...getBoundRect(this.sprite),
+        uuid: this.uuid,
+        type: 'Image',
+      });
+      this.app.setIndex(this.sprite, this.container);
+      this.app.setIndex(this.operate.operateContainer, this.container); // 设置操作框架层级
+      this.sprite.isDrag = true;
       this.move(getPoint(e));
     }
 
@@ -114,6 +121,7 @@ class EditImage {
   private up = () => {
     if (this.sprite?.isDrag) {
       this.sprite.isDrag = false;
+      this.operate?.paint(getBoundRect(this.sprite));
       this.position = {
         x: this.sprite.x,
         y: this.sprite.y,

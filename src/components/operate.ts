@@ -1,5 +1,5 @@
 import { Graphics, InteractionEvent } from 'pixi.js';
-import { getPoint } from './utils';
+import { getBoundRect, getPoint } from './utils';
 import type { positionType } from './utils';
 import CanvasStore from './store';
 
@@ -12,7 +12,8 @@ type argType = {
 } & positionType;
 
 class OperateRect {
-  public lineStyle: lineStyle;
+  public lineWidth: number;
+  public lineColor: number;
   public position: positionType;
   public width: number = 0;
   public height: number = 0;
@@ -24,7 +25,7 @@ class OperateRect {
   main: Graphics;
   isDrag: boolean = false;
   startPosition: positionType = { x: 0, y: 0 };
-  dirMap: any;
+  dirMap: { [x: string]: Graphics };
   operateGraphical: any;
   moveType: string = '';
   x: number = 0;
@@ -33,11 +34,14 @@ class OperateRect {
   originY: number = 0;
   originW: number = 0;
   originH: number = 0;
+  isClear: boolean = false;
   constructor({
-    lineStyle = { width: 1, color: 0x0000ff },
+    lineWidth = 1,
+    lineColor = 0x6078F4,
     position = {},
   }: any) {
-    this.lineStyle = lineStyle;
+    this.lineWidth = lineWidth;
+    this.lineColor = lineColor;
     this.position = position;
     this.operateContainer = new Graphics();
     this.operateContainer.name = 'operateContainer';
@@ -58,6 +62,7 @@ class OperateRect {
   }
 
   clear = () => {
+    this.isClear = true;
     Object.values(this.dirMap).forEach((item: any) => {
       item.clear();
     });
@@ -67,30 +72,30 @@ class OperateRect {
     Object.keys(this.dirMap).forEach((item) => {
       if (item === 'main') {
         if (init) {
-          this.dirMap[item].interactive = true;
+          // this.dirMap[item].interactive = true;
           this.dirMap[item].name = `${item}`;
           this.dirMap[item].zIndex = -1;
-          this.dirMap[item].buttonMode = true;
           this.dirMap[item].endFill();
         } else {
-          this.dirMap[item].beginFill(0xffffff, 0);
-          // this.dirMap[item].beginFill(0xffffff, 0.0001);
-          this.dirMap[item].lineStyle(this.lineStyle.width, this.lineStyle.color, this.lineStyle.alpha, this.lineStyle.alignment, this.lineStyle.native);
-          this.dirMap[item].drawRect(x - 4, y - 4, w + 8, h + 8);
+          this.dirMap[item].beginFill(0xffffff, 0);;
+          this.dirMap[item].lineStyle(this.lineWidth, this.lineColor, 1);
+          this.dirMap[item].drawRect(x, y, w, h);
         }
       } else {
         if (init) {
           this.dirMap[item].interactive = true;
+          this.dirMap[item].buttonMode = true;
           this.dirMap[item].name = `${item}`;
           this.dirMap[item].endFill();
         } else {
           this.dirMap[item].beginFill(0xffffff);
-          this.dirMap[item].lineStyle(1, 0x0000ff);
-          const x1 = x - 8;
-          const x2 = x + w;
-          const y1 = y - 8;
-          const y2 = y + h
-          this.dirMap[item].drawRect(item.indexOf('left') > -1 ? x1 : x2, item.indexOf('Top') > -1 ? y1 : y2, 8, 8);
+          this.dirMap[item].lineStyle(this.lineWidth, this.lineColor);
+          const hornW = 12;
+          const x1 = x - hornW / 2;
+          const x2 = x + w - hornW / 2;
+          const y1 = y - hornW / 2;
+          const y2 = y + h - hornW / 2;
+          this.dirMap[item].drawRect(item.indexOf('left') > -1 ? x1 : x2, item.indexOf('Top') > -1 ? y1 : y2, hornW, hornW);
         }
       }
     })
@@ -98,16 +103,17 @@ class OperateRect {
 
   paint = ({ x, y, width, height }: any, isSelf: boolean = false, init: boolean = false) => {
     if (!isSelf) {
-      this.originX = x - 4;
-      this.originY = y - 4;
-      this.originW = width + 8;
-      this.originH = height + 8;
+      this.originX = x;
+      this.originY = y;
+      this.originW = width;
+      this.originH = height;
     }
-    this.width = isSelf ? width : width + 8;
-    this.height = isSelf ? height : height + 8;
-    this.x = isSelf ? x: x- 4;
-    this.y = isSelf ? y: y - 4;
-    
+
+    this.width = width;
+    this.height = height;
+    this.x = x;
+    this.y = y;
+    this.isClear = false;
     this.paintRect({ x, y , w: width, h: height }, init);
   }
   hornDown = (type: string, e: InteractionEvent) => {
@@ -160,7 +166,6 @@ class OperateRect {
 
     if (this.operateGraphical) {
       if (this.operateGraphical instanceof Graphics) {
-        (this.operateGraphical as any).isMove = false;
         this.operateGraphical.clear();
         this.operateGraphical.position.set(0, 0);
         (this.operateGraphical as any)?.changePosition?.({ x, y, width, height });
@@ -174,10 +179,14 @@ class OperateRect {
   }
 
   hornUp = () => {
-    if (this.isDrag) {
-      this.isDrag = false;
-      this.operateGraphical = null;
-      this.moveType = '';
+    this.isDrag = false;
+    this.moveType = '';
+    if (this.operateGraphical) {
+      const rect = getBoundRect(this.operateGraphical);
+      this.originX = rect.x;
+      this.originY = rect.y;
+      this.originW = rect.width;
+      this.originH = rect.height;
     }
   }
 }
