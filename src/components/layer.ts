@@ -111,6 +111,8 @@ class Layer {
         type: 'Graphics'
       });
       this.layer.isDrag = true;
+      this.app.setIndex(this.layer, this.container);
+      this.app.setIndex(this.operate?.operateContainer, this.container); // 设置操作框架层级
       this.move(getPoint(e));
     }
   }
