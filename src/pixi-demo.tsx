@@ -8,7 +8,7 @@ const Demo = () => {
   const [img, setImg] = useState<Image>();
   const [img1, setImg1] = useState<Image>();
   const [gra, setGra] = useState<Graphics>();
-  const [ffi, setFfi] = useState<Graffiti>();
+  const [ffis, setFfi] = useState<Graffiti[]>([]);
   const [lay, setLay] = useState<Layer>()
   useEffect(() => {
     const canvasContainer = document.getElementById('canvas-container');
@@ -64,11 +64,8 @@ const Demo = () => {
       app.add(image);
       app.add(text1);
       app.add(image1);
-      const graffiti = new Graffiti();
-      app?.add(graffiti);
-      setFfi(graffiti);
       image.onClick = (e) => {
-        // console.log('=image click>>', e);
+        console.log('=image click>>', image.getBoundRect());
       }
     }
     return () => {
@@ -77,8 +74,10 @@ const Demo = () => {
   }, []);
 
   const start = () => {
-    // const graffiti = new Graffiti();
-    // app?.add(graffiti);
+    const graffiti = new Graffiti();
+    app?.add(graffiti);
+    ffis.push(graffiti);
+    setFfi(ffis);
     app?.startGraffiti();
   }
 
@@ -89,6 +88,7 @@ const Demo = () => {
   const handleDelete = () => {
     const selected = app?.getSelectedGraphics();
     selected && selected.delete();
+    setFfi(ffis.filter((i) => i.uuid !== selected.uuid));
   }
 
 
@@ -99,8 +99,9 @@ const Demo = () => {
   const handleImage =  async () => {
     if (app && img) {
       const image = img.getImage();
-      const graffitiImg = await ffi?.getImage();
-      const boxGraffitiImg = await ffi?.getImage(img);
+      const fi = ffis[ffis.length - 1];
+      const graffitiImg = await fi?.getImage();
+      const boxGraffitiImg = await fi?.getImage(img);
       console.log('==>>底片', image);
       console.log('==>>涂鸦', graffitiImg);
       console.log('==>> 涂鸦与底片同大', boxGraffitiImg);

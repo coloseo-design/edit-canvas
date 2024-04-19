@@ -20,8 +20,8 @@ class Canvas {
   private selected: any;
   public GraffitiContainer: Container = new Container;
   public isGraffiti: boolean = false;
-  private GraffitiList: Graffiti[] = []; // 所有的存在的涂鸦
-  private cacheGraffitiList: Graffiti[] = []; // 缓存当前画笔下的涂鸦
+  public GraffitiList: Graffiti[] = []; // 所有的存在的涂鸦
+  public cacheGraffitiList: Graffiti[] = []; // 缓存当前画笔下的涂鸦
   public backCanvasList: any[] = [] // 存储画布前一步的状态
   public revokeBackList: any[] = [] // 存储画布回退时的状态
   public showScale: boolean = false;

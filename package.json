@@ -6,7 +6,8 @@
   "types": "lib/index.d.ts",
   "scripts": {
     "build": "node build.js && tsc --declaration --outDir lib src/components/*.ts -t es5",
-    "start": "webpack-dev-server --mode development --open"
+    "start": "webpack-dev-server --mode development --open",
+    "dev": "webpack-dev-server --mode development --open"
   },
   "file": [
     "lib"

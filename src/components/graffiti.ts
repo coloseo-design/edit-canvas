@@ -1,7 +1,7 @@
 import { Graphics, InteractionEvent, Container } from 'pixi.js';
 import { getBoundRect, uuid, getImage, getBoxImage } from './utils';
 import type { eleType, positionType, boundRectType } from './utils';
-import { getPoint, getScalePoint } from './utils';
+import { getPoint, getOriginPosition } from './utils';
 import CanvasStore from './store';
 import Canvas from './canvas';
 import OperateRect from './operate';
@@ -52,7 +52,7 @@ class Graffiti {
   }
 
   paint = (e: InteractionEvent) => {
-    const scalePosition = getScalePoint(e);
+    const scalePosition = getOriginPosition(getPoint(e));
     this.brush.beginFill(this.color, this.alpha);
     this.brush.isDrag = false;
     this.brush.drawCircle(scalePosition.x, scalePosition.y, this.lineWidth);
@@ -76,7 +76,8 @@ class Graffiti {
   }
 
   public delete = () => {
-    this.container?.removeChild(this.brush)
+    this.app.GraffitiList = this.app.GraffitiList.filter((i) => i.uuid !== this.uuid);
+    this.container?.removeChild(this.brush);
     this.operate?.clear?.();
   }
 
@@ -84,12 +85,13 @@ class Graffiti {
     this.operate?.clear();
     if (container) {
       this.app?.endGraffiti();
-      const src = await getBoxImage(container, this);
-      this.app.GraffitiContainer.addChild(this.brush);
+      const src = await getBoxImage(container, this, this.container);
       return src; 
+    } else {
+      const { base64 } = getImage(this);
+      this.app?.GraffitiContainer.addChild(this.brush);
+      return base64;
     }
-    const { base64 } = getImage(this);
-    return base64;
   }
 
   private repeat = (rect: boundRectType) => {
