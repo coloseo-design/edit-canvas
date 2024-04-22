@@ -175,7 +175,6 @@ class Canvas {
     this.isGraffiti = true;
     operate.clear();
     operate.isDrag = false;
-    this.cacheGraffitiList = [];
   }
   public endGraffiti() { // 结束涂鸦
     this.isGraffiti = false;

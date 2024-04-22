@@ -27,7 +27,7 @@ const Demo = () => {
         height: 300,
       });
       const image1 = new Image({
-        url: 'http://47.109.84.94/file-1713170051377.jpg',
+        url: 'http://47.109.84.94/api/file-1713170051377.jpg',
         position: {
           x: 20,
           y: 200,
