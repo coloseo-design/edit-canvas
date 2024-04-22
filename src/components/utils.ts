@@ -46,9 +46,11 @@ export const uuid = (): string => {
   return `${S4()}${S4()}-${S4()}-${S4()}-${S4()}-${S4()}${S4()}${S4()}`;
 };
 
-export const getOriginPosition = (origin: positionType) => { // 获取原始的position，去除掉移动缩放的距离
-  const { x: screenX, y: screenY } = CanvasStore.screen;
-  const { x: scaleX, y: scaleY } = CanvasStore.scale;
+// originS 主要用于画布伸缩移动后获取原来的宽高和位置，主要用于layer生成图片
+
+export const getOriginPosition = (origin: positionType, originS?: boolean) => { // 获取原始的position，去除掉移动缩放的距离
+  const { x: screenX, y: screenY } = originS ? { x: 0, y: 0 } : CanvasStore.screen;
+  const { x: scaleX, y: scaleY } = originS ? {x: 1, y: 1 }: CanvasStore.scale;
   const moveX = screenX * scaleX;
   const moveY = screenY * scaleY;
   const originX = (origin.x + moveX) / scaleX;
@@ -59,11 +61,11 @@ export const getOriginPosition = (origin: positionType) => { // 获取原始的p
   }
 }
 
-export const getBoundRect = (ele: any) => {
+export const getBoundRect = (ele: any, originS?: boolean) => {
   if (ele) {
     const { x, y, width, height } = ele.getBounds();
-    const { x: scaleX, y: scaleY } = CanvasStore.scale;
-    const { x: originX, y: originY } = getOriginPosition({ x, y });
+    const { x: scaleX, y: scaleY } = originS ? { x: 1, y: 1 } : CanvasStore.scale;
+    const { x: originX, y: originY } = getOriginPosition({ x, y }, originS);
     const originW = width / scaleX;
     const originH = height / scaleY;
     return {
@@ -105,10 +107,10 @@ export const getPixiGra = (ele: eleType) => {
   };
 }
 
-export const getImage = (main: eleType | Container, parent?: any) => {
+export const getImage = (main: eleType | Container, third?: any) => {
   const rect = main instanceof Container ? main :  (main as any)[getPixiGra(main)] || '';
   if (rect) {
-    const { width, height } = getBoundRect(rect);
+    const { width, height } = getBoundRect(rect, third?.isLayer);
     const imageApp = new Application({
       width,
       height,
@@ -122,7 +124,7 @@ export const getImage = (main: eleType | Container, parent?: any) => {
     imageApp.stage.addChild(imageContainer);
     const mainSrc = imageApp.renderer.plugins.extract.base64(imageContainer);
     const img = imageApp.renderer.plugins.extract.image(imageContainer, "image/png", 1); // 用来裁剪
-    parent?.addChild(rect);
+    third?.parent?.addChild(rect);
     return {
       base64: mainSrc,
       img,
@@ -134,13 +136,17 @@ export const getImage = (main: eleType | Container, parent?: any) => {
   };
 }
 
-export const getBoxImage = async (container: eleType, main: eleType | Container, parent?: any) => {
+export const getBoxImage = async (
+  container: eleType,
+  main: eleType | Container,
+  third?: any,
+) => {
   const temp = main instanceof Container ? main : (main as any)[getPixiGra(main)];
-  const { img } = getImage(main, parent);
+  const { img } = getImage(main, third);
   const rect = (container as any)[getPixiGra(container)] || '';
   await sleep(100);
-  const { x, y, width, height } = getBoundRect(rect);
-  const { x: bx, y: by } = getBoundRect(temp);
+  const { x, y, width, height } = getBoundRect(rect, third?.isLayer);
+  const { x: bx, y: by } = getBoundRect(temp, third?.isLayer);
   const tx = x - bx;
   const ty = y - by;
   const canvasElement: HTMLCanvasElement = document.createElement('canvas');

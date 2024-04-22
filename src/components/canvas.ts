@@ -40,140 +40,6 @@ class Canvas {
     }
   
   }
-
-  private brushStartPaint = (e: InteractionEvent) => {
-    this.isDown = true;
-    const currentP = this.GraffitiList[this.GraffitiList.length - 1];
-    const item = new Graffiti({ color: currentP.color, lineWidth: currentP.lineWidth, alpha: currentP.alpha });
-    item.operate = operate;
-    item.app = this;
-    item.container = currentP.brush;
-    currentP.brush.addChild(item.brush);
-    (currentP?.children || []).push(item);
-    item.paint(e);
-    this.backCanvasList.push({ uuid: item.uuid, type: 'Graffiti'}); // 存储画布操作
-  }
-  private pointerDown = (e: InteractionEvent) => {
-    if (this.isGraffiti && this.GraffitiList.length) {
-      this.brushStartPaint(e);
-    } else if (e.target) {
-      e.stopPropagation();
-      if (['leftTop', 'leftBottom', 'rightTop', 'rightBottom', 'main'].includes(e.target.name)) {
-        operate.moveType = e.target.name;
-        operate.hornDown(e.target.name, e);
-      } else {
-        this.selected = (e.target as any)?.ele || e.target;
-        (e.target as any).ele?.onClick(e);
-        operate.operateGraphical = e.target;
-        !operate.isClear && operate.clear();
-        operate.paint(getBoundRect(e.target));
-      }
-    }
-  }
-  private appOperate = () => {
-    if (this.app && this.mainContainer) {
-      this.app.renderer.plugins.interaction.on('pointerdown', this.pointerDown);
-      this.app.renderer.plugins.interaction.on('pointermove', (e: InteractionEvent) => {
-        if (this.isDown) {
-          const currentP = this.GraffitiList[this.GraffitiList.length - 1];
-          if (currentP?.children.length) {
-            const item = currentP.children[currentP.children.length - 1];
-            item.paint(e);
-          }
-        }
-      })
-      this.app.renderer.plugins.interaction.on('pointerup', (e: InteractionEvent) => {
-        e.stopPropagation();
-        if (e.target) {
-          (e.target as any).isDrag = false
-        } else {
-          operate.clear();
-        }
-        operate.hornUp();
-        this.isDown = false;
-        if (this.GraffitiList.length) {
-          this.GraffitiList.forEach((i) => i.brush.isDrag = false);
-        }
-      });
-    }
-  }
-  private rootOperate = () => {
-    let lastScrollTime: any | null = null; // 保存上次滚动事件的时间戳
-    const scrollThreshold = 100;
-    if (this.root && this.rod) {
-      this.root.addEventListener("mousewheel", (e: any) => {
-        if (this.showScale) {
-          const { x, y, width } = CanvasStore.screen;
-          const { x: scaleX } = CanvasStore.scale;
-          const currentTime = new Date().getTime();
-          if (Math.floor(scaleX * 100) >= 10 && width >= 50) {
-            if (!e.ctrlKey) { // 滚动
-              const lenX = this.rod?.countX || 15;
-              const lenY = this.rod?.countY || 15;
-
-              // 横向滚动
-              if (x > 0) {
-                if (e.deltaX >= 0 && x > this.rod?.swipeList[1][lenX - 1].start) {
-                  this.rod?.paintX(this.rod?.swipeList[1][lenX - 1].start, this.rod?.gap);
-                }
-                if (e.deltaX < 0 && x < this.rod?.swipeList[0][lenX - 1].start) {
-                  this.rod?.paintX(this.rod?.swipeList[0][lenX - 1].start, this.rod?.gap);
-                }
-              } else {
-                if (e.deltaX <= 0 && Math.abs(x) > Math.abs(this.rod?.swipeList[0][0].start)) {
-                  this.rod?.paintX(this.rod?.swipeList[0][0].start, this.rod?.gap);
-                }
-                if (e.deltaX > 0 && x > this.rod?.swipeList[1][lenX - 1].start) {
-                  this.rod?.paintX(this.rod?.swipeList[1][lenX - 1].start, this.rod?.gap);
-                }
-              }
-
-              // 竖向滚动
-              if (y > 0) {
-                if (e.deltaY >= 0 && y > this.rod?.verticalSwipes[1][lenY - 1].start) {
-                  this.rod?.paintY(this.rod?.verticalSwipes[1][lenY - 1].start, this.rod?.gap);
-                }
-                if (e.deltaY < 0 && y < this.rod?.verticalSwipes[0][lenY - 1].start) {
-                  this.rod?.paintY(this.rod?.verticalSwipes[0][lenY - 1].start, this.rod?.gap);
-                }
-              } else {
-                if (e.deltaY <= 0 && Math.abs(y) > Math.abs(this.rod?.verticalSwipes[0][0].start)) {
-                  this.rod?.paintY(this.rod?.verticalSwipes[0][0].start, this.rod?.gap);
-                }
-                if (e.deltaY > 0 && y > this.rod?.verticalSwipes[1][lenY - 1].start) {
-                  this.rod?.paintY(this.rod?.verticalSwipes[1][lenY - 1].start, this.rod?.gap);
-                }
-              }
-
-              this.temStartY = this.rod?.verticalSwipes[1][0].start;
-              this.temStartX = this.rod?.swipeList[1][0].start;
-            } else {  // 缩放  TODO
-              const gap = scaleX < 1 ? Math.ceil((width / this.rod.countX)) : Math.ceil((width / this.rod.countX) * scaleX);
-              this.rod.gap = gap;
-              this.rod?.paintX?.(this.temStartX, gap);
-              this.rod?.paintY?.(this.temStartY, gap);
-              if (lastScrollTime !== null && (currentTime - lastScrollTime) < scrollThreshold) {
-                // console.log("鼠标滚动");
-              } else {
-                // console.log("鼠标结束");
-                // this.gap = gap;
-                this.temStartY = this.rod.verticalSwipes[1][0].start;
-                this.temStartX = this.rod.swipeList[1][0].start;
-              }
-              lastScrollTime = currentTime;
-            }
-          }
-        }
-        wheelListener(e);
-
-      }, { passive: false });
-      this.root.addEventListener("pointermove", (e) => {
-        pointerListener(e);
-      }, {
-        passive: true,
-      });
-    }
-  }
   public clearCanvas = () => {
     if (this.app) {
       this.mainContainer.removeChildren();
@@ -358,6 +224,150 @@ class Canvas {
     }
   }
 
+  private brushStartPaint = (e: InteractionEvent) => {
+    this.isDown = true;
+    const currentP = this.GraffitiList[this.GraffitiList.length - 1];
+    const item = new Graffiti({ color: currentP.color, lineWidth: currentP.lineWidth, alpha: currentP.alpha });
+    item.operate = operate;
+    item.app = this;
+    item.container = currentP.brush;
+    currentP.brush.addChild(item.brush);
+    (currentP?.children || []).push(item);
+    item.paint(e);
+    this.backCanvasList.push({ uuid: item.uuid, type: 'Graffiti'}); // 存储画布操作
+  }
+  private pointerDown = (e: InteractionEvent) => {
+    if (this.isGraffiti && this.GraffitiList.length) {
+      this.brushStartPaint(e);
+    } else if (e.target) {
+      e.stopPropagation();
+      if (['leftTop', 'leftBottom', 'rightTop', 'rightBottom', 'main'].includes(e.target.name)) {
+        operate.moveType = e.target.name;
+        operate.hornDown(e.target.name, e);
+      } else {
+        this.selected = (e.target as any)?.ele || e.target;
+        (e.target as any).ele?.onClick(e);
+        operate.operateGraphical = e.target;
+        !operate.isClear && operate.clear();
+        operate.paint(getBoundRect(e.target));
+      }
+    }
+  }
+  private appOperate = () => {
+    if (this.app && this.mainContainer) {
+      this.app.renderer.plugins.interaction.on('pointerdown', this.pointerDown);
+      this.app.renderer.plugins.interaction.on('pointermove', (e: InteractionEvent) => {
+        if (this.isDown) {
+          const currentP = this.GraffitiList[this.GraffitiList.length - 1];
+          if (currentP?.children.length) {
+            const item = currentP.children[currentP.children.length - 1];
+            item.paint(e);
+          }
+        }
+      })
+      this.app.renderer.plugins.interaction.on('pointerup', (e: InteractionEvent) => {
+        e.stopPropagation();
+        if (e.target) {
+          (e.target as any).isDrag = false
+        } else {
+          operate.clear();
+        }
+        operate.hornUp();
+        this.isDown = false;
+        if (this.GraffitiList.length) {
+          this.GraffitiList.forEach((i) => i.brush.isDrag = false);
+        }
+      });
+    }
+  }
+  private rootOperate = () => {
+    let lastScrollTime: any | null = null; // 保存上次滚动事件的时间戳
+    const scrollThreshold = 100;
+    if (this.root && this.rod) {
+      this.root.addEventListener("mousewheel", (e: any) => {
+        if (this.showScale) {
+          const { x, y, width } = CanvasStore.screen;
+          const { x: scaleX } = CanvasStore.scale;
+          const currentTime = new Date().getTime();
+          if (Math.floor(scaleX * 100) >= 10 && width >= 50) {
+            if (!e.ctrlKey) { // 滚动
+              const lenX = this.rod?.countX || 15;
+              const lenY = this.rod?.countY || 15;
+
+              // 横向滚动
+              if (x > 0) {
+                if (e.deltaX >= 0 && x > this.rod?.swipeList[1][lenX - 1].start) {
+                  this.rod?.paintX(this.rod?.swipeList[1][lenX - 1].start, this.rod?.gap);
+                }
+                if (e.deltaX < 0 && x < this.rod?.swipeList[0][lenX - 1].start) {
+                  this.rod?.paintX(this.rod?.swipeList[0][lenX - 1].start, this.rod?.gap);
+                }
+              } else {
+                if (e.deltaX <= 0 && Math.abs(x) > Math.abs(this.rod?.swipeList[0][0].start)) {
+                  this.rod?.paintX(this.rod?.swipeList[0][0].start, this.rod?.gap);
+                }
+                if (e.deltaX > 0 && x > this.rod?.swipeList[1][lenX - 1].start) {
+                  this.rod?.paintX(this.rod?.swipeList[1][lenX - 1].start, this.rod?.gap);
+                }
+              }
+
+              // 竖向滚动
+              if (y > 0) {
+                if (e.deltaY >= 0 && y > this.rod?.verticalSwipes[1][lenY - 1].start) {
+                  this.rod?.paintY(this.rod?.verticalSwipes[1][lenY - 1].start, this.rod?.gap);
+                }
+                if (e.deltaY < 0 && y < this.rod?.verticalSwipes[0][lenY - 1].start) {
+                  this.rod?.paintY(this.rod?.verticalSwipes[0][lenY - 1].start, this.rod?.gap);
+                }
+              } else {
+                if (e.deltaY <= 0 && Math.abs(y) > Math.abs(this.rod?.verticalSwipes[0][0].start)) {
+                  this.rod?.paintY(this.rod?.verticalSwipes[0][0].start, this.rod?.gap);
+                }
+                if (e.deltaY > 0 && y > this.rod?.verticalSwipes[1][lenY - 1].start) {
+                  this.rod?.paintY(this.rod?.verticalSwipes[1][lenY - 1].start, this.rod?.gap);
+                }
+              }
+
+              this.temStartY = this.rod?.verticalSwipes[1][0].start;
+              this.temStartX = this.rod?.swipeList[1][0].start;
+            } else {  // 缩放  TODO
+              const gap = scaleX < 1 ? Math.ceil((width / this.rod.countX)) : Math.ceil((width / this.rod.countX) * scaleX);
+              this.rod.gap = gap;
+              this.rod?.paintX?.(this.temStartX, gap);
+              this.rod?.paintY?.(this.temStartY, gap);
+              if (lastScrollTime !== null && (currentTime - lastScrollTime) < scrollThreshold) {
+                // console.log("鼠标滚动");
+              } else {
+                // console.log("鼠标结束");
+                // this.gap = gap;
+                this.temStartY = this.rod.verticalSwipes[1][0].start;
+                this.temStartX = this.rod.swipeList[1][0].start;
+              }
+              lastScrollTime = currentTime;
+            }
+          }
+        }
+        wheelListener(e);
+
+      }, { passive: false });
+      this.root.addEventListener("pointermove", (e) => {
+        pointerListener(e);
+      }, {
+        passive: true,
+      });
+    }
+  }
+
+  TickerUpdate = () => {
+    const { x, y } = CanvasStore.screen;
+    const { x: scaleX, y: scaleY } = CanvasStore.scale;
+    this.mainContainer.position.set(-scaleX * x, -scaleY * y);
+    this.mainContainer.scale.set(scaleX, scaleY);
+
+    this.GraffitiContainer.position.set(-scaleX * x, -scaleY * y);
+    this.GraffitiContainer.scale.set(scaleX, scaleY);
+  }
+
   public attach(root: HTMLElement) {
     this.root = root;
     CanvasStore.initialize(
@@ -388,16 +398,8 @@ class Canvas {
     app.stage.addChild(this.GraffitiContainer);
 
     // 监听帧更新
+    app.ticker.add(this.TickerUpdate);
 
-    app.ticker.add(() => {
-      const { x, y } = CanvasStore.screen;
-      const { x: scaleX, y: scaleY } = CanvasStore.scale;
-      this.mainContainer.position.set(-scaleX * x, -scaleY * y);
-      this.mainContainer.scale.set(scaleX, scaleY);
-
-      this.GraffitiContainer.position.set(-scaleX * x, -scaleY * y);
-      this.GraffitiContainer.scale.set(scaleX, scaleY);
-    });
     this.temStartY = top.verticalSwipes[1][0].start;
     this.temStartX = top.swipeList[1][0].start;
   }
@@ -405,6 +407,8 @@ class Canvas {
     this.cacheGraffitiList = [];
     this.backCanvasList = [];
     this.revokeBackList = [];
+    // 取消帧更新
+    this.app.ticker.remove(this.TickerUpdate);
     const dom = root || this.root;
     dom.removeEventListener("mousewheel", wheelListener);
     dom.removeEventListener("pointermove", pointerListener);

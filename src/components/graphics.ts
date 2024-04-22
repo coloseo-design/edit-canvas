@@ -115,7 +115,7 @@ class EditGraphics {
   }
   onClick(e: InteractionEvent) {
   }
-  public changePosition = ({ x, y, width, height }: positionType & { width?: number, height?: number}) => {
+  public changePosition = ({ x, y, width, height }: boundRectType) => {
     this.position = { x, y };
     if (width) this.width = width;
     if (height) this.height = height;

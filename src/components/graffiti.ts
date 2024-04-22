@@ -85,7 +85,7 @@ class Graffiti {
     this.operate?.clear();
     if (container) {
       this.app?.endGraffiti();
-      const src = await getBoxImage(container, this, this.container);
+      const src = await getBoxImage(container, this, { parent: this.container });
       return src; 
     } else {
       const { base64 } = getImage(this);

@@ -69,7 +69,11 @@ class Layer {
    public async getImage() {
     this.operate?.clear();
     this.layer.alpha = 0;
-    const src = await getBoxImage(this, this.container);
+    this.app.app.ticker.remove(this.app.TickerUpdate);
+    this.container.scale.set(1,1);
+    this.container.position.set(0, 0);
+    const src = await getBoxImage(this, this.container, { isLayer: true });
+    this.app.app.ticker.add(this.app.TickerUpdate);
     this.layer.alpha = 1;
     this.app?.app.stage.addChild(this.app?.mainContainer);
     this.app?.app.stage.setChildIndex(this.container, 0);
