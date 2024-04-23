@@ -118,7 +118,7 @@ class Canvas {
       } else {
         const current: any = (this.mainContainer.children || []).find((i: any) => i.uuid === last.uuid);
         if (current) {
-          isBack && this.revokeBackList.push({ ...getBoundRect(current), uuid: (current as any).uuid });
+          isBack && this.revokeBackList.push({ ...getBoundRect(current), uuid: (current as any).uuid, type: last.type });
           if (last.type === 'Graphics') {
             current.changePosition({ ...last });
             current.clear();
