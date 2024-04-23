@@ -17,7 +17,7 @@ class Canvas {
   private rod: any;
   private temStartX: number = 0;
   private temStartY: number = 0;
-  private selected: any;
+  public selected: any;
   public GraffitiContainer: Container = new Container;
   public isGraffiti: boolean = false;
   public GraffitiList: Graffiti[] = []; // 所有的存在的涂鸦
@@ -127,6 +127,8 @@ class Canvas {
             current.changePosition({ ...last});
             current.position.set(last.x, last.y);
           }
+        } else if (last.kind === 'delete') {
+          last.deleteEle?.paint();
         }
       }
       operate.clear();
@@ -357,7 +359,7 @@ class Canvas {
     }
   }
 
-  TickerUpdate = () => {
+  public TickerUpdate = () => {
     const { x, y } = CanvasStore.screen;
     const { x: scaleX, y: scaleY } = CanvasStore.scale;
     this.mainContainer.position.set(-scaleX * x, -scaleY * y);

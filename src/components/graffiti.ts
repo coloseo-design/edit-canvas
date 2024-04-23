@@ -36,7 +36,7 @@ class Graffiti {
   alpha: number;
   start: positionType = { x: 0, y: 0};
   constructor(props?: GraffitiType) {
-    const { color = 0x6078F4, lineWidth = 10, alpha = 0.7 } = props || {};
+    const { color = 0x6078F4, lineWidth = 10, alpha = 0.5 } = props || {};
     const brush = new Graphics();
     this.brush = brush;
     this.color = color;
@@ -76,7 +76,7 @@ class Graffiti {
   }
 
   public delete = () => {
-    this.app.GraffitiList = this.app.GraffitiList.filter((i) => i.uuid !== this.uuid);
+    this.app.GraffitiList = (this.app.GraffitiList || []).filter((i) => i.uuid !== this.uuid);
     this.container?.removeChild(this.brush);
     this.operate?.clear?.();
   }

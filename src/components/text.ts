@@ -160,6 +160,12 @@ class EditText {
   }
 
   delete = () => {
+    this.app?.backCanvasList.push({
+      deleteEle: this,
+      type: 'Text',
+      kind: 'delete',
+      uuid: this.uuid,
+    });
     this.container?.removeChild(this.text);
     this.operate?.clear();
   }

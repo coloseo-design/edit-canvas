@@ -61,6 +61,7 @@ class Layer {
     this.container.addChild(this.layer);
     this.app?.setIndex(this.layer, this.container);
     this.app?.setIndex(this.operate.operateContainer, this.container);
+    this.app.selected = this;
     this.operate.clear();
     this.operate.paint(getBoundRect(this.layer));
     this.operate.operateGraphical = this.layer;
@@ -89,6 +90,12 @@ class Layer {
   }
 
   delete() {
+    this.app?.backCanvasList.push({
+      deleteEle: this,
+      type: 'Layer',
+      kind: 'delete',
+      uuid: this.uuid,
+    });
     this.operate.clear();
     this.container.removeChild(this.layer);
   }

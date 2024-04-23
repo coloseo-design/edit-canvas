@@ -61,9 +61,9 @@ const canvas = new EditCanvas();
 
 ### Graffiti 涂鸦 API
 
-- **color**: 画笔颜色
-- **lineWidth**:画笔的宽度
-- **alpha**:画笔颜色透明度
+- **color**: 画笔颜色 默认 0x6078F4
+- **lineWidth**:画笔的宽度 默认 10
+- **alpha**:画笔颜色透明度 默认 0.5
 - **delete**: 清除矩形，() => void;
 - **setStyle**: 修改画笔样式({color, alpha, lineWidth}) => void;
 - **onClick**: 点击事件(e: InteractionEvent) => void;
@@ -87,59 +87,175 @@ const canvas = new EditCanvas();
 
 ### demo示例
 ```
-import React, { useEffect, useRef } from 'react';
-import EditCanvas, { Text, Image, Graphics, Graffiti } from 'edit-canvas';
-const Demo = () => {
-  const canvasRef = useRef<EditCanvas>(null);
-  useEffect(() => {
-    const app = new EditCanvas();
-    canvasRef.current = app;
-    app.attach(canvasRef.current);
-    const text = new Text({
-      value: '测试文案',
-      position: {
-        x: 200,
-        y: 20,
-      },
-      style: {
-        fontSize: 30,
-        fill: 0x000000,
-        fontWeight: "900",
-        wordWrap: true,
-      },
-    });
-    const img = new Image({
-      url: require('./assets/cat.png'),
-      position: {
-        x: 200,
-        y: 200,
-      },
-      width: 300,
-      height: 300,
-    });
-    const graphics = new Graphics({
-      position: {
-        x: 0,
-        y: 0,
-      },
-      background: 0xff0000,
-      width: 100,
-      height: 100,
-    });
-    app.add(text);
-    app.add(img);
-    app.add(graphics);
+import React, { useEffect, useState, useRef } from 'react';
+import EditCanvas, { Image, Text, Graffiti, Graphics, Layer } from 'edit-canvas';
 
-    image.onClick = (e) => {
-      console.log('=image click>>', e);
+
+const Demo = () => {
+  const canvas = useRef<EditCanvas>();
+  const text = useRef<Text>();
+  const img = useRef<Image>();
+  const img1 = useRef<Image>();
+  const [ffis, setFfi] = useState<Graffiti[]>([]);
+  const layer = useRef<Layer>();
+  useEffect(() => {
+    const canvasContainer = document.getElementById('canvas-container');
+    const app = new EditCanvas();
+    canvas.current = app;
+    if (canvasContainer) {
+      app.attach(canvasContainer);
+      app.setScale(true);
+      const image = new Image({
+        url: require('./assets/cat.png'),
+        position: {
+          x: 200,
+          y: 200,
+        },
+        width: 300,
+        height: 300,
+      });
+      img.current = image;
+      const image1 = new Image({
+        url: 'http://47.109.84.94/api/file-1713170051377.jpg',
+        position: {
+          x: 20,
+          y: 200,
+        },
+        width: 150,
+        height: 250,
+      });
+      img1.current = image1;
+      const text1 = new Text({
+        style: {
+          fontSize: 30,
+          fill: 0x000000,
+          fontWeight: "900",
+          wordWrap: true,
+        },
+        value: '测试文字',
+        position: {
+          x: 400,
+          y: 230,
+        },
+      });
+      text.current = text1;
+      const g = new Graphics({
+        position: {
+          x: 0,
+          y: 0,
+        },
+        width: 100,
+        height: 100,
+      })
+      app.add(g);
+      app.add(image);
+      app.add(text1);
+      app.add(image1);
+      image.onClick = (e) => {
+        console.log('=image click>>', image.getBoundRect());
+      }
+    }
+    return () => {
+      canvasContainer && app.detach(canvasContainer);
     }
   }, []);
+
+  const start = () => {
+    const graffiti = new Graffiti();
+    canvas.current?.add(graffiti);
+    ffis.push(graffiti);
+    setFfi(ffis);
+    canvas.current?.startGraffiti();
+  }
+
+  const end = () => {
+    canvas.current?.endGraffiti();
+  }
+
+  const handleDelete = () => {
+    const selected = canvas.current?.getSelectedGraphics();
+    if (selected) {
+      selected.delete();
+      setFfi(ffis.filter((i) => i.uuid !== selected.uuid));
+    }
+  }
+
+
+  const handleText = () => {
+    text.current?.writeText();
+  }
+
+  const handleImage =  async () => {
+    if (canvas.current && img) {
+      const image = (img.current as Image).getImage();
+      const fi = ffis[ffis.length - 1];
+      const graffitiImg = await fi?.getImage();
+      const boxGraffitiImg = await fi?.getImage(img.current);
+      console.log('==>>底片', image);
+      console.log('==>>涂鸦', graffitiImg);
+      console.log('==>> 涂鸦与底片同大', boxGraffitiImg);
+    }
+  }
+
+  const handleAdd = () => {
+    const lay = new Layer({
+      position: {
+        x: 150,
+        y: 150,
+      },
+      width: 350,
+      height: 350,
+    });
+    canvas.current?.add(lay);
+    layer.current = lay;
+  }
+
+  const handleLayer = async () => {
+    if (layer.current) {
+      const src = await layer.current?.getImage();
+      console.log('==src', src);
+    }
+  };
+
+  const handleIndex = () => {
+    canvas.current?.setIndex(text.current);
+  }
+
+  const handleClear = () => {
+    canvas.current?.clearCanvas();
+  }
+
   return (
-    <div>
-      <div ref={canvasRef}></div>
+    <div style={{ display: 'flex', height: '100vh'}}>
+
+      <div style={{ display: 'flex', padding: 16, flexDirection: 'column' }}>
+      <button  onClick={start}>涂鸦</button>
+      <br />
+      <button onClick={end}>停止涂鸦</button>
+      <br />
+      <button onClick={handleDelete}>删除当前选中图形</button>
+      <br />
+      <button onClick={handleText}>编辑文字</button>
+      <br />
+      <button onClick={handleImage}>生成图片</button>
+      <br />
+      <button onClick={() => canvas.current?.back()}>回退</button>
+      <br />
+      <button onClick={() => canvas.current?.revoke()}>撤销回退</button>
+      <br />
+      <button onClick={handleAdd}>添加新的图层</button>
+      <br />
+      <button onClick={handleLayer}>生成图像外延图片</button>
+      <button onClick={handleIndex}>改变文字的层级</button>
+      <br />
+      <button onClick={handleClear}>清空画布</button>
+      </div>
+      <div id="canvas-container" style={{ flex: 1, height: '100%', position: 'relative' }} />
     </div>
   )
 }
+
+export default Demo;
 
 
 ```

@@ -39,6 +39,12 @@ class EditImage {
   }
 
   delete = () => {
+    this.app?.backCanvasList.push({
+      deleteEle: this,
+      type: 'Image',
+      kind: 'delete',
+      uuid: this.uuid,
+    });
     this.operate?.clear();
     this.container?.removeChild?.(this.sprite);
   }

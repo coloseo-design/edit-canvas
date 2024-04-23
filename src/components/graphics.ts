@@ -83,6 +83,12 @@ class EditGraphics {
   }
 
   public delete = () => {
+    this.app?.backCanvasList.push({
+      deleteEle: this,
+      type: 'Graphics',
+      kind: 'delete',
+      uuid: this.uuid,
+    });
     this.container.removeChild(this.graphics)
     this.operate?.clear?.();
   }
@@ -136,7 +142,7 @@ class EditGraphics {
     this.graphics.endFill();
   }
   
-  down = (e: InteractionEvent) => {
+  private down = (e: InteractionEvent) => {
     e.stopPropagation();
     if (!this.app.isGraffiti) {
       this.app.backCanvasList.push({...this.position, width: this.width, height: this.height, uuid: this.uuid, type: 'Graphics' });
@@ -146,7 +152,7 @@ class EditGraphics {
       this.move(getPoint(e));
     }
   }
-  move(start: positionType) {
+  private move(start: positionType) {
     this.graphics.on('pointermove', (e: InteractionEvent) => {
       if (this.graphics.isDrag) {
         const scalePosition = getPoint(e);
@@ -159,7 +165,7 @@ class EditGraphics {
     });
   }
 
-  up = (e: InteractionEvent) => {
+  private up = (e: InteractionEvent) => {
     e.stopPropagation();
     if (this.graphics.isDrag) {
       this.graphics.isDrag = false;

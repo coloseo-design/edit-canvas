@@ -1,19 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import EditCanvas, { Image, Text, Graffiti, Graphics, Layer } from './components/index';;
 
 
 const Demo = () => {
-  const [app, setApp] = useState<EditCanvas>();
-  const [text, setText] = useState<Text>();
-  const [img, setImg] = useState<Image>();
-  const [img1, setImg1] = useState<Image>();
-  const [gra, setGra] = useState<Graphics>();
+  const canvas = useRef<EditCanvas>();
+  const text = useRef<Text>();
+  const img = useRef<Image>();
+  const img1 = useRef<Image>();
   const [ffis, setFfi] = useState<Graffiti[]>([]);
-  const [lay, setLay] = useState<Layer>()
+  const layer = useRef<Layer>();
   useEffect(() => {
     const canvasContainer = document.getElementById('canvas-container');
     const app = new EditCanvas();
-    setApp(app);
+    canvas.current = app;
     if (canvasContainer) {
       app.attach(canvasContainer);
       app.setScale(true);
@@ -26,6 +25,7 @@ const Demo = () => {
         width: 300,
         height: 300,
       });
+      img.current = image;
       const image1 = new Image({
         url: 'http://47.109.84.94/api/file-1713170051377.jpg',
         position: {
@@ -34,7 +34,8 @@ const Demo = () => {
         },
         width: 150,
         height: 250,
-      })
+      });
+      img1.current = image1;
       const text1 = new Text({
         style: {
           fontSize: 30,
@@ -48,6 +49,7 @@ const Demo = () => {
           y: 230,
         },
       });
+      text.current = text1;
       const g = new Graphics({
         position: {
           x: 0,
@@ -56,10 +58,6 @@ const Demo = () => {
         width: 100,
         height: 100,
       })
-      setText(text1);
-      setImg(image);
-      setGra(g);
-      setImg1(image1);
       app.add(g);
       app.add(image);
       app.add(text1);
@@ -75,33 +73,35 @@ const Demo = () => {
 
   const start = () => {
     const graffiti = new Graffiti();
-    app?.add(graffiti);
+    canvas.current?.add(graffiti);
     ffis.push(graffiti);
     setFfi(ffis);
-    app?.startGraffiti();
+    canvas.current?.startGraffiti();
   }
 
   const end = () => {
-    app?.endGraffiti();
+    canvas.current?.endGraffiti();
   }
 
   const handleDelete = () => {
-    const selected = app?.getSelectedGraphics();
-    selected && selected.delete();
-    setFfi(ffis.filter((i) => i.uuid !== selected.uuid));
+    const selected = canvas.current?.getSelectedGraphics();
+    if (selected) {
+      selected.delete();
+      setFfi(ffis.filter((i) => i.uuid !== selected.uuid));
+    }
   }
 
 
   const handleText = () => {
-    text?.writeText();
+    text.current?.writeText();
   }
 
   const handleImage =  async () => {
-    if (app && img) {
-      const image = img.getImage();
+    if (canvas.current && img) {
+      const image = (img.current as Image).getImage();
       const fi = ffis[ffis.length - 1];
       const graffitiImg = await fi?.getImage();
-      const boxGraffitiImg = await fi?.getImage(img);
+      const boxGraffitiImg = await fi?.getImage(img.current);
       console.log('==>>底片', image);
       console.log('==>>涂鸦', graffitiImg);
       console.log('==>> 涂鸦与底片同大', boxGraffitiImg);
@@ -109,7 +109,7 @@ const Demo = () => {
   }
 
   const handleAdd = () => {
-    const layer = new Layer({
+    const lay = new Layer({
       position: {
         x: 150,
         y: 150,
@@ -117,13 +117,15 @@ const Demo = () => {
       width: 350,
       height: 350,
     });
-    app?.add(layer);
-    setLay(layer);
+    canvas.current?.add(lay);
+    layer.current = lay;
   }
 
   const handleLayer = async () => {
-    const src = await lay?.getImage();
-    console.log('==src', src);
+    if (layer.current) {
+      const src = await layer.current?.getImage();
+      console.log('==src', src);
+    }
   };
 
   return (
@@ -140,19 +142,19 @@ const Demo = () => {
       <br />
       <button onClick={handleImage}>生成图片</button>
       <br />
-      <button onClick={() => app?.back()}>回退</button>
+      <button onClick={() => canvas.current?.back()}>回退</button>
       <br />
-      <button onClick={() => app?.revoke()}>撤销回退</button>
+      <button onClick={() => canvas.current?.revoke()}>撤销回退</button>
       <br />
       <button onClick={handleAdd}>添加新的图层</button>
       <br />
       <button onClick={handleLayer}>生成图像外延图片</button>
       <button onClick={() => {
-        app?.setIndex(text)
+        canvas.current?.setIndex(text.current)
       }}>改变文字的层级</button>
       <br />
       <button onClick={() => {
-        app?.clearCanvas();
+        canvas.current?.clearCanvas();
       }}>清空画布</button>
       </div>
       <div id="canvas-container" style={{ flex: 1, height: '100%', position: 'relative' }} />
