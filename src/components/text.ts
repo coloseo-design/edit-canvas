@@ -51,8 +51,17 @@ class EditText {
     this.text.buttonMode = true;
     this.text.resolution = 2;
     this.text.position.set(this.position.x, this.position.y);
-    this.text.on('pointerdown', this.down);
-    this.text.on('pointerup', this.up);
+    this.text.on('pointerdown', (e: InteractionEvent) => {
+      this.onPointerdown(e);
+      this.down(e);
+    });
+    this.text.on('pointerup', (e: InteractionEvent) => {
+      this.onPointerup(e);
+      this.up(e);
+    });
+    this.text.on('click', (e: InteractionEvent) => {
+      this.onClick(e);
+    });
     this.text.uuid = this.uuid;
     this.text.isDrag = false;
     this.text.changePosition = this.changePosition;
@@ -73,6 +82,10 @@ class EditText {
     }
     this.createInput();
   }
+
+  onClick(e: InteractionEvent) {}
+  onPointerdown(e: InteractionEvent) {}
+  onPointerup(e: InteractionEvent) {}
 
   public getImage() {
     this.operate?.clear();
@@ -168,9 +181,6 @@ class EditText {
     });
     this.container?.removeChild(this.text);
     this.operate?.clear();
-  }
-
-  onClick(e: InteractionEvent) {
   }
 
   private down = (e: InteractionEvent) => {

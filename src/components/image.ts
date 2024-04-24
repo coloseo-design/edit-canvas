@@ -1,4 +1,4 @@
-import { InteractionEvent, Loader, Sprite, Container } from 'pixi.js';
+import { InteractionEvent, Loader, Sprite, Container, RenderTexture } from 'pixi.js';
 import { getPoint, uuid, getBoundRect, getImage } from './utils';
 import type { positionType, boundRectType } from './utils';
 import CanvasStore from './store';
@@ -15,14 +15,14 @@ type SP = {
 } & Sprite
 
 export interface EditImageProps {
-  url: string;
+  url: string | RenderTexture;
   position: positionType;
   width: number;
   height: number;
 }
 
 class EditImage {
-  public url: string = '';
+  public url: string | RenderTexture = '';
   public position: positionType = {x: 0, y: 0 };
   public sprite!: SP;
   public container!: Container;
@@ -48,28 +48,51 @@ class EditImage {
     this.operate?.clear();
     this.container?.removeChild?.(this.sprite);
   }
-  paint = () => {
-    new Loader().add('myImage', this.url).load((loader, resources) => {
-      if (resources) {
-        const myTexture = resources['myImage']?.texture
-        this.sprite = new Sprite(myTexture);
-        this.sprite.position.set(this.position.x, this.position.y); //设置位置
-        this.sprite.width = this.width;
-        this.sprite.height = this.height;
-        this.sprite.interactive = true;
-        this.sprite.buttonMode = true;
-        this.sprite.changePosition = this.changePosition;
-        this.sprite.delete = this.delete;
-        this.sprite.ele = this;
-        this.sprite.uuid = this.uuid;
-        this.sprite.on('pointerdown', this.down);
-        this.sprite.isDrag = false;
-        this.sprite.on('pointerup', this.up);
-        if (this.container) {
-          this.container.addChild(this.sprite);
-        }
+
+  private utilsPaint() {
+    this.sprite.position.set(this.position.x, this.position.y); //设置位置
+      this.sprite.width = this.width;
+      this.sprite.height = this.height;
+      this.sprite.interactive = true;
+      this.sprite.buttonMode = true;
+      this.sprite.changePosition = this.changePosition;
+      this.sprite.delete = this.delete;
+      this.sprite.ele = this;
+      this.sprite.uuid = this.uuid;
+      this.sprite.on('pointerdown', (e: InteractionEvent) => {
+        this.onPointerdown(e);
+        this.down(e)
+      });
+      this.sprite.on('pointerup', (e: InteractionEvent) => {
+        this.onPointerup(e);
+        this.up();
+      });
+      this.sprite.on('click', (e: InteractionEvent) => {
+        this.onClick(e);
+      });
+      this.sprite.isDrag = false;
+
+      if (this.container) {
+        this.container.addChild(this.sprite);
       }
-    })
+  }
+  onPointerdown(e: InteractionEvent) {}
+  onPointerup(e: InteractionEvent) {}
+
+  paint = () => {
+    // const texture = this.app.renderer.generateTexture(item.brush, 1, 2);
+    if (this.url instanceof RenderTexture) {
+      this.sprite = new Sprite(this.url);
+      this.utilsPaint();
+    } else {
+      new Loader().add('myImage', this.url).load((loader, resources) => {
+        if (resources) {
+          const myTexture = resources['myImage']?.texture
+          this.sprite = new Sprite(myTexture);
+          this.utilsPaint();
+        }
+      })
+    }
   }
 
   onClick(e: InteractionEvent) {

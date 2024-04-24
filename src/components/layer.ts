@@ -53,8 +53,17 @@ class Layer {
     this.layer.beginFill();
     this.layer.interactive = true;
     this.layer.buttonMode = true;
-    this.layer.on('pointerdown', this.down);
-    this.layer.on('pointerup', this.up);
+    this.layer.on('pointerdown', (e: InteractionEvent) => {
+      this.onPointerdown(e);
+      this.down(e);
+    });
+    this.layer.on('pointerup', (e: InteractionEvent) => {
+      this.onPointerdown(e);
+      this.up(e)
+    });
+    this.layer.on('click', (e: InteractionEvent) => {
+      this.onClick(e);
+    });
     this.layer.ele = this;
     this.layer.uuid = this.uuid;
     this.layer.delete = this.delete;
@@ -83,9 +92,9 @@ class Layer {
     return src;
   }
 
-  onClick(e: InteractionEvent) {
-
-  }
+  onClick(e: InteractionEvent) {}
+  onPointerdown(e: InteractionEvent) {}
+  onPointerup(e: InteractionEvent) {}
 
   public getBoundRect() {
     return getBoundRect(this.layer);

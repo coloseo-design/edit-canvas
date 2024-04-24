@@ -1,4 +1,4 @@
-import { Application, Container, InteractionEvent } from "pixi.js";
+import { Application, Container, InteractionEvent, Sprite } from "pixi.js";
 import { getBoundRect, getPixiGra, wheelListener, pointerListener } from './utils';
 import type { eleType } from './utils';
 import CanvasStore from './store';
@@ -128,7 +128,7 @@ class Canvas {
             current.position.set(last.x, last.y);
           }
         } else if (last.kind === 'delete') {
-          last.deleteEle?.paint();
+          last.deleteEle?.paint?.();
         }
       }
       operate.clear();
@@ -186,9 +186,7 @@ class Canvas {
   private getBrushParent() {
     (this.GraffitiList || []).forEach((item) => {
       if (item) {
-        item.brush.clear();
         const obj = getBoundRect(item.brush);
-        item.brush.drawRect(obj.x, obj.y, obj.width, obj.height);
         item.brush.drawRect(obj.x, obj.y, obj.width, obj.height);
       }
     });
@@ -226,6 +224,11 @@ class Canvas {
   }
 
   private brushStartPaint = (e: InteractionEvent) => {
+    if (this.cacheGraffitiList.length > 0 && this.GraffitiList.length === 0) {
+      const tem: Graffiti = this.cacheGraffitiList[this.cacheGraffitiList.length - 1];
+      tem.children = [];
+      this.GraffitiList.push(tem);
+    }
     this.isDown = true;
     const currentP = this.GraffitiList[this.GraffitiList.length - 1];
     const item = new Graffiti({ color: currentP.color, lineWidth: currentP.lineWidth, alpha: currentP.alpha });
@@ -238,7 +241,7 @@ class Canvas {
     this.backCanvasList.push({ uuid: item.uuid, type: 'Graffiti'}); // 存储画布操作
   }
   private pointerDown = (e: InteractionEvent) => {
-    if (this.isGraffiti && this.GraffitiList.length) {
+    if (this.isGraffiti) {
       this.brushStartPaint(e);
     } else if (e.target) {
       e.stopPropagation();
@@ -247,7 +250,6 @@ class Canvas {
         operate.hornDown(e.target.name, e);
       } else {
         this.selected = (e.target as any)?.ele || e.target;
-        (e.target as any).ele?.onClick(e);
         operate.operateGraphical = e.target;
         !operate.isClear && operate.clear();
         operate.paint(getBoundRect(e.target));
@@ -256,7 +258,10 @@ class Canvas {
   }
   private appOperate = () => {
     if (this.app && this.mainContainer) {
-      this.app.renderer.plugins.interaction.on('pointerdown', this.pointerDown);
+      this.app.renderer.plugins.interaction.on('pointerdown', (e: InteractionEvent) => {
+        this.onPointerdown(e)
+        this.pointerDown(e);
+      });
       this.app.renderer.plugins.interaction.on('pointermove', (e: InteractionEvent) => {
         if (this.isDown) {
           const currentP = this.GraffitiList[this.GraffitiList.length - 1];
@@ -267,9 +272,9 @@ class Canvas {
         }
       })
       this.app.renderer.plugins.interaction.on('pointerup', (e: InteractionEvent) => {
-        e.stopPropagation();
+        this.onPointerup(e);
         if (e.target) {
-          (e.target as any).isDrag = false
+          (e.target as any).isDrag = false;
         } else {
           operate.clear();
         }
@@ -281,6 +286,9 @@ class Canvas {
       });
     }
   }
+
+  public onPointerdown(e: InteractionEvent) {}
+  public onPointerup(e: InteractionEvent) {}
   private rootOperate = () => {
     let lastScrollTime: any | null = null; // 保存上次滚动事件的时间戳
     const scrollThreshold = 100;

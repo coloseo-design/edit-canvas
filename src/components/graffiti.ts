@@ -47,8 +47,17 @@ class Graffiti {
     this.brush.paint = this.paint;
     this.alpha = alpha;
     this.uuid = `${uuid()}`;
-    this.brush.on('pointerdown', this.down);
-    this.brush.on('pointerup', this.up);
+    this.brush.on('pointerdown', (e: InteractionEvent) => {
+      this.onPointerdown(e);
+      this.down(e);
+    });
+    this.brush.on('pointerup', (e: InteractionEvent) => {
+      this.onPointerup(e);
+      this.up();
+    });
+    this.brush.on('click', (e: InteractionEvent) => {
+      this.onClick(e);
+    })
   }
 
   paint = (e: InteractionEvent) => {
@@ -60,8 +69,9 @@ class Graffiti {
 
   }
 
-  onClick(e: InteractionEvent) {
-  }
+  onClick(e: InteractionEvent) {}
+  onPointerdown(e: InteractionEvent) {}
+  onPointerup(e: InteractionEvent) {}
 
   public setStyle({ color, alpha, lineWidth }: GraffitiType) {
     if (color) {

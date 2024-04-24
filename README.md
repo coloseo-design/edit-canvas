@@ -26,6 +26,8 @@ const canvas = new EditCanvas();
 - **height**:图片的高, number
 - **delete**: 清除图片，() => void;
 - **onClick**: 点击事件(e: InteractionEvent) => void;
+- **onPointerdown**: 鼠标按下事件(e: InteractionEvent) => void;
+- **onPointerup**: 鼠标松开事件(e: InteractionEvent) => void;
 - **getImage**: 生成当前Image大小的图片, () => base64;
 - **getBoundRect**: 获取当前Image的宽高位置: () => ({ x, y, width, height });
 
@@ -39,6 +41,8 @@ const canvas = new EditCanvas();
 - **width**:文字的宽, number
 - **delete**: 清除文字，() => void;
 - **onClick**: 点击事件(e: InteractionEvent) => void;
+- **onPointerdown**: 鼠标按下事件(e: InteractionEvent) => void;
+- **onPointerup**: 鼠标松开事件(e: InteractionEvent) => void;
 - **getImage**: 生成当前Text大小的图片, () => base64;
 - **getBoundRect**: 获取当前Text的宽高位置: () => ({ x, y, width, height });
 
@@ -55,6 +59,8 @@ const canvas = new EditCanvas();
 - **width**:矩形的宽, number
 - **delete**: 清除画笔，() => void;
 - **onClick**: 点击事件(e: InteractionEvent) => void;
+- **onPointerdown**: 鼠标按下事件(e: InteractionEvent) => void;
+- **onPointerup**: 鼠标松开事件(e: InteractionEvent) => void;
 - **getImage**: 生成当前Graphics大小的图片, () => base64;
 - **getBoundRect**: 获取当前Graphics的宽高位置: () => ({ x, y, width, height });
 
@@ -67,7 +73,9 @@ const canvas = new EditCanvas();
 - **delete**: 清除矩形，() => void;
 - **setStyle**: 修改画笔样式({color, alpha, lineWidth}) => void;
 - **onClick**: 点击事件(e: InteractionEvent) => void;
-- **getImage**: 不传ele生成当前Graffiti大小的图片, 传入ele生成ele大小的图片，如果Graffiti的位置宽高不在ele里面则截取, (ele?: Image | Text | Graphics | Graffiti | Layer) => Promise/<base64/>
+- **onPointerdown**: 鼠标按下事件(e: InteractionEvent) => void;
+- **onPointerup**: 鼠标松开事件(e: InteractionEvent) => void;
+- **getImage**: 不传ele生成当前Graffiti大小的图片, 传入ele生成ele大小的图片，如果Graffiti的位置宽高不在ele里面则截取, (ele?: Image | Text | Graphics | Graffiti | Layer) => Promise<url: string>
 - **getBoundRect**: 获取当前Graffiti的宽高位置: () => ({ x, y, width, height });
 - **setStyle**: 设置涂鸦画笔的线宽，颜色，透明度, ({ color, alpha, lineWidth }) => void;
 
@@ -79,10 +87,12 @@ const canvas = new EditCanvas();
 - **height** 图层高 number；
 - **background**: 图层背景色 number 默认 0xffffff;
 - **alpha**: 图层透明度 number 默认 1;
-- **getImage**: 生成图层大小并且与图层交叉的内容图片 () => Promise/<base64/>;
+- **getImage**: 生成图层大小并且与图层交叉的内容图片 () => Promise<url: string>;
 - **getBoundRect**: 获取当前图层的位置和宽高 () => ({ x, y, width, height });
 - **delete**:在画布中删除当前图层;
 - **onClick**: 点击事件(e: InteractionEvent) => void;
+- **onPointerdown**: 鼠标按下事件(e: InteractionEvent) => void;
+- **onPointerup**: 鼠标松开事件(e: InteractionEvent) => void;
 
 
 ### demo示例

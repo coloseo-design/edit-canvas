@@ -105,8 +105,17 @@ class EditGraphics {
     this.graphics.shape = this.shape;
     this.graphics.isDrag = false;
     this.repeat();
-    this.graphics.on('pointerdown', this.down);
-    this.graphics.on('pointerup', this.up);
+    this.graphics.on('pointerdown', (e: InteractionEvent) => {
+      this.onPointerdown(e);
+      this.down(e);
+    });
+    this.graphics.on('pointerup', (e: InteractionEvent) => {
+      this.onPointerup(e);
+      this.up(e)
+    });
+    this.graphics.on('click', (e: InteractionEvent) => {
+      this.onClick(e)
+    });
     this.graphics.antialias = true; // 抗锯齿
     this.graphics.autoDensity = true;// 模糊处理
     this.graphics.interactive = true;
@@ -121,6 +130,8 @@ class EditGraphics {
   }
   onClick(e: InteractionEvent) {
   }
+  onPointerdown(e: InteractionEvent) {}
+  onPointerup(e: InteractionEvent) {}
   public changePosition = ({ x, y, width, height }: boundRectType) => {
     this.position = { x, y };
     if (width) this.width = width;

@@ -63,7 +63,24 @@ const Demo = () => {
       app.add(text1);
       app.add(image1);
       image.onClick = (e) => {
-        console.log('=image click>>', image.getBoundRect());
+        console.log('=image click>>', e);
+      }
+      image.onPointerdown = (e) => {
+        console.log('=image down>>', e,);
+      }
+      image.onPointerup = (e) => {
+        console.log('=image up>>', e,);
+      }
+
+      text1.onClick = (e) => {
+        console.log('=>>text1 click', e);
+      }
+
+      text1.onPointerdown = (e) => {
+        console.log('=text1 down>>', e,);
+      }
+      text1.onPointerup = (e) => {
+        console.log('=text1 up>>', e,);
       }
     }
     return () => {
@@ -85,6 +102,7 @@ const Demo = () => {
 
   const handleDelete = () => {
     const selected = canvas.current?.getSelectedGraphics();
+    console.log('selel>', selected);
     if (selected) {
       selected.delete();
       setFfi(ffis.filter((i) => i.uuid !== selected.uuid));
