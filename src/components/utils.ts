@@ -1,4 +1,4 @@
-import { InteractionEvent, Graphics, Sprite, Application, Container } from 'pixi.js';
+import { InteractionEvent, Sprite, Application, Container } from 'pixi.js';
 import EditText from './text';
 import EditGraphics from './graphics';
 import EditImage from './image';
@@ -108,7 +108,7 @@ export const getPixiGra = (ele: eleType) => {
 }
 
 export const getImage = (main: eleType | Container, third?: any) => {
-  const rect = main instanceof Container ? main :  (main as any)[getPixiGra(main)] || '';
+  const rect = third?.isGraffiti ? (main as any).originImage : main instanceof Container ? main :  (main as any)[getPixiGra(main)] || '';
   if (rect) {
     const { width, height } = getBoundRect(rect, third?.isLayer);
     const imageApp = new Application({
@@ -124,7 +124,7 @@ export const getImage = (main: eleType | Container, third?: any) => {
     imageApp.stage.addChild(imageContainer);
     const mainSrc = imageApp.renderer.plugins.extract.base64(imageContainer);
     const img = imageApp.renderer.plugins.extract.image(imageContainer, "image/png", 1); // 用来裁剪
-    third?.parent?.addChild(rect);
+
     return {
       base64: mainSrc,
       img,
@@ -156,5 +156,45 @@ export const getBoxImage = async (
   ctx?.drawImage(img, tx, ty, width, height, 0, 0, width, height);
   const src = canvasElement.toDataURL("image/png");
   return src;
+}
+
+export const GraffitiToSprite = (current: EditGraffiti, app: Application, position: positionType | boolean = false) => {
+  const rect: any = position ? position : getBoundRect(current.brush);
+  current.container.removeChild(current.brush);
+  const texture = app.renderer.generateTexture(current.brush, 1, 2);
+  current.position = { x: rect.x, y: rect.y };
+  const sprite: any = new Sprite(texture);
+  sprite.position.set(rect.x, rect.y);
+  sprite.interactive = true;
+  sprite.buttonMode = true;
+  sprite.paint = current.paint;
+  sprite.changePosition = current.changePosition;
+  sprite.uuid = current.uuid;
+  sprite.on('pointerdown', (e: InteractionEvent) => {
+    current?.onPointerdown?.(e);
+    current?.down?.(e);
+  });
+  sprite.on('pointerup', (e: InteractionEvent) => {
+    current?.onPointerup?.(e);
+    current?.up?.();
+  });
+  sprite.on('click', (e: InteractionEvent) => {
+    current?.onClick?.(e);
+  });
+  current.brush = sprite;
+  sprite.ele = current;
+  sprite.originImage = current.originImage;
+  current?.changeChild?.(sprite);
+  current?.changePosition(rect);
+  if ((current.container.children || []).map((i: any) => i.uuid).includes(current.uuid)) {
+    (current.container.children || []).forEach((item: any) => {
+      if(item.uuid === current.uuid) {
+        current.container.removeChild(item);
+      }
+    })
+   
+  }
+  current.container.addChild(current.brush);
+  return sprite;
 }
 

@@ -80,7 +80,6 @@ class EditImage {
   onPointerup(e: InteractionEvent) {}
 
   paint = () => {
-    // const texture = this.app.renderer.generateTexture(item.brush, 1, 2);
     if (this.url instanceof RenderTexture) {
       this.sprite = new Sprite(this.url);
       this.utilsPaint();
@@ -100,7 +99,6 @@ class EditImage {
 
   public getImage() {
     this.operate?.clear();
-    this.app?.endGraffiti();
     const { base64 } = getImage(this);
     this.sprite && this.app?.mainContainer.addChild(this.sprite);
     return base64;

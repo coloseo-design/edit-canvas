@@ -1,5 +1,5 @@
-import { Graphics, InteractionEvent, Container } from 'pixi.js';
-import { getBoundRect, uuid, getImage, getBoxImage } from './utils';
+import { Graphics, InteractionEvent, Container, Sprite } from 'pixi.js';
+import { getBoundRect, uuid, getImage, getBoxImage, GraffitiToSprite } from './utils';
 import type { eleType, positionType, boundRectType } from './utils';
 import { getPoint, getOriginPosition } from './utils';
 import CanvasStore from './store';
@@ -15,10 +15,13 @@ export interface GraffitiType {
 
 type brushAttr = {
   repeat?: (rect: boundRectType) => void;
+  changePosition?: (rect: boundRectType) => void;
   ele?: Graffiti;
   delete?: () => void;
   isDrag?: boolean;
   paint?: (e: InteractionEvent) => void;
+  uuid?: string;
+  originImage?: any;
 } & Graphics;
 
 
@@ -35,6 +38,8 @@ class Graffiti {
   container!: Container;
   alpha: number;
   start: positionType = { x: 0, y: 0};
+  position: positionType = { x: 0, y: 0};
+  originImage: any;
   constructor(props?: GraffitiType) {
     const { color = 0x6078F4, lineWidth = 10, alpha = 0.5 } = props || {};
     const brush = new Graphics();
@@ -45,8 +50,11 @@ class Graffiti {
     this.lineWidth = lineWidth;
     this.brush.delete = this.delete;
     this.brush.paint = this.paint;
+    this.brush.changePosition = this.changePosition;
+    this.originImage = this.brush;
     this.alpha = alpha;
     this.uuid = `${uuid()}`;
+    this.brush.uuid = this.uuid;
     this.brush.on('pointerdown', (e: InteractionEvent) => {
       this.onPointerdown(e);
       this.down(e);
@@ -58,6 +66,10 @@ class Graffiti {
     this.brush.on('click', (e: InteractionEvent) => {
       this.onClick(e);
     })
+  }
+
+  changePosition = ({ x, y }: boundRectType) => {
+    this.position = { x, y };
   }
 
   paint = (e: InteractionEvent) => {
@@ -93,15 +105,20 @@ class Graffiti {
 
   public async getImage(container?: eleType) {
     this.operate?.clear();
+    this.app?.endGraffiti();
     if (container) {
-      this.app?.endGraffiti();
-      const src = await getBoxImage(container, this, { parent: this.container });
+      const src = await getBoxImage(container, this, { isGraffiti: true, parent: this.container });
+      this.hasId();
       return src; 
     } else {
-      const { base64 } = getImage(this);
-      this.app?.GraffitiContainer.addChild(this.brush);
+      const { base64 } = getImage(this, { isGraffiti: true, parent: this.container });
+      this.hasId();
       return base64;
     }
+  }
+  private hasId = () => {
+    this.brush = this.originImage;
+    GraffitiToSprite(this, this.app.app, this.position);
   }
 
   private repeat = (rect: boundRectType) => {
@@ -114,9 +131,19 @@ class Graffiti {
   }
 
 
-  private down = (e: InteractionEvent) => { // TODO
+  changeChild = (child: any) => {
+    this.brush = child;
+  }
+  
+  down = (e: InteractionEvent) => { // TODO
     e.stopPropagation();
     if (!this.app.isGraffiti) {
+      this.app?.backCanvasList.push({
+        ...getBoundRect(this.brush),
+        uuid: this.uuid,
+        type: 'Graffiti',
+        kind: 'move',
+      });
       this.brush.isDrag = true;
       this.start = getPoint(e);
       this.app?.setIndex(this.brush, this.container);
@@ -128,18 +155,24 @@ class Graffiti {
     this.brush.on('pointermove', (e: InteractionEvent) => {
       if (this.brush.isDrag) {
         const scalePosition = getPoint(e);
-        const x = (scalePosition.x - this.start.x) / CanvasStore.scale.x;
-        const y = (scalePosition.y - this.start.y)/ CanvasStore.scale.x;
+        const spriteP = this.brush instanceof Sprite ? { x: this.position.x, y: this.position.y } : { x: 0, y: 0}
+        const x = (scalePosition.x - this.start.x) / CanvasStore.scale.x + spriteP.x;
+        const y = (scalePosition.y - this.start.y)/ CanvasStore.scale.x + spriteP.y;
         this.brush.position.set(x, y);
         this.operate.clear();
       }
     });
   }
 
-  private up = () => {
+  up = () => {
     if (this.brush.isDrag) {
       this.brush.isDrag = false;
-      this.operate?.paint(getBoundRect(this.brush));
+      const rect = getBoundRect(this.brush);
+      this.operate?.paint(rect);
+      this.position = {
+        x: rect.x,
+        y: rect.y,
+      }
     }
   }
 };

@@ -1,5 +1,5 @@
 import { Application, Container, InteractionEvent, Sprite } from "pixi.js";
-import { getBoundRect, getPixiGra, wheelListener, pointerListener } from './utils';
+import { getBoundRect, getPixiGra, wheelListener, pointerListener, GraffitiToSprite } from './utils';
 import type { eleType } from './utils';
 import CanvasStore from './store';
 import OperateRect from './operate';
@@ -57,7 +57,7 @@ class Canvas {
           deleteP.brush.removeChild(deleteItem.brush);
           const findP = this.cacheGraffitiList.find((i) => i.uuid === deleteP.uuid);
           this.revokeBackList.push({ uuid: deleteItem.uuid, type: 'Graffiti' });
-          this.getBrushParent();
+          // this.getBrushParent();
           if (findP) {
             Object.assign(findP, {
               deleteChildren: [...(findP.deleteChildren || []), deleteItem],
@@ -83,7 +83,7 @@ class Canvas {
         Object.assign(current, {
           children: current.children.filter((i: any) => !(current.deleteChildren || []).includes(i))
         });
-        this.getBrushParent();
+        // this.getBrushParent();
         if ((current.children || []).length === 0) {
           const item = current.deleteChildren.pop();
           if (item) {
@@ -109,27 +109,32 @@ class Canvas {
     }
   }
 
+  private utilsMove(item: any, isBack: boolean, graffiti: boolean = false) {
+    const containers = graffiti ? this.GraffitiContainer : this.mainContainer;
+    const current: any = (containers.children || []).find((i: any) => i.uuid === item.uuid);
+    if (current) {
+      isBack && this.revokeBackList.push({ ...getBoundRect(current), uuid: (current as any).uuid, type: item.type, kind: item.kind });
+      if (item.type === 'Graphics') {
+        current.changePosition({ ...item });
+        current.clear();
+        current.repeat();
+      } else {
+        current.changePosition({ ...item});
+        current.position.set(item.x, item.y);
+      }
+    } else if (item.kind === 'delete') {
+      item.deleteEle?.paint?.();
+    }
+  }
+
   private utilsBack(isBack: boolean) {
     const list = isBack ? this.backCanvasList : this.revokeBackList;
     const last = list.pop();
     if (last) {
-      if (last.type === 'Graffiti') {
+      if (last.type === 'Graffiti' && last.kind !== 'move' && last.kind !== 'station') {
         isBack ? this.deleteGraffiti() : this.revokeGraffiti();
       } else {
-        const current: any = (this.mainContainer.children || []).find((i: any) => i.uuid === last.uuid);
-        if (current) {
-          isBack && this.revokeBackList.push({ ...getBoundRect(current), uuid: (current as any).uuid, type: last.type });
-          if (last.type === 'Graphics') {
-            current.changePosition({ ...last });
-            current.clear();
-            current.repeat();
-          } else {
-            current.changePosition({ ...last});
-            current.position.set(last.x, last.y);
-          }
-        } else if (last.kind === 'delete') {
-          last.deleteEle?.paint?.();
-        }
+        this.utilsMove(last, isBack, last.type === 'Graffiti');
       }
       operate.clear();
     }
@@ -184,10 +189,11 @@ class Canvas {
     this.cacheGraffitiList = [];
   }
   private getBrushParent() {
-    (this.GraffitiList || []).forEach((item) => {
+    (this.GraffitiList || []).forEach((item: Graffiti) => {
       if (item) {
-        const obj = getBoundRect(item.brush);
-        item.brush.drawRect(obj.x, obj.y, obj.width, obj.height);
+        const rect = getBoundRect(item.brush);
+        item.brush = item.originImage;
+        GraffitiToSprite(item, this.app, rect);
       }
     });
   }
@@ -238,7 +244,7 @@ class Canvas {
     currentP.brush.addChild(item.brush);
     (currentP?.children || []).push(item);
     item.paint(e);
-    this.backCanvasList.push({ uuid: item.uuid, type: 'Graffiti'}); // 存储画布操作
+    this.backCanvasList.push({ uuid: item.uuid, type: 'Graffiti', kind: 'station' }); // 第一步backCanvasList用来展开 存储画布操作
   }
   private pointerDown = (e: InteractionEvent) => {
     if (this.isGraffiti) {

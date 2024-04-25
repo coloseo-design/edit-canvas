@@ -91,6 +91,12 @@ const Demo = () => {
   const start = () => {
     const graffiti = new Graffiti();
     canvas.current?.add(graffiti);
+    graffiti.onPointerdown = () => {
+      console.log('==down');
+    }
+    graffiti.onPointerup = () => {
+      console.log('==up', graffiti.getBoundRect(), graffiti);
+    }
     ffis.push(graffiti);
     setFfi(ffis);
     canvas.current?.startGraffiti();
@@ -118,8 +124,9 @@ const Demo = () => {
     if (canvas.current && img) {
       const image = (img.current as Image).getImage();
       const fi = ffis[ffis.length - 1];
-      const graffitiImg = await fi?.getImage();
+      // console.log('=55>>', fi);
       const boxGraffitiImg = await fi?.getImage(img.current);
+      const graffitiImg = await fi?.getImage();
       console.log('==>>底片', image);
       console.log('==>>涂鸦', graffitiImg);
       console.log('==>> 涂鸦与底片同大', boxGraffitiImg);
