@@ -47,7 +47,7 @@ class Canvas {
      this.app.stage.removeChildren();
     }
   }
-  public deleteGraffiti() {
+  public deleteGraffiti(kind: any) {
     if (this.GraffitiList.length) {
       const deleteP = this.GraffitiList[this.GraffitiList.length - 1];
       if (deleteP && deleteP.children.length > 0) {
@@ -56,7 +56,7 @@ class Canvas {
           deleteP.children = deleteP.children.filter((i) => i !== deleteItem);
           deleteP.brush.removeChild(deleteItem.brush);
           const findP = this.cacheGraffitiList.find((i) => i.uuid === deleteP.uuid);
-          this.revokeBackList.push({ uuid: deleteItem.uuid, type: 'Graffiti' });
+          this.revokeBackList.push({ uuid: deleteItem.uuid, type: 'Graffiti', kind });
           // this.getBrushParent();
           if (findP) {
             Object.assign(findP, {
@@ -77,6 +77,7 @@ class Canvas {
   }
 
   public revokeGraffiti() { // 撤销删除的涂鸦
+    const parentChild = (this.GraffitiContainer.children || []).map((i: any) => i.uuid);
     if (this.cacheGraffitiList.length) {
       const current = this.cacheGraffitiList[this.cacheGraffitiList.length - 1];
       if (current) {
@@ -87,17 +88,22 @@ class Canvas {
         if ((current.children || []).length === 0) {
           const item = current.deleteChildren.pop();
           if (item) {
-            current.children = [item];
-            current.brush.addChild(item.brush);
-            this.GraffitiList.push(current);
+            if (!parentChild.includes(item.brush.uuid) && !parentChild.includes((item.brush?.parent as any)?.uuid)) {
+              current.children = [item];
+              current.brush.addChild(item.brush);
+              
+              this.GraffitiList.push(current);
+            }
           }
         } else {
           this.GraffitiList.forEach((i) => {
             if (i.uuid === current.uuid) {
               const item = current.deleteChildren.pop();
               if (item) {
-                i.children = [...(i.children || []) as Graffiti[], item];
-                i.brush.addChild(item.brush);
+                if (!parentChild.includes(item.brush.uuid) && !parentChild.includes((item.brush?.parent as any)?.uuid)) {
+                  i.children = [...(i.children || []) as Graffiti[], item];
+                  i.brush.addChild(item.brush);
+                }
               }
             }
           })
@@ -131,8 +137,12 @@ class Canvas {
     const list = isBack ? this.backCanvasList : this.revokeBackList;
     const last = list.pop();
     if (last) {
-      if (last.type === 'Graffiti' && last.kind !== 'move' && last.kind !== 'station') {
-        isBack ? this.deleteGraffiti() : this.revokeGraffiti();
+      if (last.type === 'Graffiti' && last.kind !== 'move') {
+        if (isBack) {
+          this.deleteGraffiti(last.kind)
+        } else {
+          this.revokeGraffiti();
+        }
       } else {
         this.utilsMove(last, isBack, last.type === 'Graffiti');
       }

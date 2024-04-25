@@ -31,7 +31,7 @@ class Graffiti {
   public color: number;
   public lineWidth: number;
   public children: Graffiti[] = [];
-  public uuid: string;
+  public uuid: string = `${uuid()}`;
   public deleteChildren: Graffiti[] = []
   app!: Canvas;
   operate!: OperateRect;
@@ -53,7 +53,6 @@ class Graffiti {
     this.brush.changePosition = this.changePosition;
     this.originImage = this.brush;
     this.alpha = alpha;
-    this.uuid = `${uuid()}`;
     this.brush.uuid = this.uuid;
     this.brush.on('pointerdown', (e: InteractionEvent) => {
       this.onPointerdown(e);
