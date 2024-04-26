@@ -83,6 +83,7 @@ const Demo = () => {
         console.log('=text1 up>>', e,);
       }
     }
+
     return () => {
       canvasContainer && app.detach(canvasContainer);
     }
@@ -149,7 +150,7 @@ const Demo = () => {
   const handleLayer = async () => {
     if (layer.current) {
       const src = await layer.current?.getImage();
-      console.log('==src', src);
+      // console.log('==src', src);
     }
   };
 

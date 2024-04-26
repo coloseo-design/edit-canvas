@@ -20,6 +20,7 @@ type layerAttr = {
   changePosition?: (rect: boundRectType) => void;
   ele?: Layer;
   uuid?: string;
+  name?: string;
 } & Graphics
 
 class Layer {
@@ -66,6 +67,7 @@ class Layer {
     });
     this.layer.ele = this;
     this.layer.uuid = this.uuid;
+    this.layer.name = 'layer';
     this.layer.delete = this.delete;
     this.layer.repeat = this.repeat;
     this.layer.changePosition = this.changePosition;

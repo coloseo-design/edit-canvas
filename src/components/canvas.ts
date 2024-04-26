@@ -212,6 +212,10 @@ class Canvas {
     return this.app?.renderer.plugins.extract.base64(this.mainContainer);
   }
 
+  public getBoundRect(ele: PIXI.DisplayObject | any) {
+    return getBoundRect(ele);
+  }
+
   public setScale(show: boolean) {
     this.showScale = show;
     if (show) {
