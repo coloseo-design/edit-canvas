@@ -6,6 +6,7 @@
 
 const canvas = new EditCanvas();
 - **attach**: 为canvas添加container, attach(HTMLElement) => void
+- **detach**: 在组件卸载时调用
 - **add**: 为canvas添加子集 例如:Image, Text, Graffiti,Graphics, add(Image|Text|Graffiti|Graphics) => void
 - **clearCanvas**: 清空画布方法, () => void
 - **back**: 返回画布图形上一步操作, () => void
