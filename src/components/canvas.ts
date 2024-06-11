@@ -439,6 +439,7 @@ class Canvas {
     // 取消帧更新
     this.app.ticker.remove(this.TickerUpdate);
     const dom = root || this.root;
+    dom.removeChild(this.app.view);
     dom.removeEventListener("mousewheel", wheelListener);
     dom.removeEventListener("pointermove", pointerListener);
   }
